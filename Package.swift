@@ -14,7 +14,8 @@ let package = Package(
         // The C++ astronomical algorithms library by J.P. Naughter
         .library(name: "AAplus", targets: ["AAplus"]),
         // The Swift wrapper API
-        .library(name: "AstronomyKit", targets: ["AstronomyKit"])
+        .library(name: "AstronomyKit", targets: ["AstronomyKit"]),
+        .library(name: "SwiftAstronomy", targets: ["AstronomyKit"]) // Alias de rétrocompatibilité
     ],
     targets: [
         // MARK: - C++ Core
