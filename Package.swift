@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SwiftAstronomy",
+    name: "AstronomyKit",
     defaultLocalization: "en",
     platforms: [
         .macOS(.v10_15),
@@ -14,7 +14,7 @@ let package = Package(
         // The C++ astronomical algorithms library by J.P. Naughter
         .library(name: "AAplus", targets: ["AAplus"]),
         // The Swift wrapper API
-        .library(name: "SwiftAstronomy", targets: ["SwiftAstronomy"])
+        .library(name: "AstronomyKit", targets: ["AstronomyKit"])
     ],
     targets: [
         // MARK: - C++ Core
@@ -29,7 +29,7 @@ let package = Package(
 
         // MARK: - Swift API
         .target(
-            name: "SwiftAstronomy",
+            name: "AstronomyKit",
             dependencies: ["AAplus"],
             path: "Sources/SwiftAstronomy",
             resources: [
@@ -42,7 +42,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SwiftAstronomyTests",
-            dependencies: ["SwiftAstronomy", "AAplus"],
+            dependencies: ["AstronomyKit", "AAplus"],
             path: "Tests/SwiftAstronomyTests",
             swiftSettings: [
                 .interoperabilityMode(.Cxx),

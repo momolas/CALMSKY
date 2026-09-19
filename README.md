@@ -304,11 +304,11 @@ Add SwiftAstronomy as a dependency in your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/momolas/SwiftAstronomy.git", branch: "master")
+    .package(url: "https://github.com/momolas/AstronomyKit.git", branch: "master")
 ]
 ```
 
-Or add it directly in Xcode via **File > Add Package Dependencies...** with `https://github.com/momolas/SwiftAstronomy.git`.
+Or add it directly in Xcode via **File > Add Package Dependencies...** with `https://github.com/momolas/AstronomyKit.git`.
 
 ---
 
