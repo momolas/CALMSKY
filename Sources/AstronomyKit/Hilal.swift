@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 #if canImport(Accelerate)
 import Accelerate
 #endif

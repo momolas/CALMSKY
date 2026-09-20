@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 public typealias MeanSolarYear = Double
 public typealias DecimalYear = Double

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The Mars planet.
 public final class Mars: Planet, @unchecked Sendable, MarsPhysicalDetails {

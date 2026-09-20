@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 enum InvalidParameterError: Error {
     case invalidPlanet(KPCAAPlanet)

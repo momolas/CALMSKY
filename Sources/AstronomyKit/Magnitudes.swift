@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 public extension Magnitude {
     /// Combine two magnitudes.

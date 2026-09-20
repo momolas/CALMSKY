@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Represents a date in the Islamic (Hijri / Moslem) calendar.
 public struct HijriDate: Sendable, Codable, Hashable, CustomStringConvertible {

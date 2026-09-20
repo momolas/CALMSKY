@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The eight conventional lunar phases based on Moon-Sun elongation.
 public enum LunarPhase: String, CaseIterable, Sendable, Identifiable, Codable {

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Struct to encapsulate amount of proper motion in equatorial reference.
 public struct ProperMotion: Sendable, Codable, Hashable {

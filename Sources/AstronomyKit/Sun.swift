@@ -7,7 +7,6 @@
 //
 
 import Foundation
-@_exported import AAplus
 
 /// The Sun.
 public final class Sun: Object, @unchecked Sendable, CelestialBody {

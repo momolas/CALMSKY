@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 public enum TwilightSunAltitude: Degree, Sendable, Codable, Hashable {
     case diskCenterOnGeometricHorizon = 0

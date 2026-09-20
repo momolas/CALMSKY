@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The Pluto dwarf planet.
 public final class Pluto: DwarfPlanet, @unchecked Sendable {

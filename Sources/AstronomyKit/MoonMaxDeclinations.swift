@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Lunar standstill (maximum declination) details.
 public struct MoonMaxDeclinationDetails: Sendable, Codable, Hashable {

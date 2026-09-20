@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The Saturn planet.
 public final class Saturn: Planet, @unchecked Sendable {

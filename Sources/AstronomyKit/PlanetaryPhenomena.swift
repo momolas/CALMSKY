@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 func calculatePlanetaryPhenomenon(mean: Bool, jd: Double, object: KPCPlanetaryObject, type: CAAPlanetaryPhenomena.EventType) -> Double {
     let fractionalYear = CAADate(jd, true).FractionalYear()

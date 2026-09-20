@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The Degree is a unit of angle.
 public struct Degree: NumericType, CustomStringConvertible {

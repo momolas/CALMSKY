@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 extension Earth {
     

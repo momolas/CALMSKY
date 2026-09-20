@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Solar eclipse types and flags.
 public struct SolarEclipseFlags: OptionSet, Sendable, Codable, Hashable {

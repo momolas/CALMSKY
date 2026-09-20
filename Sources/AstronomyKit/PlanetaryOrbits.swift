@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 func orbitMeanLongitude(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
     switch planet {

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Lightweight ephemeris provider using the built-in VSOP87 + ELP2000 analytical theories.
 ///

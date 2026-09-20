@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The RiseTransitSetTimesDetails struct encompasses all elements of the times of rise, transit and set.
 public struct RiseTransitSetTimesDetails: Sendable {

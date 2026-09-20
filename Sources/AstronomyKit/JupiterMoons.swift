@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 public typealias JupiterEquatorialRadius = Double
 
@@ -31,7 +30,7 @@ public struct GalileanMoonRectangularCoordinates: Sendable, Codable, Hashable {
 }
 
 /// The GalileanMoon struct encompasses all properties of Galilean moons
-public struct GalileanMoon: @unchecked Sendable {
+public struct GalileanMoon: Sendable {
     fileprivate var details: CAAGalileanMoonDetail
 
     /// The name of the Moon

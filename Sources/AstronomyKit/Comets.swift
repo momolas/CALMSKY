@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Orbital elements of a body in a parabolic orbit (e.g. non-periodic comets).
 public struct ParabolicOrbitElements: Sendable, Codable, Hashable {

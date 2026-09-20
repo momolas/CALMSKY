@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// Constant value substracted from Julian Day to create so-called modified julian days.
 public let ModifiedJulianDayZero: Double = 2400000.5

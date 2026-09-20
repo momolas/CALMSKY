@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The Jupiter planet.
 public final class Jupiter: Planet, @unchecked Sendable, JupiterPhysicalDetails {

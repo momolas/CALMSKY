@@ -11,36 +11,17 @@ let package = Package(
         .watchOS(.v7)
     ],
     products: [
-        // The C++ astronomical algorithms library by J.P. Naughter
-        .library(name: "AAplus", targets: ["AAplus"]),
-        // The Swift wrapper API
         .library(name: "AstronomyKit", targets: ["AstronomyKit"]),
         .library(name: "SwiftAstronomy", targets: ["AstronomyKit"]) // Alias de rétrocompatibilité
     ],
     targets: [
-        // MARK: - C++ Core
-        .target(
-            name: "AAplus",
-            path: "Sources/AA+",
-            publicHeadersPath: ".",
-            cxxSettings: [
-                .headerSearchPath(".")
-            ],
-            linkerSettings: [
-                .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
-            ]
-        ),
-
-        // MARK: - Swift API
         .target(
             name: "AstronomyKit",
-            dependencies: ["AAplus"],
             path: "Sources/AstronomyKit",
             resources: [
                 .process("AstronomyKit.docc")
             ],
             swiftSettings: [
-                .interoperabilityMode(.Cxx),
                 .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
@@ -49,17 +30,14 @@ let package = Package(
         ),
         .testTarget(
             name: "AstronomyKitTests",
-            dependencies: ["AstronomyKit", "AAplus"],
+            dependencies: ["AstronomyKit"],
             path: "Tests/AstronomyKitTests",
             swiftSettings: [
-                .interoperabilityMode(.Cxx),
                 .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
-                .linkedLibrary("c++"),
                 .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
             ]
         )
-    ],
-    cxxLanguageStandard: .cxx17
+    ]
 )

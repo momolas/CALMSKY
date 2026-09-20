@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import AAplus
 
 /// The GalileanMoon struct encompasses all properties of Galilean moons
 /// Saturnian Moons are a world by themselves! We'll consider the 7 most important for now.
@@ -24,7 +23,7 @@ import AAplus
 ///
 /// Additional data can be taken from this source (referenced by Wikipedia):
 /// http://nssdc.gsfc.nasa.gov/planetary/factsheet/saturniansatfact.html
-public struct SaturnianMoon: @unchecked Sendable {
+public struct SaturnianMoon: Sendable {
     fileprivate var details: CAASaturnMoonDetail
 
     /// The name of the Moon

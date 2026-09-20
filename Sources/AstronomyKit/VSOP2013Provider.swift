@@ -7,34 +7,32 @@
 //
 
 import Foundation
-import AAplus
 
 /// High-precision planetary ephemeris provider using the VSOP2013 theory (IMCCE, Observatoire de Paris).
 ///
 /// VSOP2013 provides heliocentric ecliptic positions and velocities for the 9 major Solar System bodies
 /// (Mercury through Pluto) with an accuracy of ≈1–10 meters over the interval −4000 to +8000 CE.
 ///
-/// The underlying C++ implementation (`CAAVSOP2013` from AA+ v2.63) requires pre-computed binary data
+/// The pure Swift implementation requires pre-computed binary data
 /// files (`VSOP2013.P2000.bin`, etc.) to be present in a directory specified at initialization.
 /// Use ``EphemerisDataManager`` to download these files from the official IMCCE server.
 ///
 /// - Note: The Moon and Sun are not directly supported by VSOP2013. For the Moon, use
 ///   ``LunarDE440Provider`` or ``HybridEphemerisProvider``. The Sun position is derived
 ///   by negating the Earth-Moon Barycenter position.
-/// - Thread Safety: Conforms to `Sendable` via `@unchecked Sendable`. Access to the underlying
-///   `CAAVSOP2013` instance (which lazy-loads Chebyshev tables into internal arrays) is protected
-///   by an internal `NSLock`, ensuring thread-safe access across concurrent Swift tasks.
-public final class VSOP2013Provider: @unchecked Sendable {
+/// - Thread Safety: Conforms to `Sendable`. Access to the underlying
+///   `CAAVSOP2013` instance is protected by an internal `NSLock`.
+public final class VSOP2013Provider: Sendable {
 
     // MARK: - Properties
 
     /// The directory containing the VSOP2013 binary data files.
     public let dataDirectoryURL: URL
 
-    /// The underlying C++ VSOP2013 engine, heap-allocated to keep the constructor in the C++ object.
-    private let vsop2013: UnsafeMutablePointer<CAAVSOP2013>
+    /// The underlying pure Swift VSOP2013 engine.
+    private let vsop2013: CAAVSOP2013
 
-    /// Synchronization lock for thread-safe access to the C++ calculation engine.
+    /// Synchronization lock for thread-safe access to the calculation engine.
     private let lock = NSLock()
 
     // MARK: - Initialization
@@ -50,15 +48,9 @@ public final class VSOP2013Provider: @unchecked Sendable {
         guard FileManager.default.fileExists(atPath: path) else {
             throw EphemerisError.dataFileNotFound(path)
         }
-        guard let instance = CAAVSOP2013Create() else {
-            throw EphemerisError.calculationFailed("Failed to allocate CAAVSOP2013 instance")
-        }
+        let instance = CAAVSOP2013()
+        instance.SetBinaryFilesDirectory(path)
         self.vsop2013 = instance
-        vsop2013.pointee.SetBinaryFilesDirectory(path)
-    }
-
-    deinit {
-        CAAVSOP2013Destroy(vsop2013)
     }
 
     // MARK: - Planet Mapping
@@ -90,7 +82,7 @@ public final class VSOP2013Provider: @unchecked Sendable {
     private func calculateEquatorial(planet: CAAVSOP2013.Planet, jd: Double) -> CAAVSOP2013Position {
         lock.lock()
         defer { lock.unlock() }
-        let ecliptic = vsop2013.pointee.Calculate(planet, jd)
+        let ecliptic = vsop2013.Calculate(planet, jd)
         return CAAVSOP2013.Ecliptic2Equatorial(ecliptic)
     }
 }
