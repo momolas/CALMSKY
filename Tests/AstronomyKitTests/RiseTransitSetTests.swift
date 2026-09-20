@@ -6,14 +6,16 @@
 //  MIT Licence. See LICENCE file.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class RiseTransitSetTests: XCTestCase {
+@Suite("RiseTransitSetTests")
+struct RiseTransitSetTests {
     
     let moscow = GeographicCoordinates(positivelyWestwardLongitude: -37.615559, latitude: 55.752220)
     let boston = GeographicCoordinates(positivelyWestwardLongitude: 71.0833, latitude: 42.3333)
     
+    @Test("Venus At Boston1988")
     func testVenusAtBoston1988() { // See AA p.103
         let venus = Venus(julianDay: JulianDay(year: 1988, month: 3, day: 20, hour: 0, minute: 0, second: 0))
         
@@ -28,6 +30,7 @@ class RiseTransitSetTests: XCTestCase {
         AssertEqual(details.setTime!, expectedSet, accuracy: accuracy)
     }
     
+    @Test("Venus At Boston2017")
     func testVenusAtBoston2017() { // See http://aa.usno.navy.mil/data/docs/mrst.php
         let sexagesimalLongitude = boston.longitude.inHours.sexagesimal
         let venus = Venus(julianDay: JulianDay(year: 2017, month: 3, day: 20, hour: 0 + sexagesimalLongitude.radical, minute: sexagesimalLongitude.minute, second: sexagesimalLongitude.second))
@@ -44,6 +47,7 @@ class RiseTransitSetTests: XCTestCase {
     }
     
     
+    @Test("Venus At Moscow2016")
     func testVenusAtMoscow2016() { // Data from SkySafari
         let venus = Venus(julianDay: JulianDay(year: 2016, month: 12, day: 27, hour: 6, minute: 29, second: 55))
         
@@ -58,6 +62,7 @@ class RiseTransitSetTests: XCTestCase {
         AssertEqual(details.setTime!, expectedSet, accuracy: accuracy)
     }
     
+    @Test("Sun At Moscow2016")
     func testSunAtMoscow2016() { // Data from SkySafari
         let sun = Sun(julianDay: JulianDay(year: 2016, month: 12, day: 27, hour: 3, minute: 1, second: 34))
         
@@ -87,6 +92,7 @@ class RiseTransitSetTests: XCTestCase {
     
     // See https://github.com/onekiloparsec/SwiftAA/issues/95 for the problem
     // See https://github.com/codebox/star-rise-and-set-times/blob/master/test/spec/calc-spec.js for the test
+    @Test("Sirius In Cerro Paranal Chile")
     func testSiriusInCerroParanalChile() {
         let jd1 = JulianDay(year: 2018, month: 1, day: 1, hour: 12, minute: 0, second: 0)
         let jd2 = JulianDay(year: 2018, month: 6, day: 1, hour: 12, minute: 0, second: 0)
@@ -101,33 +107,35 @@ class RiseTransitSetTests: XCTestCase {
         let results1 = sirius1.riseTransitSetTimes(for: paranal)
         let results2 = sirius2.riseTransitSetTimes(for: paranal)
         
-        XCTAssertNotNil(results1.riseTime)
-        XCTAssertNotNil(results1.transitTime)
-        XCTAssertNotNil(results1.setTime)
+        #expect(results1.riseTime != nil)
+        #expect(results1.transitTime != nil)
+        #expect(results1.setTime != nil)
         
-        XCTAssertNotNil(results2.riseTime)
-        XCTAssertNotNil(results2.transitTime)
-        XCTAssertNotNil(results2.setTime)
+        #expect(results2.riseTime != nil)
+        #expect(results2.transitTime != nil)
+        #expect(results2.setTime != nil)
 
-        XCTAssertNil(results2.transitError)
+        #expect(results2.transitError == nil)
 
         //        AssertEqual(results1.riseTime!.date.fractionalHour, Double(22.151388), accuracy: Double(0.001), "")
     }
     
+    @Test("Polaris Ttransit Error Always Above")
     func testPolarisTtransitErrorAlwaysAbove() {
         let coords = EquatorialCoordinates(rightAscension: Hour(.plus, 2, 31, 47.08), declination: Degree(.plus, 89, 15, 50.9))
         let polaris = AstronomicalObject(name: "Polaris", coordinates: coords, julianDay: JulianDay(year: 2020, month: 9, day: 6))
         let us_coords = GeographicCoordinates(positivelyWestwardLongitude: Degree(.plus, 7, 46, 42), latitude: Degree(.plus, 49, 9, 3), altitude: 210)
         let results = polaris.riseTransitSetTimes(for: us_coords)
-        XCTAssertEqual(results.transitError!, CelestialBodyTransitError.alwaysAboveAltitude)
+        #expect(results.transitError! == CelestialBodyTransitError.alwaysAboveAltitude)
     }
     
+    @Test("Polaris Ttransit Error Always Below")
     func testPolarisTtransitErrorAlwaysBelow() {
         let coords = EquatorialCoordinates(rightAscension: Hour(.plus, 2, 31, 47.08), declination: Degree(.plus, 89, 15, 50.9))
         let polaris = AstronomicalObject(name: "Polaris", coordinates: coords, julianDay: JulianDay(year: 2020, month: 9, day: 6))
         let paranal = GeographicCoordinates(positivelyWestwardLongitude: Degree(24.627222),latitude: Degree(-70.404167), altitude: 2400)
         let results = polaris.riseTransitSetTimes(for: paranal)
-        XCTAssertEqual(results.transitError!, CelestialBodyTransitError.alwaysBelowAltitude)
+        #expect(results.transitError! == CelestialBodyTransitError.alwaysBelowAltitude)
     }
 
 }

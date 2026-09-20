@@ -6,95 +6,108 @@
 //  MIT Licence. See LICENCE file.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class PlanetaryBaseTest: XCTestCase {
+@Suite("PlanetaryBaseTest")
+struct PlanetaryBaseTest {
     var jd: JulianDay = 0.0
 
+    @Test("Planet Basic")
     func testPlanetBasic() {
-        XCTAssertEqual(Planet.averageColor, CelestialColor.white)
+        #expect(Planet.averageColor == CelestialColor.white)
     }
     
+    @Test("Mercury Types")
     func testMercuryTypes() {
         let mercury = Mercury(julianDay: self.jd)
-        XCTAssertEqual(mercury.name, "Mercury")
-        XCTAssertEqual(mercury.planet, KPCAAPlanetMercury)
-        XCTAssertEqual(mercury.planetStrict, KPCAAPlanetStrictMercury)
-        XCTAssertEqual(mercury.planetaryObject, KPCPlanetaryObjectMERCURY)
+        #expect(mercury.name == "Mercury")
+        #expect(mercury.planet == KPCAAPlanetMercury)
+        #expect(mercury.planetStrict == KPCAAPlanetStrictMercury)
+        #expect(mercury.planetaryObject == KPCPlanetaryObjectMERCURY)
     }
 
+    @Test("Venus Types")
     func testVenusTypes() {
         let venus = Venus(julianDay: self.jd)
-        XCTAssertEqual(venus.name, "Venus")
-        XCTAssertEqual(venus.planet, KPCAAPlanetVenus)
-        XCTAssertEqual(venus.planetStrict, KPCAAPlanetStrictVenus)
-        XCTAssertEqual(venus.planetaryObject, KPCPlanetaryObjectVENUS)
+        #expect(venus.name == "Venus")
+        #expect(venus.planet == KPCAAPlanetVenus)
+        #expect(venus.planetStrict == KPCAAPlanetStrictVenus)
+        #expect(venus.planetaryObject == KPCPlanetaryObjectVENUS)
     }
 
+    @Test("Earth Types")
     func testEarthTypes() {
         let earth = Earth(julianDay: self.jd)
-        XCTAssertEqual(earth.name, "Earth")
-        XCTAssertEqual(earth.planet, KPCAAPlanetEarth)
-        XCTAssertEqual(earth.planetStrict, KPCAAPlanetStrictEarth)
-        XCTAssertEqual(earth.planetaryObject, KPCPlanetaryObjectUNDEFINED) // <-- yes, UNDEFINED.
+        #expect(earth.name == "Earth")
+        #expect(earth.planet == KPCAAPlanetEarth)
+        #expect(earth.planetStrict == KPCAAPlanetStrictEarth)
+        #expect(earth.planetaryObject == KPCPlanetaryObjectUNDEFINED) // <-- yes, UNDEFINED.
     }
 
+    @Test("Mars Types")
     func testMarsTypes() {
         let mars = Mars(julianDay: self.jd)
-        XCTAssertEqual(mars.name, "Mars")
-        XCTAssertEqual(mars.planet, KPCAAPlanetMars)
-        XCTAssertEqual(mars.planetStrict, KPCAAPlanetStrictMars)
-        XCTAssertEqual(mars.planetaryObject, KPCPlanetaryObjectMARS)
+        #expect(mars.name == "Mars")
+        #expect(mars.planet == KPCAAPlanetMars)
+        #expect(mars.planetStrict == KPCAAPlanetStrictMars)
+        #expect(mars.planetaryObject == KPCPlanetaryObjectMARS)
     }
 
+    @Test("Jupiter Types")
     func testJupiterTypes() {
         let jupiter = Jupiter(julianDay: self.jd)
-        XCTAssertEqual(jupiter.name, "Jupiter")
-        XCTAssertEqual(jupiter.planet, KPCAAPlanetJupiter)
-        XCTAssertEqual(jupiter.planetStrict, KPCAAPlanetStrictJupiter)
-        XCTAssertEqual(jupiter.planetaryObject, KPCPlanetaryObjectJUPITER)
+        #expect(jupiter.name == "Jupiter")
+        #expect(jupiter.planet == KPCAAPlanetJupiter)
+        #expect(jupiter.planetStrict == KPCAAPlanetStrictJupiter)
+        #expect(jupiter.planetaryObject == KPCPlanetaryObjectJUPITER)
     }
 
+    @Test("Saturn Types")
     func testSaturnTypes() {
         let saturn = Saturn(julianDay: self.jd)
-        XCTAssertEqual(saturn.name, "Saturn")
-        XCTAssertEqual(saturn.planet, KPCAAPlanetSaturn)
-        XCTAssertEqual(saturn.planetStrict, KPCAAPlanetStrictSaturn)
-        XCTAssertEqual(saturn.planetaryObject, KPCPlanetaryObjectSATURN)
+        #expect(saturn.name == "Saturn")
+        #expect(saturn.planet == KPCAAPlanetSaturn)
+        #expect(saturn.planetStrict == KPCAAPlanetStrictSaturn)
+        #expect(saturn.planetaryObject == KPCPlanetaryObjectSATURN)
     }
 
+    @Test("Uranus Types")
     func testUranusTypes() {
         let uranus = Uranus(julianDay: self.jd)
-        XCTAssertEqual(uranus.name, "Uranus")
-        XCTAssertEqual(uranus.planet, KPCAAPlanetUranus)
-        XCTAssertEqual(uranus.planetStrict, KPCAAPlanetStrictUranus)
-        XCTAssertEqual(uranus.planetaryObject, KPCPlanetaryObjectURANUS)
+        #expect(uranus.name == "Uranus")
+        #expect(uranus.planet == KPCAAPlanetUranus)
+        #expect(uranus.planetStrict == KPCAAPlanetStrictUranus)
+        #expect(uranus.planetaryObject == KPCPlanetaryObjectURANUS)
     }
 
+    @Test("Neptune Types")
     func testNeptuneTypes() {
         let neptune = Neptune(julianDay: self.jd)
-        XCTAssertEqual(neptune.name, "Neptune")
-        XCTAssertEqual(neptune.planet, KPCAAPlanetNeptune)
-        XCTAssertEqual(neptune.planetStrict, KPCAAPlanetStrictNeptune)
-        XCTAssertEqual(neptune.planetaryObject, KPCPlanetaryObjectNEPTUNE)
+        #expect(neptune.name == "Neptune")
+        #expect(neptune.planet == KPCAAPlanetNeptune)
+        #expect(neptune.planetStrict == KPCAAPlanetStrictNeptune)
+        #expect(neptune.planetaryObject == KPCPlanetaryObjectNEPTUNE)
     }
 
+    @Test("Pluto Types")
     func testPlutoTypes() {
         let pluto = Pluto(julianDay: self.jd)
-        XCTAssertEqual(pluto.name, "Pluto")
-        XCTAssertEqual(pluto.planet, KPCAAPlanetPluto)
-        XCTAssertEqual(pluto.planetStrict, KPCAAPlanetStrictUndefined) // <-- yes, undefined.
-        XCTAssertEqual(pluto.planetaryObject, KPCPlanetaryObjectUNDEFINED) // <-- yes, UNDEFINED.
+        #expect(pluto.name == "Pluto")
+        #expect(pluto.planet == KPCAAPlanetPluto)
+        #expect(pluto.planetStrict == KPCAAPlanetStrictUndefined) // <-- yes, undefined.
+        #expect(pluto.planetaryObject == KPCPlanetaryObjectUNDEFINED) // <-- yes, UNDEFINED.
     }
     
     // See AA, p.270, Example 38.a
+    @Test("Perihelion Aphelion")
     func testPerihelionAphelion() {
         let venus = Venus(julianDay: JulianDay(year: 1978, month: 10, day: 15))
         AssertEqual(venus.perihelion, JulianDay(2443873.704), accuracy: JulianDay(0.001))
     }
     
     // See AA, p.270, Example 38.b
+    @Test("Aphelion")
     func testAphelion() {
         let mars = Mars(julianDay: JulianDay(year: 2032, month: 1, day: 1))
         AssertEqual(mars.aphelion, JulianDay(2463530.456), accuracy: JulianDay(0.001))

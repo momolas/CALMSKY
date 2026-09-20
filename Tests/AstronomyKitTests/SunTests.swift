@@ -6,12 +6,14 @@
 //  MIT Licence. See LICENCE file.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class SunTests: XCTestCase {
+@Suite("SunTests")
+struct SunTests {
     
     // See AA p.165
+    @Test("Position")
     func testPosition() {
         let sun = Sun(julianDay: JulianDay(year: 1993, month: 10, day: 13))
         let equatorial = sun.equatorialCoordinates
@@ -21,9 +23,10 @@ class SunTests: XCTestCase {
     }
     
     // See AA p.189
+    @Test("Physical Observations")
     func testPhysicalObservations() {
         let jd = JulianDay(year: 1992, month: 10, day: 13)
-        XCTAssertEqual(jd.value, 2448908.5)
+        #expect(jd.value == 2448908.5)
         
         let sun = Sun(julianDay: jd)
         AssertEqual(sun.positionAngleOfNorthernRotationAxisPoint, Degree(26.27), accuracy: Degree(0.005))
@@ -32,6 +35,7 @@ class SunTests: XCTestCase {
     }
 
     // See AA p.192
+    @Test("Synodic Rotation Start Time")
     func testSynodicRotationStartTime() {
         let jdResult = JulianDay(2444480.7224)
         AssertEqual(Sun.timeOfStartOfSynodicRotation(rotationNumber: 1699), jdResult, accuracy: JulianDay(0.001))
@@ -43,12 +47,14 @@ class SunTests: XCTestCase {
     }
 
     // See AA p.384, Example 28.a
+    @Test("Equation Of Time")
     func testEquationOfTime() {
         let sun = Sun(julianDay: JulianDay(2448908.5))
         AssertEqual(sun.equationOfTime(), Minute(13.70940), accuracy: Minute(0.0003))
     }
     
     // See AA p.384, Example 28.a
+    @Test("Apparent Coordinates And Radius Vector")
     func testApparentCoordinatesAndRadiusVector() {
         let sun = Sun(julianDay: JulianDay(2448908.5))
         AssertEqual(sun.radiusVector, AstronomicalUnit(0.99760775), accuracy: AstronomicalUnit(0.000001))
@@ -63,6 +69,7 @@ class SunTests: XCTestCase {
     }
     
     // See AA p.389
+    @Test("Semi Diameters")
     func testSemiDiameters() {
         let sun = Sun(julianDay: JulianDay(2448908.5))
         AssertEqual(sun.equatorialSemiDiameter, ArcSecond(Sun.semiDiameterAtOneAU.value/sun.radiusVector.value), accuracy: ArcSecond(0.01))

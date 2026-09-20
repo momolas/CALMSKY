@@ -46,9 +46,11 @@ public struct CAAVSOP2013Orbit: Sendable, Codable, Hashable {
     }
 }
 
+import os
+
 // MARK: - Ephemerides File Reader
 
-private final class VSOP2013EphemeridesFile: @unchecked Sendable {
+private struct VSOP2013EphemeridesFile: Sendable {
     static let sizeBasicInterval: Double = 32.0
     static let identificationIndex: Int = 2013
     static let chebyshevTables: Int = 17122
@@ -62,7 +64,7 @@ private final class VSOP2013EphemeridesFile: @unchecked Sendable {
     var subIntervals: [Int32] = Array(repeating: 0, count: 9)
     var mappedData: Data?
 
-    func readBinaryFile(at path: String) -> Bool {
+    mutating func readBinaryFile(at path: String) -> Bool {
         let url = URL(fileURLWithPath: path)
         guard let data = try? Data(contentsOf: url, options: .mappedIfSafe), data.count >= 125 else {
             return false
@@ -120,7 +122,12 @@ private final class VSOP2013EphemeridesFile: @unchecked Sendable {
 
 // MARK: - Main CAAVSOP2013 Engine
 
-public final class CAAVSOP2013: @unchecked Sendable {
+private struct VSOP2013InternalState: Sendable {
+    var binaryFilesDirectory: String = "."
+    var ephemerideFiles: [VSOP2013EphemeridesFile] = (0..<6).map { _ in VSOP2013EphemeridesFile() }
+}
+
+public final class CAAVSOP2013: Sendable {
     public enum Planet: Int, Sendable, CaseIterable {
         case MERCURY = 0
         case VENUS = 1
@@ -148,8 +155,7 @@ public final class CAAVSOP2013: @unchecked Sendable {
         }
     }
 
-    private let lock = NSLock()
-    private var binaryFilesDirectory: String = "."
+    private let internalState: OSAllocatedUnfairLock<VSOP2013InternalState> = OSAllocatedUnfairLock(initialState: VSOP2013InternalState())
 
     private let dateRange: [Double] = [
         77294.5, 625198.5, 1173102.5, 1721006.5, 2268910.5, 2816814.5, 3364718.5
@@ -160,20 +166,18 @@ public final class CAAVSOP2013: @unchecked Sendable {
         "VSOP2013.P1000.bin", "VSOP2013.P2000.bin", "VSOP2013.P4000.bin"
     ]
 
-    private var ephemerideFiles: [VSOP2013EphemeridesFile] = (0..<6).map { _ in VSOP2013EphemeridesFile() }
-
     public init() {}
 
     public func SetBinaryFilesDirectory(_ directory: String) {
-        lock.lock()
-        defer { lock.unlock() }
-        binaryFilesDirectory = directory
+        internalState.withLock { state in
+            state.binaryFilesDirectory = directory
+        }
     }
 
     public func GetBinaryFilesDirectory() -> String {
-        lock.lock()
-        defer { lock.unlock() }
-        return binaryFilesDirectory
+        internalState.withLock { state in
+            state.binaryFilesDirectory
+        }
     }
 
     public func Calculate(_ planet: Planet, _ JD: Double) -> CAAVSOP2013Position {
@@ -184,33 +188,31 @@ public final class CAAVSOP2013: @unchecked Sendable {
             return CAAVSOP2013Position()
         }
 
-        lock.lock()
-        defer { lock.unlock() }
-
-        // Find file index
-        var nIndex = 0
-        for i in 1..<dateRange.count {
-            if JD < dateRange[i] {
-                nIndex = i - 1
-                break
+        return internalState.withLock { state in
+            // Find file index
+            var nIndex = 0
+            for i in 1..<dateRange.count {
+                if JD < dateRange[i] {
+                    nIndex = i - 1
+                    break
+                }
             }
-        }
-        if nIndex >= ephemerideFiles.count {
-            nIndex = ephemerideFiles.count - 1
-        }
+            if nIndex >= state.ephemerideFiles.count {
+                nIndex = state.ephemerideFiles.count - 1
+            }
 
-        let file = ephemerideFiles[nIndex]
-        if !file.isLoaded {
-            let fullPath = (binaryFilesDirectory as NSString).appendingPathComponent(ephemeridesFilenames[nIndex])
-            if !file.readBinaryFile(at: fullPath) {
+            if !state.ephemerideFiles[nIndex].isLoaded {
+                let fullPath = (state.binaryFilesDirectory as NSString).appendingPathComponent(ephemeridesFilenames[nIndex])
+                if !state.ephemerideFiles[nIndex].readBinaryFile(at: fullPath) {
+                    return CAAVSOP2013Position()
+                }
+            }
+
+            let file = state.ephemerideFiles[nIndex]
+            let iper = Int((JD - file.startJD) / VSOP2013EphemeridesFile.sizeBasicInterval)
+            guard let aperiod = file.getTableRecord(at: iper) else {
                 return CAAVSOP2013Position()
             }
-        }
-
-        let iper = Int((JD - file.startJD) / VSOP2013EphemeridesFile.sizeBasicInterval)
-        guard let aperiod = file.getTableRecord(at: iper) else {
-            return CAAVSOP2013Position()
-        }
 
         let pIdx = planet.rawValue
         let iad = Int(file.firstCoefficientRank[pIdx]) - 1
@@ -253,6 +255,7 @@ public final class CAAVSOP2013: @unchecked Sendable {
             X: r[0], Y: r[1], Z: r[2],
             X_DASH: r[3], Y_DASH: r[4], Z_DASH: r[5]
         )
+        }
     }
 
     public static func CalculateMeanMotion(_ planet: Planet, _ a: Double) -> Double {

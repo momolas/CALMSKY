@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Uranus planet
-public final class Uranus: Planet, @unchecked Sendable {
+public final class Uranus: Planet {
     
     /// The average color of the planet
     public class override var averageColor: CelestialColor {

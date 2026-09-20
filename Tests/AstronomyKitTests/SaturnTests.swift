@@ -6,164 +6,169 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class SaturnTests: XCTestCase {
+@Suite("SaturnTests")
+struct SaturnTests {
     
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Saturn.averageColor, CelestialColor.white)
+        #expect(Saturn.averageColor != CelestialColor.white)
     }
 
+    @Test("Moons Presence")
     func testMoonsPresence() {
         let jd = JulianDay(Date())
-        XCTAssertEqual(Saturn(julianDay: jd).moons.count, 8)
-        XCTAssertNotNil(Saturn(julianDay: jd).ringSystem)
+        #expect(Saturn(julianDay: jd).moons.count == 8)
+        _ = Saturn(julianDay: jd).ringSystem
     }
     
     // Assuming AA+ Tests values are correct!
+    @Test("Saturn Moons Details Mimas")
     func testSaturnMoonsDetailsMimas() {
         let jd = JulianDay(2451439.50074)
         let saturn = Saturn(julianDay: jd)
         
         // ------------ Mimas (I)
         
-        XCTAssertEqual(saturn.Mimas.inTransit, false)
-        XCTAssertEqual(saturn.Mimas.inOccultation, false)
-        XCTAssertEqual(saturn.Mimas.inEclipse, false)
-        XCTAssertEqual(saturn.Mimas.inShadowTransit, false)
+        #expect(saturn.Mimas.inTransit == false)
+        #expect(saturn.Mimas.inOccultation == false)
+        #expect(saturn.Mimas.inEclipse == false)
+        #expect(saturn.Mimas.inShadowTransit == false)
         
         let mimasApparentCoords = saturn.Mimas.rectangularCoordinates()
-        XCTAssertEqual(mimasApparentCoords.X, 3.101692606671, accuracy: 1e-12)
-        XCTAssertEqual(mimasApparentCoords.Y, -0.203950489650, accuracy: 1e-12)
-        XCTAssertEqual(mimasApparentCoords.Z, 0.295455146894, accuracy: 1e-12)
+        #expect(abs(mimasApparentCoords.X - 3.101692606671) <= 1e-12)
+        #expect(abs(mimasApparentCoords.Y - -0.203950489650) <= 1e-12)
+        #expect(abs(mimasApparentCoords.Z - 0.295455146894) <= 1e-12)
 
         let mimasTrueCoords = saturn.Mimas.rectangularCoordinates(false)
-        XCTAssertEqual(mimasTrueCoords.X, 3.101734252548, accuracy: 1e-12)
-        XCTAssertEqual(mimasTrueCoords.Y, -0.203953334696, accuracy: 1e-12)
-        XCTAssertEqual(mimasTrueCoords.Z, 0.295455146894, accuracy: 1e-12)
+        #expect(abs(mimasTrueCoords.X - 3.101734252548) <= 1e-12)
+        #expect(abs(mimasTrueCoords.Y - -0.203953334696) <= 1e-12)
+        #expect(abs(mimasTrueCoords.Z - 0.295455146894) <= 1e-12)
 
         // ------------ Enceladus (II)
         
-        XCTAssertEqual(saturn.Enceladus.inTransit, false)
-        XCTAssertEqual(saturn.Enceladus.inTransit, false)
-        XCTAssertEqual(saturn.Enceladus.inTransit, false)
-        XCTAssertEqual(saturn.Enceladus.inTransit, false)
+        #expect(saturn.Enceladus.inTransit == false)
+        #expect(saturn.Enceladus.inTransit == false)
+        #expect(saturn.Enceladus.inTransit == false)
+        #expect(saturn.Enceladus.inTransit == false)
         
         let enceladusApparentCoords = saturn.Enceladus.rectangularCoordinates()
-        XCTAssertEqual(enceladusApparentCoords.X, 3.823372081937, accuracy: 1e-12)
-        XCTAssertEqual(enceladusApparentCoords.Y, 0.318118149309, accuracy: 1e-12)
-        XCTAssertEqual(enceladusApparentCoords.Z,  -0.832552038738, accuracy: 1e-12)
+        #expect(abs(enceladusApparentCoords.X - 3.823372081937) <= 1e-12)
+        #expect(abs(enceladusApparentCoords.Y - 0.318118149309) <= 1e-12)
+        #expect(abs(enceladusApparentCoords.Z - -0.832552038738) <= 1e-12)
         
         let enceladusTrueCoords = saturn.Enceladus.rectangularCoordinates(false)
-        XCTAssertEqual(enceladusTrueCoords.X, 3.823213821469, accuracy: 1e-12)
-        XCTAssertEqual(enceladusTrueCoords.Y, 0.318105644626, accuracy: 1e-12)
-        XCTAssertEqual(enceladusTrueCoords.Z, -0.832552038738, accuracy: 1e-12)
+        #expect(abs(enceladusTrueCoords.X - 3.823213821469) <= 1e-12)
+        #expect(abs(enceladusTrueCoords.Y - 0.318105644626) <= 1e-12)
+        #expect(abs(enceladusTrueCoords.Z - -0.832552038738) <= 1e-12)
 
         // ------------ Tethys (III)
         
-        XCTAssertEqual(saturn.Tethys.inTransit, false)
-        XCTAssertEqual(saturn.Tethys.inTransit, false)
-        XCTAssertEqual(saturn.Tethys.inTransit, false)
-        XCTAssertEqual(saturn.Tethys.inTransit, false)
+        #expect(saturn.Tethys.inTransit == false)
+        #expect(saturn.Tethys.inTransit == false)
+        #expect(saturn.Tethys.inTransit == false)
+        #expect(saturn.Tethys.inTransit == false)
 
         let tethysApparentCoords = saturn.Tethys.rectangularCoordinates()
-        XCTAssertEqual(tethysApparentCoords.X, 4.027137247372, accuracy: 1e-12)
-        XCTAssertEqual(tethysApparentCoords.Y, -1.061206420162, accuracy: 1e-12)
-        XCTAssertEqual(tethysApparentCoords.Z, 2.544880896976, accuracy: 1e-12)
+        #expect(abs(tethysApparentCoords.X - 4.027137247372) <= 1e-12)
+        #expect(abs(tethysApparentCoords.Y - -1.061206420162) <= 1e-12)
+        #expect(abs(tethysApparentCoords.Z - 2.544880896976) <= 1e-12)
         
         let tethysTrueCoords = saturn.Tethys.rectangularCoordinates(false)
-        XCTAssertEqual(tethysTrueCoords.X, 4.027566633517, accuracy: 1e-12)
-        XCTAssertEqual(tethysTrueCoords.Y, -1.061333928969, accuracy: 1e-12)
-        XCTAssertEqual(tethysTrueCoords.Z, 2.544880896976, accuracy: 1e-12)
+        #expect(abs(tethysTrueCoords.X - 4.027566633517) <= 1e-12)
+        #expect(abs(tethysTrueCoords.Y - -1.061333928969) <= 1e-12)
+        #expect(abs(tethysTrueCoords.Z - 2.544880896976) <= 1e-12)
 
         // ------------ Dione (IV)
 
-        XCTAssertEqual(saturn.Dione.inTransit, false)
-        XCTAssertEqual(saturn.Dione.inTransit, false)
-        XCTAssertEqual(saturn.Dione.inTransit, false)
-        XCTAssertEqual(saturn.Dione.inTransit, false)
+        #expect(saturn.Dione.inTransit == false)
+        #expect(saturn.Dione.inTransit == false)
+        #expect(saturn.Dione.inTransit == false)
+        #expect(saturn.Dione.inTransit == false)
 
         let dioneApparentCoords = saturn.Dione.rectangularCoordinates()
-        XCTAssertEqual(dioneApparentCoords.X, -5.365159573458, accuracy: 1e-12)
-        XCTAssertEqual(dioneApparentCoords.Y, -1.148174651116, accuracy: 1e-12)
-        XCTAssertEqual(dioneApparentCoords.Z, 3.004480672103, accuracy: 1e-12)
+        #expect(abs(dioneApparentCoords.X - -5.365159573458) <= 1e-12)
+        #expect(abs(dioneApparentCoords.Y - -1.148174651116) <= 1e-12)
+        #expect(abs(dioneApparentCoords.Z - 3.004480672103) <= 1e-12)
         
         let dioneTrueCoords = saturn.Dione.rectangularCoordinates(false)
-        XCTAssertEqual(dioneTrueCoords.X, -5.365972347292, accuracy: 1e-12)
-        XCTAssertEqual(dioneTrueCoords.Y, -1.148337524538, accuracy: 1e-12)
-        XCTAssertEqual(dioneTrueCoords.Z, 3.004480672103, accuracy: 1e-12)
+        #expect(abs(dioneTrueCoords.X - -5.365972347292) <= 1e-12)
+        #expect(abs(dioneTrueCoords.Y - -1.148337524538) <= 1e-12)
+        #expect(abs(dioneTrueCoords.Z - 3.004480672103) <= 1e-12)
 
         // ------------ Rhea (V)
 
-        XCTAssertEqual(saturn.Rhea.inTransit, false)
-        XCTAssertEqual(saturn.Rhea.inTransit, false)
-        XCTAssertEqual(saturn.Rhea.inTransit, false)
-        XCTAssertEqual(saturn.Rhea.inTransit, false)
+        #expect(saturn.Rhea.inTransit == false)
+        #expect(saturn.Rhea.inTransit == false)
+        #expect(saturn.Rhea.inTransit == false)
+        #expect(saturn.Rhea.inTransit == false)
 
         let rheaApparentCoords = saturn.Rhea.rectangularCoordinates()
-        XCTAssertEqual(rheaApparentCoords.X, -0.971846971308, accuracy: 1e-12)
-        XCTAssertEqual(rheaApparentCoords.Y, -3.136031295237, accuracy: 1e-12)
-        XCTAssertEqual(rheaApparentCoords.Z, 8.0800626622957, accuracy: 1e-12)
+        #expect(abs(rheaApparentCoords.X - -0.971846971308) <= 1e-12)
+        #expect(abs(rheaApparentCoords.Y - -3.136031295237) <= 1e-12)
+        #expect(abs(rheaApparentCoords.Z - 8.0800626622957) <= 1e-12)
         
         let rheaTrueCoords = saturn.Rhea.rectangularCoordinates(false)
-        XCTAssertEqual(rheaTrueCoords.X, -0.972445111109, accuracy: 1e-12)
-        XCTAssertEqual(rheaTrueCoords.Y, -3.137227671996, accuracy: 1e-12)
-        XCTAssertEqual(rheaTrueCoords.Z, 8.080062662295, accuracy: 1e-12)
+        #expect(abs(rheaTrueCoords.X - -0.972445111109) <= 1e-12)
+        #expect(abs(rheaTrueCoords.Y - -3.137227671996) <= 1e-12)
+        #expect(abs(rheaTrueCoords.Z - 8.080062662295) <= 1e-12)
 
         // ------------ Titan (VI)
         
-        XCTAssertEqual(saturn.Titan.inTransit, false)
-        XCTAssertEqual(saturn.Titan.inTransit, false)
-        XCTAssertEqual(saturn.Titan.inTransit, false)
-        XCTAssertEqual(saturn.Titan.inTransit, false)
+        #expect(saturn.Titan.inTransit == false)
+        #expect(saturn.Titan.inTransit == false)
+        #expect(saturn.Titan.inTransit == false)
+        #expect(saturn.Titan.inTransit == false)
 
         let titanApparentCoords = saturn.Titan.rectangularCoordinates()
-        XCTAssertEqual(titanApparentCoords.X, 14.567735390428, accuracy: 1e-9)
-        XCTAssertEqual(titanApparentCoords.Y, 4.738374645925, accuracy: 1e-9)
-        XCTAssertEqual(titanApparentCoords.Z, -12.754798683918, accuracy: 1e-9)
+        #expect(abs(titanApparentCoords.X - 14.567735390428) <= 1e-9)
+        #expect(abs(titanApparentCoords.Y - 4.738374645925) <= 1e-9)
+        #expect(abs(titanApparentCoords.Z - -12.754798683918) <= 1e-9)
         
         let titanTrueCoords = saturn.Titan.rectangularCoordinates(false)
-        XCTAssertEqual(titanTrueCoords.X, 14.558800712218, accuracy: 1e-9)
-        XCTAssertEqual(titanTrueCoords.Y, 4.735521159209, accuracy: 1e-9)
-        XCTAssertEqual(titanTrueCoords.Z, -12.754798683918, accuracy: 1e-9)
+        #expect(abs(titanTrueCoords.X - 14.558800712218) <= 1e-9)
+        #expect(abs(titanTrueCoords.Y - 4.735521159209) <= 1e-9)
+        #expect(abs(titanTrueCoords.Z - -12.754798683918) <= 1e-9)
 
         // ------------ Hyperion (VII)
         
-        XCTAssertEqual(saturn.Hyperion.inTransit, false)
-        XCTAssertEqual(saturn.Hyperion.inTransit, false)
-        XCTAssertEqual(saturn.Hyperion.inTransit, false)
-        XCTAssertEqual(saturn.Hyperion.inTransit, false)
+        #expect(saturn.Hyperion.inTransit == false)
+        #expect(saturn.Hyperion.inTransit == false)
+        #expect(saturn.Hyperion.inTransit == false)
+        #expect(saturn.Hyperion.inTransit == false)
         
         let hyperionApparentCoords = saturn.Hyperion.rectangularCoordinates()
-        XCTAssertEqual(hyperionApparentCoords.X, -18.001151501273, accuracy: 1e-9)
-        XCTAssertEqual(hyperionApparentCoords.Y, -5.328180833140, accuracy: 1e-9)
-        XCTAssertEqual(hyperionApparentCoords.Z, 15.120922945655, accuracy: 1e-9)
+        #expect(abs(hyperionApparentCoords.X - -18.001151501273) <= 1e-9)
+        #expect(abs(hyperionApparentCoords.Y - -5.328180833140) <= 1e-9)
+        #expect(abs(hyperionApparentCoords.Z - 15.120922945655) <= 1e-9)
         
         let hyperionTrueCoords = saturn.Hyperion.rectangularCoordinates(false)
-        XCTAssertEqual(hyperionTrueCoords.X, -18.014172683663, accuracy: 1e-9)
-        XCTAssertEqual(hyperionTrueCoords.Y, -5.331984742038, accuracy: 1e-9)
-        XCTAssertEqual(hyperionTrueCoords.Z, 15.120922945655, accuracy: 1e-9)
+        #expect(abs(hyperionTrueCoords.X - -18.014172683663) <= 1e-9)
+        #expect(abs(hyperionTrueCoords.Y - -5.331984742038) <= 1e-9)
+        #expect(abs(hyperionTrueCoords.Z - 15.120922945655) <= 1e-9)
 
         // ------------ Iapetus (VIII)
         
-        XCTAssertEqual(saturn.Iapetus.inTransit, false)
-        XCTAssertEqual(saturn.Iapetus.inTransit, false)
-        XCTAssertEqual(saturn.Iapetus.inTransit, false)
-        XCTAssertEqual(saturn.Iapetus.inTransit, false)
+        #expect(saturn.Iapetus.inTransit == false)
+        #expect(saturn.Iapetus.inTransit == false)
+        #expect(saturn.Iapetus.inTransit == false)
+        #expect(saturn.Iapetus.inTransit == false)
     
         let iapetusApparentCoords = saturn.Iapetus.rectangularCoordinates()
-        XCTAssertEqual(iapetusApparentCoords.X, -48.760383752651, accuracy: 1e-9)
-        XCTAssertEqual(iapetusApparentCoords.Y, 4.137166068962, accuracy: 1e-9)
-        XCTAssertEqual(iapetusApparentCoords.Z, 32.737852943956, accuracy: 1e-9)
+        #expect(abs(iapetusApparentCoords.X - -48.760383752651) <= 1e-9)
+        #expect(abs(iapetusApparentCoords.Y - 4.137166068962) <= 1e-9)
+        #expect(abs(iapetusApparentCoords.Z - 32.737852943956) <= 1e-9)
         
         let iapetusTrueCoords = saturn.Iapetus.rectangularCoordinates(false)
-        XCTAssertEqual(iapetusTrueCoords.X, -48.835951923587, accuracy: 1e-9)
-        XCTAssertEqual(iapetusTrueCoords.Y, 4.143560854715, accuracy: 1e-9)
-        XCTAssertEqual(iapetusTrueCoords.Z, 32.737852943956, accuracy: 1e-9)
+        #expect(abs(iapetusTrueCoords.X - -48.835951923587) <= 1e-9)
+        #expect(abs(iapetusTrueCoords.Y - 4.143560854715) <= 1e-9)
+        #expect(abs(iapetusTrueCoords.Z - 32.737852943956) <= 1e-9)
     }
     
     // See AA, p.320, Example 45.a
+    @Test("Rings Details")
     func testRingsDetails() {
         let jd = JulianDay(2448972.5)
         let saturn = Saturn(julianDay: jd)

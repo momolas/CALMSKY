@@ -6,16 +6,19 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class MarsTests: XCTestCase {
+@Suite("MarsTests")
+struct MarsTests {
     
+    @Test("Average Color Presence")
     func testAverageColorPresence() {
-        XCTAssertNotEqual(Mars.averageColor, CelestialColor.white)
+        #expect(Mars.averageColor != CelestialColor.white)
     }
     
     // See AA p.291, Example 42.a
+    @Test("Physical Details")
     func testPhysicalDetails() {
         let jd = JulianDay(year: 1992, month: 11, day: 9)
         let mars = Mars(julianDay: jd)

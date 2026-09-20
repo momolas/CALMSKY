@@ -6,21 +6,25 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class JupiterTests: XCTestCase {
+@Suite("JupiterTests")
+struct JupiterTests {
     
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Jupiter.averageColor, CelestialColor.white)
+        #expect(Jupiter.averageColor != CelestialColor.white)
     }
     
+    @Test("Moons Presence")
     func testMoonsPresence() {
         let jd = JulianDay(Date())
-        XCTAssertEqual(Jupiter(julianDay: jd).moons.count, 4)
+        #expect(Jupiter(julianDay: jd).moons.count == 4)
     }
     
     // See AA p.295, Example 43.a
+    @Test("Appearance")
     func testAppearance() {
         let jd = JulianDay(2448972.50068)
         let jupiter = Jupiter(julianDay: jd)

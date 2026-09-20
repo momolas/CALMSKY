@@ -6,16 +6,19 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
 // Based on AA+ "tests"
-class EarthTests: XCTestCase {
+@Suite("EarthTests")
+struct EarthTests {
 
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Earth.averageColor, CelestialColor.white)
+        #expect(Earth.averageColor != CelestialColor.white)
     }
 
+    @Test("Length Of Season2000")
     func testLengthOfSeason2000() {
         let earth = Earth(julianDay: JulianDay(year: 2000, month: 2, day: 1))
         AssertEqual(earth.lengthOfSeason(.spring, northernHemisphere: true), 92.7586.days, accuracy: 0.0001.days)
@@ -33,6 +36,7 @@ class EarthTests: XCTestCase {
     
     // Same as Venus test, but using convenience method of Earth class.
     // See AA p.103
+    @Test("Rise Transit Set Times Of Venus")
     func testRiseTransitSetTimesOfVenus() {
         let jd = JulianDay(year: 1988, month: 3, day: 20, hour: 0, minute: 0, second: 0)
         let earth = Earth(julianDay: jd)
@@ -48,9 +52,10 @@ class EarthTests: XCTestCase {
         let expectedSet = JulianDay(year: 1988, month: 03, day: 20, hour: 2, minute: 55)
         AssertEqual(details.setTime!, expectedSet, accuracy: accuracy)
 
-        XCTAssertNil(details.transitError)
+        #expect(details.transitError == nil)
     }
     
+    @Test("Rise Transit Set Times Invalid Planet")
     func testRiseTransitSetTimesInvalidPlanet() {
         let jd = JulianDay(year: 1988, month: 3, day: 20, hour: 0, minute: 0, second: 0)
         let earth = Earth(julianDay: jd)
@@ -58,12 +63,13 @@ class EarthTests: XCTestCase {
         let boston = GeographicCoordinates(positivelyWestwardLongitude: 71.0833, latitude: 42.3333)
         let details = earth.riseTransitSetTimes(for: KPCPlanetaryObjectUNDEFINED, geographicCoordinates: boston)
         
-        XCTAssertNil(details.riseTime)
-        XCTAssertNil(details.transitTime)
-        XCTAssertNil(details.setTime)
-        XCTAssertNotNil(details.transitError)
+        #expect(details.riseTime == nil)
+        #expect(details.transitTime == nil)
+        #expect(details.setTime == nil)
+        #expect(details.transitError != nil)
     }
     
+    @Test("Equinoxes")
     func testEquinoxes() {
         let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1))
         AssertEqual(earth.equinox(of: .northwardSpring), JulianDay(2437744.60425), accuracy: JulianDay(0.00001))
@@ -75,6 +81,7 @@ class EarthTests: XCTestCase {
     }
 
     // See AA p.180, Example 27.a
+    @Test("Solstices")
     func testSolstices() {
         let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: true)
         let northernSummer = earth.solstice(of: .northernSummer)
@@ -88,18 +95,19 @@ class EarthTests: XCTestCase {
     
     // See AATests.cpp.
     // Procedure: Run AAPlusTests Xcode target, put breakpoints on lines ~1125 and read memory values.
+    @Test("Long Lat Radius")
     func testLongLatRadius () {
         let earthLowPrecision = Earth(julianDay: JulianDay(2448908.5), highPrecision: false)
         let earthHighPrecision = Earth(julianDay: JulianDay(2448908.5), highPrecision: true)
         
-        XCTAssertEqual(earthLowPrecision.heliocentricEclipticCoordinates.celestialLongitude.value, 19.907371990723, accuracy: 1e-12)
-        XCTAssertEqual(earthHighPrecision.heliocentricEclipticCoordinates.celestialLongitude.value, 19.907297242049, accuracy: 1e-11)
+        #expect(abs(earthLowPrecision.heliocentricEclipticCoordinates.celestialLongitude.value - 19.907371990723) <= 1e-12)
+        #expect(abs(earthHighPrecision.heliocentricEclipticCoordinates.celestialLongitude.value - 19.907297242049) <= 1e-11)
         
-        XCTAssertEqual(earthLowPrecision.heliocentricEclipticCoordinates.celestialLatitude.value, -0.000179012504, accuracy: 1e-12)
-        XCTAssertEqual(earthHighPrecision.heliocentricEclipticCoordinates.celestialLatitude.value, -0.000206645944, accuracy: 1e-12)
+        #expect(abs(earthLowPrecision.heliocentricEclipticCoordinates.celestialLatitude.value - -0.000179012504) <= 1e-12)
+        #expect(abs(earthHighPrecision.heliocentricEclipticCoordinates.celestialLatitude.value - -0.000206645944) <= 1e-12)
         
-        XCTAssertEqual(earthLowPrecision.radiusVector.value, 0.997607749514, accuracy: 1e-12)
-        XCTAssertEqual(earthHighPrecision.radiusVector.value, 0.997608520235, accuracy: 1e-12)
+        #expect(abs(earthLowPrecision.radiusVector.value - 0.997607749514) <= 1e-12)
+        #expect(abs(earthHighPrecision.radiusVector.value - 0.997608520235) <= 1e-12)
     }
 }
 

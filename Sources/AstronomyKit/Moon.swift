@@ -61,7 +61,7 @@ public struct SelenographicCoordinates: Sendable, Codable, Hashable {
 
 
 /// The Earth's Moon.
-public final class Moon : Object, @unchecked Sendable, CelestialBody {
+public final class Moon : Object, CelestialBody {
     
     /// Accessor to all values underlying the geocentric physical details. Will probably become private
     /// once all relevant accessors are implemented and covered.

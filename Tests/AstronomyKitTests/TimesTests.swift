@@ -6,10 +6,12 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class TimesTests: XCTestCase {
+@Suite("TimesTests")
+struct TimesTests {
+    @Test("Hour Minus Sign Constructor")
     func testHourMinusSignConstructor() {
         XCTAssertEqual(Hour(.minus, 1, 7, 30.0).value, -1.125)
         XCTAssertEqual(Hour(.minus, -1, 7, 30.0).value, -1.125)
@@ -21,6 +23,7 @@ class TimesTests: XCTestCase {
         XCTAssertEqual(Hour(.minus, -1, -7, -30.0).value, -1.125)
     }
     
+    @Test("Hour Plus Sign Constructor")
     func testHourPlusSignConstructor() {
         XCTAssertEqual(Hour(.plus, 1, 7, 30.0).value, 1.125)
         XCTAssertEqual(Hour(.plus, -1, 7, 30.0).value, 1.125)
@@ -32,6 +35,7 @@ class TimesTests: XCTestCase {
         XCTAssertEqual(Hour(.plus, 1, -7, -30.0).value, 1.125)
     }
     
+    @Test("Hour Minus Zero Sign Constructor")
     func testHourMinusZeroSignConstructor() {
         XCTAssertEqual(Hour(.minus, 0, 7, 30.0).value, -0.125)
         XCTAssertEqual(Hour(.minus, 0, -7, 30.0).value, -0.125)
@@ -41,6 +45,7 @@ class TimesTests: XCTestCase {
         XCTAssertEqual(Hour(.minus, 0, 0, -90.0).value, -0.025)
     }
     
+    @Test("Hour Plus Zero Sign Constructor")
     func testHourPlusZeroSignConstructor() {
         XCTAssertEqual(Hour(.plus, 0, 7, 30.0).value, 0.125)
         XCTAssertEqual(Hour(.plus, 0, -7, 30.0).value, 0.125)
@@ -50,21 +55,23 @@ class TimesTests: XCTestCase {
         XCTAssertEqual(Hour(.plus, 0, 0, -90.0).value, 0.025)
     }
     
+    @Test("Hour Sexagesimal Transform")
     func testHourSexagesimalTransform() {
         let hplus = Hour(1.125)
         let hplussexagesimal: SexagesimalNotation = (.plus, 1, 7, 30.0)
-        XCTAssertTrue(hplus.sexagesimal == hplussexagesimal)
+        #expect(hplus.sexagesimal == hplussexagesimal)
         
         let hminus = Hour(-1.125)
         let hminussexagesimal: SexagesimalNotation = (.minus, 1, 7, 30.0)
-        XCTAssertTrue(hminus.sexagesimal == hminussexagesimal)
+        #expect(hminus.sexagesimal == hminussexagesimal)
     }
     
     // See AATests.cpp
+    @Test("TTto UTRound Tripping")
     func testTTtoUTRoundTripping() {
         let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: false)
         let northwardEquinox = earth.equinox(of: .northwardSpring)
-        XCTAssertEqual(northwardEquinox.value, JulianDay(2437744.6042503607).value)
+        #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
         
         // TT
         XCTAssertEqual(northwardEquinox, JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
@@ -77,10 +84,11 @@ class TimesTests: XCTestCase {
     }
     
     // See AATests.cpp
+    @Test("TTto TAIRound Tripping")
     func testTTtoTAIRoundTripping() {
         let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: false)
         let northwardEquinox = earth.equinox(of: .northwardSpring)
-        XCTAssertEqual(northwardEquinox.value, JulianDay(2437744.6042503607).value)
+        #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
         
         // TT -> TAI
         XCTAssertEqual(northwardEquinox.TTtoTAI(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 35.047155))
@@ -90,10 +98,11 @@ class TimesTests: XCTestCase {
     }
     
     // See AATests.cpp
+    @Test("TTto UT1 Round Tripping")
     func testTTtoUT1RoundTripping() {
         let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: false)
         let northwardEquinox = earth.equinox(of: .northwardSpring)
-        XCTAssertEqual(northwardEquinox.value, JulianDay(2437744.6042503607).value)
+        #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
         
         // TT -> UT1 Note: before version with v2.44, it was not necessary to provide accuracy in this test.
         AssertEqual(northwardEquinox.TTtoUT1(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 33.140024), accuracy: JulianDay(0.0000001))
@@ -103,6 +112,7 @@ class TimesTests: XCTestCase {
     }
     
     // Based on data downloadable from http://tycho.usno.navy.mil/systime.html
+    @Test("UT1minus UTC")
     func testUT1minusUTC() {
         let jd1 = JulianDay(modified: 58018.0) // 2017  9 22, the day of writing this test...
         AssertEqual(jd1.UT1minusUTC(), Second(0.32103), accuracy: Second(0.01))
@@ -117,71 +127,77 @@ class TimesTests: XCTestCase {
 //        AssertEqual(jd3.UT1minusUTC(), Second(-0.07169), accuracy: Second(0.01))
     }
     
+    @Test("Days Since2000 January1")
     func testDaysSince2000January1() {
         XCTAssertEqual(JulianDay(year: 2017, month: 9, day: 23, hour: 9, minute: 0, second: 0.0).date.daysSince2000January1(), 6476)
     }
     
+    @Test("Day Conversions")
     func testDayConversions() {
         let t1 = 3.1415
         let t2 = -2.718
         
-        XCTAssertEqual(Day(t1).inHours.value, t1*24.0)
-        XCTAssertEqual(Day(t2).inHours.value, t2*24.0)
+        #expect(Day(t1).inHours.value == t1*24.0)
+        #expect(Day(t2).inHours.value == t2*24.0)
         
-        XCTAssertEqual(Day(t1).inMinutes.value, t1*24.0*60.0)
-        XCTAssertEqual(Day(t2).inMinutes.value, t2*24.0*60.0)
+        #expect(Day(t1).inMinutes.value == t1*24.0*60.0)
+        #expect(Day(t2).inMinutes.value == t2*24.0*60.0)
         
-        XCTAssertEqual(Day(t1).inSeconds.value, t1*24.0*3600.0)
-        XCTAssertEqual(Day(t2).inSeconds.value, t2*24.0*3600.0)
+        #expect(Day(t1).inSeconds.value == t1*24.0*3600.0)
+        #expect(Day(t2).inSeconds.value == t2*24.0*3600.0)
         
-        XCTAssertEqual(Day(t1).inJulianDays.value, t1)
+        #expect(Day(t1).inJulianDays.value == t1)
     }
     
+    @Test("Hour Conversion")
     func testHourConversion() {
         let t1 = 3.1415
         let t2 = -2.718
         
-        XCTAssertEqual(Hour(t1).inDays.value, t1/24.0)
-        XCTAssertEqual(Hour(t2).inDays.value, t2/24.0)
+        #expect(Hour(t1).inDays.value == t1/24.0)
+        #expect(Hour(t2).inDays.value == t2/24.0)
         
-        XCTAssertEqual(Hour(t1).inMinutes.value, t1*60.0)
-        XCTAssertEqual(Hour(t2).inMinutes.value, t2*60.0)
+        #expect(Hour(t1).inMinutes.value == t1*60.0)
+        #expect(Hour(t2).inMinutes.value == t2*60.0)
         
-        XCTAssertEqual(Hour(t1).inSeconds.value, t1*3600.0)
-        XCTAssertEqual(Hour(t2).inSeconds.value, t2*3600.0)
+        #expect(Hour(t1).inSeconds.value == t1*3600.0)
+        #expect(Hour(t2).inSeconds.value == t2*3600.0)
         
-        XCTAssertEqual(Hour(12.0).inRadians.value, .pi, accuracy: 0.00000000001) // rounding errors
-        XCTAssertEqual(Hour(-6.0).inRadians.value, -.pi/2.0, accuracy: 0.00000000001) // rounding errors
+        #expect(abs(Hour(12.0).inRadians.value - .pi) <= 0.00000000001) // rounding errors
+        #expect(abs(Hour(-6.0).inRadians.value - -.pi/2.0) <= 0.00000000001) // rounding errors
     }
     
+    @Test("Minute Conversion")
     func testMinuteConversion() {
         let t1 = 3.1415
         let t2 = -2.718
         
-        XCTAssertEqual(Minute(t1).inDays.value, t1/(24.0*60.0))
-        XCTAssertEqual(Minute(t2).inDays.value, t2/(24.0*60.0))
+        #expect(Minute(t1).inDays.value == t1/(24.0*60.0))
+        #expect(Minute(t2).inDays.value == t2/(24.0*60.0))
         
-        XCTAssertEqual(Minute(t1).inHours.value, t1/60.0)
-        XCTAssertEqual(Minute(t2).inHours.value, t2/60.0)
+        #expect(Minute(t1).inHours.value == t1/60.0)
+        #expect(Minute(t2).inHours.value == t2/60.0)
         
-        XCTAssertEqual(Minute(t1).inSeconds.value, t1*60.0)
-        XCTAssertEqual(Minute(t2).inSeconds.value, t2*60.0)
+        #expect(Minute(t1).inSeconds.value == t1*60.0)
+        #expect(Minute(t2).inSeconds.value == t2*60.0)
     }
     
+    @Test("Second Conversion")
     func testSecondConversion() {
         let t1 = 3.1415
         let t2 = -2.718
         
-        XCTAssertEqual(Second(t1).inDays.value, t1/(24.0*3600.0))
-        XCTAssertEqual(Second(t2).inDays.value, t2/(24.0*3600.0))
+        #expect(Second(t1).inDays.value == t1/(24.0*3600.0))
+        #expect(Second(t2).inDays.value == t2/(24.0*3600.0))
         
-        XCTAssertEqual(Second(t1).inHours.value, t1/3600.0)
-        XCTAssertEqual(Second(t2).inHours.value, t2/3600.0)
+        #expect(Second(t1).inHours.value == t1/3600.0)
+        #expect(Second(t2).inHours.value == t2/3600.0)
         
-        XCTAssertEqual(Second(t1).inMinutes.value, t1/60.0)
-        XCTAssertEqual(Second(t2).inMinutes.value, t2/60.0)
+        #expect(Second(t1).inMinutes.value == t1/60.0)
+        #expect(Second(t2).inMinutes.value == t2/60.0)
     }
     
+    @Test("Hour Reduce")
     func testHourReduce() {
         AssertEqual(Hour(-25).reduced, Hour(23))
         AssertEqual(Hour(-23).reduced, Hour(1))
@@ -193,6 +209,7 @@ class TimesTests: XCTestCase {
         AssertEqual(Hour(25).reduced, Hour(1))
     }
     
+    @Test("Hour Reduce0")
     func testHourReduce0() {
         AssertEqual(Hour(-25).reduced0, Hour(-1))
         AssertEqual(Hour(-23).reduced0, Hour(1))
@@ -204,6 +221,7 @@ class TimesTests: XCTestCase {
         AssertEqual(Hour(25).reduced0, Hour(1))
     }
     
+    @Test("Minute Reduce")
     func testMinuteReduce() {
         AssertEqual(Minute(-61).reduced, Minute(59))
         AssertEqual(Minute(-59).reduced, Minute(1))
@@ -215,10 +233,11 @@ class TimesTests: XCTestCase {
         AssertEqual(Minute(61).reduced, Minute(1))
     }
 
+    @Test("Descriptions")
     func testDescriptions() {
-        XCTAssertNotNil(String(describing: Day(3.141519)))
-        XCTAssertNotNil(String(describing: Hour(3.141519)))
-        XCTAssertNotNil(String(describing: Minute(3.141519)))
-        XCTAssertNotNil(String(describing: Second(3.141519)))
+        #expect(!String(describing: Day(3.141519)).isEmpty)
+        #expect(!String(describing: Hour(3.141519)).isEmpty)
+        #expect(!String(describing: Minute(3.141519)).isEmpty)
+        #expect(!String(describing: Second(3.141519)).isEmpty)
     }
 }

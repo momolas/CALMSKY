@@ -6,13 +6,15 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class PlutoTests: XCTestCase {
+@Suite("PlutoTests")
+struct PlutoTests {
     
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Pluto.averageColor, CelestialColor.white)
+        #expect(Pluto.averageColor != CelestialColor.white)
     }
         
 }

@@ -6,11 +6,13 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class UranusTests: XCTestCase {
+@Suite("UranusTests")
+struct UranusTests {
+    @Test("Average Color Presence")
     func testAverageColorPresence() {
-        XCTAssertNotNil(Uranus.averageColor)
+        #expect(Uranus.averageColor != CelestialColor.white)
     }
 }

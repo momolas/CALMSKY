@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Mars planet.
-public final class Mars: Planet, @unchecked Sendable, MarsPhysicalDetails {
+public final class Mars: Planet, MarsPhysicalDetails {
 
     /// Accessor to all values of the underlying physical details. Will probably become private
     /// once all relevant accessors are implemented and covered.

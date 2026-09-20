@@ -5,10 +5,11 @@ let package = Package(
     name: "AstronomyKit",
     defaultLocalization: "en",
     platforms: [
-        .macOS(.v10_15),
-        .iOS(.v13),
-        .tvOS(.v12),
-        .watchOS(.v7)
+        .macOS(.v15),
+        .iOS(.v18),
+        .tvOS(.v18),
+        .watchOS(.v11),
+        .visionOS(.v2)
     ],
     products: [
         .library(name: "AstronomyKit", targets: ["AstronomyKit"]),

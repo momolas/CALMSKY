@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Mercury planet.
-public final class Mercury: Planet, @unchecked Sendable {
+public final class Mercury: Planet {
     
     /// An average color of the planet
     public class override var averageColor: CelestialColor {

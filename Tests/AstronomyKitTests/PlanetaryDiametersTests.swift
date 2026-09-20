@@ -6,44 +6,73 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class PlanetaryDiametersTests: XCTestCase {
+@Suite("PlanetaryDiametersTests")
+struct PlanetaryDiametersTests {
 
+    @Test("Old Values")
     func testOldValues() {
         let jd = JulianDay(Date())
-        XCTAssertNotNil(try! Mercury(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
-        XCTAssertNotNil(try! Venus(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
-        XCTAssertNotNil(try! Mars(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
-        XCTAssertNotNil(try! Jupiter(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
-        XCTAssertNotNil(try! Saturn(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
-        XCTAssertNotNil(try! Uranus(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
-        XCTAssertNotNil(try! Neptune(julianDay: jd).equatorialSemiDiameter(usingOldValues: true))
+        _ = try! Mercury(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
+        _ = try! Venus(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
+        _ = try! Mars(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
+        _ = try! Jupiter(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
+        _ = try! Saturn(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
+        _ = try! Uranus(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
+        _ = try! Neptune(julianDay: jd).equatorialSemiDiameter(usingOldValues: true)
     }
 
+    @Test("New Values")
     func testNewValues() {
         let jd = JulianDay(Date())
-        XCTAssertNotNil(try! Mercury(julianDay: jd).equatorialSemiDiameter())
-        XCTAssertNotNil(try! Venus(julianDay: jd).equatorialSemiDiameter())
-        XCTAssertNotNil(try! Mars(julianDay: jd).equatorialSemiDiameter())
-        XCTAssertNotNil(try! Jupiter(julianDay: jd).equatorialSemiDiameter())
-        XCTAssertNotNil(try! Saturn(julianDay: jd).equatorialSemiDiameter())
-        XCTAssertNotNil(try! Uranus(julianDay: jd).equatorialSemiDiameter())
-        XCTAssertNotNil(try! Neptune(julianDay: jd).equatorialSemiDiameter())
+        _ = try! Mercury(julianDay: jd).equatorialSemiDiameter()
+        _ = try! Venus(julianDay: jd).equatorialSemiDiameter()
+        _ = try! Mars(julianDay: jd).equatorialSemiDiameter()
+        _ = try! Jupiter(julianDay: jd).equatorialSemiDiameter()
+        _ = try! Saturn(julianDay: jd).equatorialSemiDiameter()
+        _ = try! Uranus(julianDay: jd).equatorialSemiDiameter()
+        _ = try! Neptune(julianDay: jd).equatorialSemiDiameter()
     }
     
-    func testEquatorialPolarComparedValues() {
+    @Test("Equatorial Polar Compared Values")
+    func testEquatorialPolarComparedValues() throws {
         let jd = JulianDay(Date())
-        XCTAssertEqual(try! Mercury(julianDay: jd).equatorialSemiDiameter(), try! Mercury(julianDay: jd).polarSemiDiameter())
-        XCTAssertEqual(try! Venus(julianDay: jd).equatorialSemiDiameter(), try! Venus(julianDay: jd).polarSemiDiameter())
-        XCTAssertEqual(try! Mars(julianDay: jd).equatorialSemiDiameter(), try! Mars(julianDay: jd).polarSemiDiameter())
+        let mercury = try Mercury(julianDay: jd)
+        let mEq = try mercury.equatorialSemiDiameter()
+        let mPol = try mercury.polarSemiDiameter()
+        #expect(mEq == mPol)
         
-        XCTAssertNotEqual(try! Jupiter(julianDay: jd).equatorialSemiDiameter(), try! Jupiter(julianDay: jd).polarSemiDiameter())
-        XCTAssertNotEqual(try! Saturn(julianDay: jd).equatorialSemiDiameter(), try! Saturn(julianDay: jd).polarSemiDiameter())
+        let venus = try Venus(julianDay: jd)
+        let vEq = try venus.equatorialSemiDiameter()
+        let vPol = try venus.polarSemiDiameter()
+        #expect(vEq == vPol)
         
-        XCTAssertEqual(try! Uranus(julianDay: jd).equatorialSemiDiameter(), try! Uranus(julianDay: jd).polarSemiDiameter())
-        XCTAssertEqual(try! Neptune(julianDay: jd).equatorialSemiDiameter(), try! Neptune(julianDay: jd).polarSemiDiameter())
+        let mars = try Mars(julianDay: jd)
+        let maEq = try mars.equatorialSemiDiameter()
+        let maPol = try mars.polarSemiDiameter()
+        #expect(maEq == maPol)
+        
+        let jupiter = try Jupiter(julianDay: jd)
+        let jEq = try jupiter.equatorialSemiDiameter()
+        let jPol = try jupiter.polarSemiDiameter()
+        #expect(jEq != jPol)
+        
+        let saturn = try Saturn(julianDay: jd)
+        let sEq = try saturn.equatorialSemiDiameter()
+        let sPol = try saturn.polarSemiDiameter()
+        #expect(sEq != sPol)
+        
+        let uranus = try Uranus(julianDay: jd)
+        let uEq = try uranus.equatorialSemiDiameter()
+        let uPol = try uranus.polarSemiDiameter()
+        #expect(uEq == uPol)
+        
+        let neptune = try Neptune(julianDay: jd)
+        let nEq = try neptune.equatorialSemiDiameter()
+        let nPol = try neptune.polarSemiDiameter()
+        #expect(nEq == nPol)
     }
 
 }

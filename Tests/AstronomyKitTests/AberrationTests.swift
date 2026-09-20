@@ -6,12 +6,14 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class AberrationTests: XCTestCase {
+@Suite("AberrationTests")
+struct AberrationTests {
 
     // See AA. p156, example 23.b
+    @Test("High Precision Equatorial Aberration")
     func testHighPrecisionEquatorialAberration() {
         
         // theta Persei, mean equinox J2000, allowing for proper motion.
@@ -22,7 +24,7 @@ class AberrationTests: XCTestCase {
         // In teh book, it is written 2028 Nov. 13.19 TD.
         let sexagesimalHour = Hour(0.19*24.0).sexagesimal
         let jd = JulianDay(year: 2028, month: 11, day: 13, hour: sexagesimalHour.radical, minute: sexagesimalHour.minute, second: sexagesimalHour.second)
-        XCTAssertEqual(jd.value, 2462088.69)
+        #expect(jd.value == 2462088.69)
         
         // If highPrecision = false, the Ron-Vondrák algorithm is used. See AA p.153.
         // If highPrecision = true, the VSOP87 theory is used. (but we don;t have reference value to test against).

@@ -6,12 +6,14 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class NeptuneTests: XCTestCase {
+@Suite("NeptuneTests")
+struct NeptuneTests {
 
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Neptune.averageColor, CelestialColor.white)
+        #expect(Neptune.averageColor != CelestialColor.white)
     }
 }

@@ -6,11 +6,13 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class EarthTwilightsTests: XCTestCase {
+@Suite("EarthTwilightsTests")
+struct EarthTwilightsTests {
     
+    @Test("Valid Twilight Northern Hemisphere West Longitude")
     func testValidTwilightNorthernHemisphereWestLongitude() {
         
         let paris = GeographicCoordinates(positivelyWestwardLongitude: Degree(.minus, 2, 21, 0.0),
@@ -21,14 +23,15 @@ class EarthTwilightsTests: XCTestCase {
         
         let twilights = earth.twilights(forSunAltitude: TwilightSunAltitude.astronomical.rawValue, coordinates: paris)
         
-        XCTAssertNotNil(twilights.riseTime)
-        XCTAssertNotNil(twilights.transitTime)
-        XCTAssertNotNil(twilights.setTime)
-        XCTAssertNil(twilights.transitError)
+        #expect(twilights.riseTime != nil)
+        #expect(twilights.transitTime != nil)
+        #expect(twilights.setTime != nil)
+        #expect(twilights.transitError == nil)
 
-        XCTAssertTrue(twilights.riseTime! < twilights.setTime!)
+        #expect(twilights.riseTime! < twilights.setTime!)
     }
 
+    @Test("Valid Twilight Southern Hemisphere West Longitude")
     func testValidTwilightSouthernHemisphereWestLongitude() {
         
         let parisSouth = GeographicCoordinates(positivelyWestwardLongitude: Degree(-2.3508333333),
@@ -39,12 +42,12 @@ class EarthTwilightsTests: XCTestCase {
         
         let twilights = earth.twilights(forSunAltitude: TwilightSunAltitude.astronomical.rawValue, coordinates: parisSouth)
         
-        XCTAssertNotNil(twilights.riseTime)
-        XCTAssertNotNil(twilights.transitTime)
-        XCTAssertNotNil(twilights.setTime)
-        XCTAssertNil(twilights.transitError)
+        #expect(twilights.riseTime != nil)
+        #expect(twilights.transitTime != nil)
+        #expect(twilights.setTime != nil)
+        #expect(twilights.transitError == nil)
         
-        XCTAssertTrue(twilights.riseTime! < twilights.setTime!)
+        #expect(twilights.riseTime! < twilights.setTime!)
     }
     
 
@@ -71,6 +74,7 @@ class EarthTwilightsTests: XCTestCase {
     
     // See http://aa.usno.navy.mil/cgi-bin/aa_rstablew.pl?ID=AA&year=2017&task=4&place=&lon_sign=1&lon_deg=2&lon_min=21&lat_sign=1&lat_deg=48&lat_min=52&tz=0&tz_sign=-1
     // for a reference table for the 2017 year
+    @Test("Valid Twilight Northern Hemisphere West Longitude Against USNOReference")
     func testValidTwilightNorthernHemisphereWestLongitudeAgainstUSNOReference() {
         
         let paris = GeographicCoordinates(positivelyWestwardLongitude: Degree(.minus, 2, 21, 0.0),
@@ -143,6 +147,7 @@ class EarthTwilightsTests: XCTestCase {
         AssertEqual(twilights.setTime!,  JulianDay(year: 2017, month: 12, day: 1, hour: 17, minute: 50), accuracy: accuracy5)
     }
     
+    @Test("Valid Twilight Northern Hemisphere Above Artic Circle")
     func testValidTwilightNorthernHemisphereAboveArticCircle() {
         
         // Latitude must be > 66º33'.
@@ -153,20 +158,21 @@ class EarthTwilightsTests: XCTestCase {
         // Winter
         var earth = Earth(julianDay: JulianDay(year: 2017, month: 1, day: 30))
         var twilights = earth.twilights(forSunAltitude: TwilightSunAltitude.riseAndSet.rawValue, coordinates: north)
-        XCTAssertNil(twilights.riseTime)
-        XCTAssertNotNil(twilights.transitTime)
-        XCTAssertNil(twilights.setTime)
-        XCTAssertTrue(twilights.transitError == .alwaysBelowAltitude)
+        #expect(twilights.riseTime == nil)
+        #expect(twilights.transitTime != nil)
+        #expect(twilights.setTime == nil)
+        #expect(twilights.transitError == .alwaysBelowAltitude)
         
         // Summer
         earth = Earth(julianDay: JulianDay(year: 2017, month: 7, day: 30))
         twilights = earth.twilights(forSunAltitude: TwilightSunAltitude.riseAndSet.rawValue, coordinates: north)
-        XCTAssertNil(twilights.riseTime)
-        XCTAssertNotNil(twilights.transitTime)
-        XCTAssertNil(twilights.setTime)
-        XCTAssertTrue(twilights.transitError == .alwaysAboveAltitude)
+        #expect(twilights.riseTime == nil)
+        #expect(twilights.transitTime != nil)
+        #expect(twilights.setTime == nil)
+        #expect(twilights.transitError == .alwaysAboveAltitude)
     }
 
+    @Test("Valid Twilight Southern Hemisphere Below Antarctic Circle")
     func testValidTwilightSouthernHemisphereBelowAntarcticCircle() {
         
         // Latitude must be < 66º33'.
@@ -177,17 +183,17 @@ class EarthTwilightsTests: XCTestCase {
         // Summer
         var earth = Earth(julianDay: JulianDay(year: 2017, month: 1, day: 30))
         var twilights = earth.twilights(forSunAltitude: TwilightSunAltitude.riseAndSet.rawValue, coordinates: north)
-        XCTAssertNil(twilights.riseTime)
-        XCTAssertNotNil(twilights.transitTime)
-        XCTAssertNil(twilights.setTime)
-        XCTAssertTrue(twilights.transitError == .alwaysAboveAltitude)
+        #expect(twilights.riseTime == nil)
+        #expect(twilights.transitTime != nil)
+        #expect(twilights.setTime == nil)
+        #expect(twilights.transitError == .alwaysAboveAltitude)
         
         // Winter
         earth = Earth(julianDay: JulianDay(year: 2017, month: 7, day: 30))
         twilights = earth.twilights(forSunAltitude: TwilightSunAltitude.riseAndSet.rawValue, coordinates: north)
-        XCTAssertNil(twilights.riseTime)
-        XCTAssertNotNil(twilights.transitTime)
-        XCTAssertNil(twilights.setTime)
-        XCTAssertTrue(twilights.transitError == .alwaysBelowAltitude)
+        #expect(twilights.riseTime == nil)
+        #expect(twilights.transitTime != nil)
+        #expect(twilights.setTime == nil)
+        #expect(twilights.transitError == .alwaysBelowAltitude)
     }
 }

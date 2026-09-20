@@ -6,11 +6,13 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class AsteroidsTests: XCTestCase {
+@Suite("AsteroidsTests")
+struct AsteroidsTests {
     
+    @Test("Diameters")
     func testDiameters() {
         
         // See AA p.392

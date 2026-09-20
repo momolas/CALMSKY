@@ -6,11 +6,13 @@
 //  MIT Licence. See LICENCE file.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class AstronomicalCoordinatesTests: XCTestCase {
+@Suite("AstronomicalCoordinatesTests")
+struct AstronomicalCoordinatesTests {
     
+    @Test("Equatorial2 Ecliptic")
     func testEquatorial2Ecliptic() { // p.95
         let equatorial = EquatorialCoordinates(alpha: Hour(.plus, 7, 45, 18.946), delta: Degree(.plus, 28, 1, 34.26))
         let ecliptic = equatorial.makeEclipticCoordinates()
@@ -21,6 +23,7 @@ class AstronomicalCoordinatesTests: XCTestCase {
         AssertEqual(eqBack.declination, equatorial.declination, accuracy: ArcSecond(0.01).inDegrees)
     }
     
+    @Test("Equatorial2 Horizontal")
     func testEquatorial2Horizontal() { // p.95
         let jd = JulianDay(year: 1987, month: 4, day: 10, hour: 19, minute: 21, second: 0)
         let equatorial = EquatorialCoordinates(alpha: Hour(.plus, 23, 9, 16.641), delta: Degree(.minus, 6, 43, 11.61))
@@ -33,6 +36,7 @@ class AstronomicalCoordinatesTests: XCTestCase {
         AssertEqual(eqBack!.declination, equatorial.declination, accuracy: ArcSecond(0.01).inDegrees)
     }
     
+    @Test("Equatorial2 Galactic")
     func testEquatorial2Galactic() { // p.95
         let equatorial = EquatorialCoordinates(alpha: Hour(.plus, 17, 48, 59.74), delta: Degree(.minus, 14, 43, 8.2), epoch: .B1950)
         let galactic = equatorial.makeGalacticCoordinates()
@@ -43,6 +47,7 @@ class AstronomicalCoordinatesTests: XCTestCase {
         AssertEqual(eqBack.declination, equatorial.declination, accuracy: ArcSecond(0.01).inDegrees)
     }
     
+    @Test("Horizontal Separation")
     func testHorizontalSeparation() {
         let coords = GeographicCoordinates(positivelyWestwardLongitude: Degree(.plus, 77, 3, 56.0), latitude: Degree(.plus, 38, 55, 17.0))
         let horizontal1 = HorizontalCoordinates(azimuth: 0, altitude: 0, geographicCoordinates: coords, julianDay: JulianDay(Date()))
@@ -53,27 +58,32 @@ class AstronomicalCoordinatesTests: XCTestCase {
         AssertEqual(horizontal3.angularSeparation(with: horizontal1), Degree(90), accuracy: ArcSecond(0.0001).inDegrees)
     }
     
+    @Test("Equatorial Coordinates Description")
     func testEquatorialCoordinatesDescription() {
         let equatorial = EquatorialCoordinates(alpha: Hour(.plus, 7, 45, 18.946), delta: Degree(.minus, 28, 1, 34.26))
         XCTAssertEqual(String(describing: equatorial), "α=+7h45m18.946s, δ=-28°1'34.260\" (epoch J2000.0, equinox J2000.0)")
     }
     
+    @Test("Galactic Coordinates Description")
     func testGalacticCoordinatesDescription() {
         let galactic = GalacticCoordinates(l: Degree(.plus, 7, 45, 18.946), b: Degree(.minus, 28, 1, 34.26))
         XCTAssertEqual(String(describing: galactic), "l=+7°45'18.946\", b=-28°1'34.260\" (epoch J2000.0, equinox J2000.0)")
     }
 
+    @Test("Ecliptic Coordinates Description")
     func testEclipticCoordinatesDescription() {
         let ecliptic = EclipticCoordinates(lambda: Degree(.plus, 7, 45, 18.946), beta: Degree(.minus, 28, 1, 34.26))
         XCTAssertEqual(String(describing: ecliptic), "λ=+7°45'18.946\", β=-28°1'34.260\" (epoch J2000.0, equinox J2000.0)")
     }
 
+    @Test("Horizontal Coordinates Description")
     func testHorizontalCoordinatesDescription() {
         let coords = GeographicCoordinates(positivelyWestwardLongitude: Degree(.plus, 77, 3, 56.0), latitude: Degree(.plus, 38, 55, 17.0))
         let horizontal = HorizontalCoordinates(azimuth: -10.567, altitude: 87.654, geographicCoordinates: coords, julianDay: JulianDay(Date()))
         XCTAssertEqual(String(describing: horizontal), "A=-10°34'01.200\", h=+87°39'14.400\"")
     }
 
+    @Test("Noth Based Azimuth")
     func testNothBasedAzimuth() {
         let coords = GeographicCoordinates(positivelyWestwardLongitude: Degree(.plus, 77, 3, 56.0), latitude: Degree(.plus, 38, 55, 17.0))
         let horizontal = HorizontalCoordinates(azimuth: -10.567, altitude: 87.654, geographicCoordinates: coords, julianDay: JulianDay(Date()))
@@ -81,6 +91,7 @@ class AstronomicalCoordinatesTests: XCTestCase {
     }
     
     // See AA, p.135, Example 21.b
+    @Test("Proper Motion And Precession")
     func testProperMotionAndPrecession() {
         // Default to Epoch J2000.0 and Equinox J2000.0
         let coords0 = EquatorialCoordinates(alpha: Hour(.plus, 2, 44, 11.986), delta: Degree(.plus, 49, 13, 42.48))

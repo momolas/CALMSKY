@@ -6,12 +6,14 @@
 //  MIT Licence. See LICENCE file.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class MoonTests: XCTestCase {
+@Suite("MoonTests")
+struct MoonTests {
     
     // See AA p.343
+    @Test("Equatorial Coordinates")
     func testEquatorialCoordinates() {
         let moon = Moon(julianDay: JulianDay(year: 1992, month: 04, day: 12, hour: 00, minute: 00, second: 00))
         let equatorial = moon.equatorialCoordinates
@@ -21,6 +23,7 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.353, Example 49.a
+    @Test("Time Of Phase")
     func testTimeOfPhase() {
         let date1 = Moon(julianDay: JulianDay(year: 1977, month: 1, day: 20)).time(of: .newMoon, forward: true, mean: false)
         let date2 = Moon(julianDay: JulianDay(year: 1977, month: 2, day: 17)).time(of: .newMoon, forward: true, mean: false)
@@ -35,6 +38,7 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.353, Example 49.b
+    @Test("Time Of Phase Again")
     func testTimeOfPhaseAgain() {
         let moon = Moon(julianDay: JulianDay(2467636.88597))
         AssertEqual(moon.time(of: .lastQuarter, forward: false, mean: false), JulianDay(2467636.49186), accuracy: JulianDay(0.000005))
@@ -42,6 +46,7 @@ class MoonTests: XCTestCase {
     
     // Based on AA+ Tests. It says that an interesting case of moon rise occur on that date, on that place.
     // I've googled around, but found nothing. That position is close to Jan Mayen Island in the Norway sea.
+    @Test("Moon Rise Sets Above Artic Circle")
     func testMoonRiseSetsAboveArticCircle() {
         
         let coords = GeographicCoordinates(positivelyWestwardLongitude: -5.6306649983214818.degrees, latitude: 71.646778771324804.degrees)
@@ -49,18 +54,19 @@ class MoonTests: XCTestCase {
         let moon = Moon(julianDay: JulianDay(year: 2012, month: 10, day: 30))
         let times = moon.riseTransitSetTimes(for: coords)
 
-        XCTAssertNotNil(times.riseTime)
+        #expect(times.riseTime != nil)
         AssertEqual(times.riseTime!,
                     JulianDay(year: 2012, month: 10, day: 30, hour: 13, minute: 13, second: 12.0),
                     accuracy: 90.0.seconds.inJulianDays)
         
-        XCTAssertNotNil(times.setTime)
+        #expect(times.setTime != nil)
         AssertEqual(times.setTime!,
                     JulianDay(year: 2012, month: 10, day: 30, hour: 10, minute: 11, second: 01.0),
                     accuracy: 90.0.seconds.inJulianDays)
     }
     
     // Based on AA+ Tests.
+    @Test("Moon Transit Sets Above Artic Circle")
     func testMoonTransitSetsAboveArticCircle() {
 
         let coords = GeographicCoordinates(positivelyWestwardLongitude: -5.6306649983214818.degrees, latitude: 71.646778771324804.degrees)
@@ -68,18 +74,19 @@ class MoonTests: XCTestCase {
         let moon = Moon(julianDay: JulianDay(year: 2012, month: 10, day: 31))
         let times = moon.riseTransitSetTimes(for: coords)
         
-        XCTAssertNotNil(times.transitTime)
+        #expect(times.transitTime != nil)
         AssertEqual(times.transitTime!,
                     JulianDay(year: 2012, month: 10, day: 31, hour: 0, minute: 11, second: 59.0),
                     accuracy: 90.0.seconds.inJulianDays)
         
-        XCTAssertNotNil(times.setTime)
+        #expect(times.setTime != nil)
         AssertEqual(times.setTime!,
                     JulianDay(year: 2012, month: 10, day: 31, hour: 11, minute: 41, second: 8.0),
                     accuracy: 120.0.seconds.inJulianDays)
     }
  
     // See AA p.342, Example 47.a
+    @Test("Geocentric Longitude Latitude Distance Quatorial Horizontal Parallax")
     func testGeocentricLongitudeLatitudeDistanceQuatorialHorizontalParallax() {
         
         let jd = JulianDay(2448724.5)
@@ -100,6 +107,7 @@ class MoonTests: XCTestCase {
     }
 
     // See AA p.342, Example 47.a
+    @Test("Apparent Right Ascension Declination")
     func testApparentRightAscensionDeclination() {
         
         let jd = JulianDay(2448724.5)
@@ -116,16 +124,18 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.345, Example 48.a
+    @Test("Illuminated Fraction")
     func testIlluminatedFraction() {
         let jd = JulianDay(year: 1992, month: 4, day: 12)
         let moon = Moon(julianDay: jd)
 
         // Phase angle not as accuracte as one can expect from the book.
         AssertEqual(moon.phaseAngle(), Degree(69.0756), accuracy: Degree(0.002))
-        XCTAssertEqual(moon.illuminatedFraction(), 0.68, accuracy: 0.005)
+        #expect(abs(moon.illuminatedFraction() - 0.68) <= 0.005)
     }
     
     // See AA p.357, Example 50.a
+    @Test("Apogee Time And Parallax")
     func testApogeeTimeAndParallax() {
         let moon = Moon(julianDay: JulianDay(2447442.8191))
         // Test accuracies not as good as I expected compared to the book. But note that the apogee parallax is 3240.679 which 
@@ -135,12 +145,14 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.365, Example 51.a
+    @Test("Passage Through Nodes")
     func testPassageThroughNodes() {
         let moon = Moon(julianDay: JulianDay(year: 1987, month: 5, day: 15))
         AssertEqual(moon.passageThroughAscendingNode(), JulianDay(2446938.76803), accuracy: JulianDay(0.00001))
     }
     
     // See AA p.370, Example 52.a
+    @Test("Greatest Declinations North")
     func testGreatestDeclinationsNorth() {
         let moon = Moon(julianDay: JulianDay(year: 1988, month: 12, day: 12)) // ~ 1988.95 as in the book
         AssertEqual(moon.dateOfGreatestDeclination(false, northernly: true), JulianDay(2447518.3347), accuracy: JulianDay(0.0001))
@@ -148,6 +160,7 @@ class MoonTests: XCTestCase {
     }
 
     // See AA p.370, Example 52.b
+    @Test("Greatest Declinations South")
     func testGreatestDeclinationsSouth() {
         let moon = Moon(julianDay: JulianDay(year: 2049, month: 4, day: 20)) // -> k = 659 as in the book
         AssertEqual(moon.dateOfGreatestDeclination(false, northernly: false), JulianDay(2469553.0834), accuracy: JulianDay(0.0001))
@@ -155,6 +168,7 @@ class MoonTests: XCTestCase {
     }
 
     // See AA p.374, Example 53.a
+    @Test("Librations")
     func testLibrations() {
         let moon = Moon(julianDay: JulianDay(year: 1992, month: 4, day: 12))
         let optical = moon.geocentricOpticalLibration()
@@ -178,6 +192,7 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.377, Example 53.b
+    @Test("Selenographic Details")
     func testSelenographicDetails() {
         let moon = Moon(julianDay: JulianDay(year: 1992, month: 4, day: 12))
         
@@ -188,6 +203,7 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.346, Example 48.a
+    @Test("Position Angle Of Bright Limb")
     func testPositionAngleOfBrightLimb() {
         let moon = Moon(julianDay: JulianDay(year: 1992, month: 4, day: 12))
         AssertEqual(moon.positionAngleOfTheBrightLimb(), Degree(285.0), accuracy: Degree(0.1))
@@ -195,6 +211,7 @@ class MoonTests: XCTestCase {
 
     // Based on USNO simulator of Moon image, for the given date. Result is given in full diameter.
     // See http://aa.usno.navy.mil/imagery/disk?body=moon&year=2017&month=9&day=24&hour=11&minute=31
+    @Test("Moon Semi Diameter")
     func testMoonSemiDiameter() {
         let jd = JulianDay(year: 2017, month: 9, day: 24, hour: 11, minute: 31, second: 0.0)
         let moon = Moon(julianDay: jd)
@@ -205,6 +222,7 @@ class MoonTests: XCTestCase {
     }
     
     // See AA p.377, Example 53.c
+    @Test("Sunrise")
     func testSunrise() {
         let jd = JulianDay(year: 1992, month: 4, day: 1)
         let moon = Moon(julianDay: jd)
@@ -215,6 +233,7 @@ class MoonTests: XCTestCase {
         AssertEqual(Moon(julianDay: jdResult).altitudeOfTheSun(for: copernicus), Degree(0.0), accuracy: Degree(0.2))
     }
     
+    @Test("Longitude Mean Perigee Ascending Node")
     func testLongitudeMeanPerigeeAscendingNode() {
         let moon = Moon(julianDay: JulianDay(year: 1992, month: 4, day: 1))
         AssertEqual(moon.longitudeOfMeanPerigee, Degree(127.914), accuracy: Degree(0.1))
@@ -223,6 +242,7 @@ class MoonTests: XCTestCase {
     }
     
     // Based on Issue https://github.com/onekiloparsec/SwiftAA/issues/81
+    @Test("Time Of Full Moon")
     func testTimeOfFullMoon() {
         for index in 12...19 {
             let moon = Moon(julianDay: JulianDay(year: 2019, month: 2, day: index))

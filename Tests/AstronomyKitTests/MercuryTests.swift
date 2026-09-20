@@ -6,16 +6,19 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class MercuryTests: XCTestCase {
+@Suite("MercuryTests")
+struct MercuryTests {
 
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Mercury.averageColor, CelestialColor.white)
+        #expect(Mercury.averageColor != CelestialColor.white)
     }
     
     // Taken from AA+ tests
+    @Test("Rise Transit Set Times")
     func testRiseTransitSetTimes() {
         let jd = JulianDay(2465483.5000000000) // 1st of March in 2038
         let mercury = Mercury(julianDay: jd, highPrecision: true)

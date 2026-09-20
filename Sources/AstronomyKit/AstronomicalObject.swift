@@ -8,7 +8,7 @@
 
 import Foundation
 
-public final class AstronomicalObject: ObjectBase, CelestialBody, @unchecked Sendable {
+public final class AstronomicalObject: ObjectBase, CelestialBody, Sendable {
     public let name: String
     public let julianDay: JulianDay
     public let highPrecision: Bool

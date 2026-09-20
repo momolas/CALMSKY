@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Pluto dwarf planet.
-public final class Pluto: DwarfPlanet, @unchecked Sendable {
+public final class Pluto: DwarfPlanet {
 
     /// The average color of the planet.
     public class var averageColor: CelestialColor {

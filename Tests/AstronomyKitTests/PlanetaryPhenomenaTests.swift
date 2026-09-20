@@ -6,32 +6,36 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class PlanetaryPhenomenaTests: XCTestCase {
+@Suite("PlanetaryPhenomenaTests")
+struct PlanetaryPhenomenaTests {
 
     // See AA. p.252
+    @Test("Mercury Inferior Conjunction")
     func testMercuryInferiorConjunction() {
         let jd = JulianDay(year: 1993, month: 10, day: 1)
         let mercury = Mercury(julianDay: jd)
-        XCTAssertEqual(mercury.inferiorConjunction(mean: false).value, 2449297.644, accuracy: 0.001)
+        #expect(abs(mercury.inferiorConjunction(mean: false).value - 2449297.644) <= 0.001)
     }
     
     // See AA. p.252
+    @Test("Saturn Conjunction")
     func testSaturnConjunction() {
         // We take month = 6, to force looking for first conjunction after beginning of 2015, as in AA book.
         let jd = JulianDay(year: 2125, month: 6, day: 1)
         let saturn = Saturn(julianDay: jd)
-        XCTAssertEqual(saturn.conjunction(mean: false).value, 2497437.903, accuracy: 0.001)
+        #expect(abs(saturn.conjunction(mean: false).value - 2497437.903) <= 0.001)
     }
     
     // See AA. p.253 & 254.
+    @Test("Mercury Western Elongation")
     func testMercuryWesternElongation() {
         let jd = JulianDay(year: 1993, month: 11, day: 1)
         let mercury = Mercury(julianDay: jd)
-        XCTAssertEqual(mercury.westernElongation(mean: false).value, 2449314.14, accuracy: 0.002)
-        XCTAssertEqual(mercury.elongationValue(eastern: false).value, 19.7506, accuracy: 0.0001)
+        #expect(abs(mercury.westernElongation(mean: false).value - 2449314.14) <= 0.002)
+        #expect(abs(mercury.elongationValue(eastern: false).value - 19.7506) <= 0.0001)
     }
     
 //    // See AA. p.254.

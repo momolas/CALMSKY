@@ -95,10 +95,22 @@ public protocol EphemerisProvider: Sendable {
 
 extension EphemerisProvider {
     public func positions(for body: SolarSystemBody, at dates: [JulianDay]) throws -> [Vector3D] {
-        try dates.map { try position(for: body, at: $0) }
+        var results: [Vector3D] = []
+        results.reserveCapacity(dates.count)
+        for date in dates {
+            try Task.checkCancellation()
+            results.append(try position(for: body, at: date))
+        }
+        return results
     }
 
     public func stateVectors(for body: SolarSystemBody, at dates: [JulianDay]) throws -> [StateVector] {
-        try dates.map { try stateVector(for: body, at: $0) }
+        var results: [StateVector] = []
+        results.reserveCapacity(dates.count)
+        for date in dates {
+            try Task.checkCancellation()
+            results.append(try stateVector(for: body, at: date))
+        }
+        return results
     }
 }

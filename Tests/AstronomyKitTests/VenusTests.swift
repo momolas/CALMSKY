@@ -7,16 +7,19 @@
 //
 
 import Foundation
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class VenusTests: XCTestCase {
+@Suite("VenusTests")
+struct VenusTests {
 
+    @Test("Average Color")
     func testAverageColor() {
-        XCTAssertNotEqual(Venus.averageColor, CelestialColor.white)
+        #expect(Venus.averageColor != CelestialColor.white)
     }
     
     // See AA p.225
+    @Test("Apparent Geocentric Coordinates")
     func testApparentGeocentricCoordinates() {
         let venus = Venus(julianDay: JulianDay(year: 1992, month: 12, day: 20))
         AssertEqual(Hour(venus.allPlanetaryDetails.ApparentGeocentricRA), Hour(21.078181), accuracy: ArcSecond(0.1).inHours)
@@ -24,12 +27,14 @@ class VenusTests: XCTestCase {
     }
     
     // See AA p.284
+    @Test("Illumination Fraction")
     func testIlluminationFraction() {
         let venus = Venus(julianDay: JulianDay(year: 1992, month: 12, day: 20))
-        XCTAssertEqual(venus.illuminatedFraction, 0.647, accuracy: 0.005)
+        #expect(abs(venus.illuminatedFraction - 0.647) <= 0.005)
     }
     
     // See AA p.225
+    @Test("Heliocentric Ecliptic Coordinates")
     func testHeliocentricEclipticCoordinates() {
         let venus = Venus(julianDay: JulianDay(year: 1992, month: 12, day: 20), highPrecision: false)
         let heliocentricEcliptic = venus.heliocentricEclipticCoordinates
@@ -39,6 +44,7 @@ class VenusTests: XCTestCase {
     }
     
     // See AA p.103
+    @Test("Geocentric Equatorial Coordinates")
     func testGeocentricEquatorialCoordinates() {
         let venus = Venus(julianDay: JulianDay(year: 1988, month: 03, day: 20))
         let equatorial = venus.apparentGeocentricEquatorialCoordinates

@@ -6,11 +6,13 @@
 //  Copyright © 2017 onekiloparsec. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AstronomyKit
 
-class CelestialBodiesTests: XCTestCase {
+@Suite("CelestialBodiesTests")
+struct CelestialBodiesTests {
 
+    @Test("Paralactic Angle Before Meridian")
     func testParalacticAngleBeforeMeridian() {
         // Taken from iObserve airmass plot...
         let jd = JulianDay(year: 2017, month: 6, day: 14, hour: 2, minute: 0, second: 0.0)
@@ -28,6 +30,7 @@ class CelestialBodiesTests: XCTestCase {
         AssertEqual(gro_j1655_40.parallacticAngle(for: la_silla_dfosc), refAngle, accuracy: Degree(0.1))
     }
 
+    @Test("Paralactic Angle After Meridian")
     func testParalacticAngleAfterMeridian() {
         // Taken from iObserve airmass plot...
         let jd = JulianDay(year: 2017, month: 6, day: 14, hour: 6, minute: 0, second: 0.0)
@@ -46,6 +49,7 @@ class CelestialBodiesTests: XCTestCase {
     }
     
     // See AA p.99, Example 14.a
+    @Test("Ecliptic And Horizon")
     func testEclipticAndHorizon() {
         // jd is chosen to produce jd.apparentGreenwichSiderealTime = jd.meanLocalSiderealTime(longitude=0) = 5.0h (75º) as in Example 14.a
         let jd = JulianDay(year: 2017, month: 9, day: 21, hour: 4, minute: 58, second: 56.3824345393)
@@ -57,6 +61,7 @@ class CelestialBodiesTests: XCTestCase {
         AssertEqual(moon.angleBetweenEclipticAndHorizon(for: geoCoords), Degree(62.0), accuracy: Degree(1))
     }
     
+    @Test("Angle Between North Celestial Pole And North Pole Of Ecliptic")
     func testAngleBetweenNorthCelestialPoleAndNorthPoleOfEcliptic() {
         // gro_j1655_40, see below
         let starCoords = EquatorialCoordinates(alpha: Hour(.plus, 16, 54, 00.14), delta: Degree(.minus, 39, 50, 44.9))
@@ -68,6 +73,7 @@ class CelestialBodiesTests: XCTestCase {
         AssertEqual(gro_j1655_40.angleBetweenNorthCelestialPoleAndNorthPoleOfEcliptic(for: geoCoords), Degree(186.0), accuracy: Degree(1))
     }
     
+    @Test("Diurnal Arcs Extremes")
     func testDiurnalArcsExtremes() {
         // one of the northernmost towns in the world (norway)
         let hammerfest = GeographicCoordinates(positivelyWestwardLongitude: Degree(.minus, 23, 40, 55), latitude: Degree(.plus, 70, 39, 48))
@@ -75,16 +81,17 @@ class CelestialBodiesTests: XCTestCase {
         // northern winter
         let winterSun = Sun(julianDay: JulianDay(year: 2017, month: 1, day: 1))
         let winterArc = winterSun.diurnalArcAngle(for: 0.0, geographicCoordinates: hammerfest) // altitude could be anything > 0
-        XCTAssertNil(winterArc.value)
-        XCTAssertEqual(winterArc.error, .alwaysBelowAltitude)
+        #expect(winterArc.value == nil)
+        #expect(winterArc.error == .alwaysBelowAltitude)
         
         // northern summer
         let summerSun = Sun(julianDay: JulianDay(year: 2017, month: 7, day: 1))
         let summerArc = summerSun.diurnalArcAngle(for: 0.0, geographicCoordinates: hammerfest)
-        XCTAssertNil(summerArc.value)
-        XCTAssertEqual(summerArc.error, .alwaysAboveAltitude)
+        #expect(summerArc.value == nil)
+        #expect(summerArc.error == .alwaysAboveAltitude)
     }
     
+    @Test("Diurnal Arcs")
     func testDiurnalArcs() {
         // Take a place below polar circles
         let paris = GeographicCoordinates(positivelyWestwardLongitude: Degree(.minus, 2, 21, 07), latitude: Degree(.plus, 48, 51, 24))

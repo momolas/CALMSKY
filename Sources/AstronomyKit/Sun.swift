@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Sun.
-public final class Sun: Object, @unchecked Sendable, CelestialBody {
+public final class Sun: Object, CelestialBody {
     
     /// Accessor to all values of the underlying physical details. Will probably become private
     /// once all relevant accessors are implemented and covered.
