@@ -1,4 +1,4 @@
-# SwiftAstronomy
+# AstronomyKit
 
 ![](https://img.shields.io/badge/Swift-6.0%20%7C%206.2-blue.svg?style=flat)
 ![](https://img.shields.io/badge/platform-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos%20%7C%20visionos%20%7C%20linux-lightgrey.svg)
@@ -9,16 +9,16 @@
 Description
 ===========
 
-**SwiftAstronomy** provides everything you need to compute planetary orbits, solar & lunar eclipses, length of seasons, moon phases, rise/transit/set times, Galilean moons of Jupiter, Saturn's rings, coordinate transformations, religious & lunisolar calendars (Hijri, Jewish, Easter), crescent visibility (*Hilal*), atmospheric air mass, and observation windows with professional-grade accuracy.
+**AstronomyKit** provides everything you need to compute planetary orbits, solar & lunar eclipses, length of seasons, moon phases, rise/transit/set times, Galilean moons of Jupiter, Saturn's rings, coordinate transformations, religious & lunisolar calendars (Hijri, Jewish, Easter), crescent visibility (*Hilal*), atmospheric air mass, and observation windows with professional-grade accuracy.
 
-In addition to classical analytical models (Meeus, VSOP87, ELP2000), SwiftAstronomy incorporates the core algorithms of **international reference standards**:
+In addition to classical analytical models (Meeus, VSOP87, ELP2000), AstronomyKit incorporates the core algorithms of **international reference standards**:
 - **USNO NOVAS** : 3D Cartesian vector astrometry (`Vector3D`, `StateVector`), Einstein gravitational light deflection, and relativistic stellar aberration.
 - **IAU SOFA** : Modern time scales (`UT1`, `UTC`, `TAI`, `TT`, `TDB`), $\Delta T$ (Espenak & Meeus 2006), Earth Rotation Angle (ERA IAU 2000), and CIRS $\leftrightarrow$ TIRS coordinate rotations.
 - **NORAD SGP4** : Artificial satellite orbit propagation from standard Two-Line Element (TLE) sets, with topocentric observer look angles (altitude, azimuth, distance).
 
 ### Architecture & Direct C++ Interoperability
 
-SwiftAstronomy directly leverages **Swift C++ Interoperability (`.interoperabilityMode(.Cxx)`)** atop **AA+ v2.63**, the C++ implementation by P.J. Naughter of the reference textbook *Astronomical Algorithms* by Jean Meeus (2nd ed.). 
+AstronomyKit directly leverages **Swift C++ Interoperability (`.interoperabilityMode(.Cxx)`)** atop **AA+ v2.63**, the C++ implementation by P.J. Naughter of the reference textbook *Astronomical Algorithms* by Jean Meeus (2nd ed.). 
 
 - **Zero-cost bridge**: Direct C++ calls with zero runtime wrapper overhead.
 - **Swift 6 & Strict Concurrency ready**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and events.
@@ -34,7 +34,7 @@ Features & Examples
 ### 1. Planets & Solar System Bodies
 
 ```swift
-import SwiftAstronomy
+import AstronomyKit
 
 // Target date: standard J2000 epoch
 let jd = JulianDay(year: 2024, month: 4, day: 8, hour: 18, minute: 17)
@@ -287,10 +287,10 @@ print("Altitude: \(look.altitude)°, Azimuth: \(look.azimuth)°, Range: \(look.d
 Documentation
 =============
 
-SwiftAstronomy includes full **Apple DocC** documentation. You can preview it in your browser with:
+AstronomyKit includes full **Apple DocC** documentation. You can preview it in your browser with:
 
 ```bash
-swift package --disable-sandbox preview-documentation --target SwiftAstronomy
+swift package --disable-sandbox preview-documentation --target AstronomyKit
 ```
 
 Or build the documentation in Xcode via **Product > Build Documentation**.
@@ -300,7 +300,7 @@ Or build the documentation in Xcode via **Product > Build Documentation**.
 Installation
 ============
 
-Add SwiftAstronomy as a dependency in your `Package.swift`:
+Add AstronomyKit as a dependency in your `Package.swift`:
 
 ```swift
 dependencies: [
@@ -317,7 +317,7 @@ AA+ Core
 
 The AA+ framework, written in C++ by PJ Naughter (Visual C++ MVP), is the comprehensive implementation of the algorithms in Jean Meeus' reference textbook *Astronomical Algorithms*. 
 
-SwiftAstronomy integrates **AA+ v2.63** (released May 2025) directly as a C++ SPM module target (`AAplus`).
+AstronomyKit integrates **AA+ v2.63** (released May 2025) directly as a C++ SPM module target (`AAplus`).
 
 ---
 

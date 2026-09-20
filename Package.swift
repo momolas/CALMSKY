@@ -25,6 +25,9 @@ let package = Package(
             publicHeadersPath: ".",
             cxxSettings: [
                 .headerSearchPath(".")
+            ],
+            linkerSettings: [
+                .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
             ]
         ),
 
@@ -32,25 +35,29 @@ let package = Package(
         .target(
             name: "AstronomyKit",
             dependencies: ["AAplus"],
-            path: "Sources/SwiftAstronomy",
+            path: "Sources/AstronomyKit",
             resources: [
-                .process("SwiftAstronomy.docc")
+                .process("AstronomyKit.docc")
             ],
-            swiftSettings: [
-                .interoperabilityMode(.Cxx),
-                .swiftLanguageMode(.v6)
-            ]
-        ),
-        .testTarget(
-            name: "SwiftAstronomyTests",
-            dependencies: ["AstronomyKit", "AAplus"],
-            path: "Tests/SwiftAstronomyTests",
             swiftSettings: [
                 .interoperabilityMode(.Cxx),
                 .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
-                .linkedLibrary("c++")
+                .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
+            ]
+        ),
+        .testTarget(
+            name: "AstronomyKitTests",
+            dependencies: ["AstronomyKit", "AAplus"],
+            path: "Tests/AstronomyKitTests",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx),
+                .swiftLanguageMode(.v6)
+            ],
+            linkerSettings: [
+                .linkedLibrary("c++"),
+                .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
             ]
         )
     ],

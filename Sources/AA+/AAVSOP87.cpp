@@ -31,6 +31,12 @@ to maintain a single distribution point for the source code.
 #include "AACoordinateTransformation.h"
 #include <cmath>
 #include <cassert>
+#include <vector>
+
+#if defined(__APPLE__) && defined(__MACH__)
+#include <Accelerate/Accelerate.h>
+#define AA_USE_APPLE_ACCELERATE 1
+#endif
 
 
 //////////////////// Macros / Defines /////////////////////////////////////////
@@ -53,6 +59,58 @@ double CAAVSOP87::Calculate(double JD, const VSOP87Coefficient2* pTable, size_t 
   const double T{(JD - 2451545)/365250};
   double TTerm{T};
   double Result{0};
+
+#if defined(AA_USE_APPLE_ACCELERATE)
+  constexpr size_t kStackBufferSize{1024};
+  double stackAngles[kStackBufferSize];
+  double stackCosines[kStackBufferSize];
+  std::vector<double> heapAngles;
+  std::vector<double> heapCosines;
+
+  for (size_t i{0}; i<nTableSize; i++)
+  {
+    const size_t nCoeffs{pTable[i].nCoefficientsSize};
+    double TempResult{0};
+
+    if (nCoeffs >= 8)
+    {
+      double* pAngles{stackAngles};
+      double* pCosines{stackCosines};
+
+      if (nCoeffs > kStackBufferSize)
+      {
+        heapAngles.resize(nCoeffs);
+        heapCosines.resize(nCoeffs);
+        pAngles = heapAngles.data();
+        pCosines = heapCosines.data();
+      }
+
+      // Step 1: Compute angle arguments theta_j = B_j + C_j * T via vDSP_vsmaD
+      // VSOP87Coefficient memory layout: A (offset 0), B (offset 8), C (offset 16) -> stride = 3 doubles
+      const auto length{static_cast<vDSP_Length>(nCoeffs)};
+      const auto nInt{static_cast<int>(nCoeffs)};
+      vDSP_vsmaD(&pTable[i].pCoefficients[0].C, 3, &T, &pTable[i].pCoefficients[0].B, 3, pAngles, 1, length);
+
+      // Step 2: Vector cosine via Apple vForce vvcos
+      vvcos(pCosines, pAngles, &nInt);
+
+      // Step 3: Dot product of amplitude A with cosines via vDSP_dotprD
+      vDSP_dotprD(&pTable[i].pCoefficients[0].A, 3, pCosines, 1, &TempResult, length);
+    }
+    else
+    {
+      for (size_t j{0}; j<nCoeffs; j++)
+        TempResult += (pTable[i].pCoefficients[j].A*cos(pTable[i].pCoefficients[j].B + (pTable[i].pCoefficients[j].C*T)));
+    }
+
+    if (i)
+    {
+      TempResult *= TTerm;
+      TTerm *= T;
+    }
+    Result += TempResult;
+  }
+#else
   for (size_t i{0}; i<nTableSize; i++)
   {
     double TempResult{0};
@@ -68,6 +126,7 @@ double CAAVSOP87::Calculate(double JD, const VSOP87Coefficient2* pTable, size_t 
     }
     Result += TempResult;
   }
+#endif
 
   if (bAngle)
     Result = CAACoordinateTransformation::MapTo0To2PIRange(Result);
@@ -80,13 +139,92 @@ double CAAVSOP87::Calculate(double JD, const VSOP87Coefficient2* pTable, size_t 
 #endif //#ifdef _MSC_VER
 double CAAVSOP87::Calculate_Dash(double JD, const VSOP87Coefficient2* pTable, size_t nTableSize) noexcept
 {
-//Validate our parameters
+  //Validate our parameters
   assert(pTable);
 
   const double T{(JD - 2451545)/365250};
   double TTerm1{1};
   double TTerm2{T};
   double Result{0};
+
+#if defined(AA_USE_APPLE_ACCELERATE)
+  constexpr size_t kStackBufferSize{1024};
+  double stackAngles[kStackBufferSize];
+  double stackCosines[kStackBufferSize];
+  double stackSines[kStackBufferSize];
+  double stackSinC[kStackBufferSize];
+  std::vector<double> heapAngles;
+  std::vector<double> heapCosines;
+  std::vector<double> heapSines;
+  std::vector<double> heapSinC;
+
+  for (size_t i{0}; i<nTableSize; i++)
+  {
+    const size_t nCoeffs{pTable[i].nCoefficientsSize};
+    double tempPart1{0};
+    double tempPart2{0};
+
+    if (nCoeffs >= 8)
+    {
+      double* pAngles{stackAngles};
+      double* pCosines{stackCosines};
+      double* pSines{stackSines};
+      double* pSinC{stackSinC};
+
+      if (nCoeffs > kStackBufferSize)
+      {
+        heapAngles.resize(nCoeffs);
+        heapCosines.resize(nCoeffs);
+        heapSines.resize(nCoeffs);
+        heapSinC.resize(nCoeffs);
+        pAngles = heapAngles.data();
+        pCosines = heapCosines.data();
+        pSines = heapSines.data();
+        pSinC = heapSinC.data();
+      }
+
+      const auto length{static_cast<vDSP_Length>(nCoeffs)};
+      const auto nInt{static_cast<int>(nCoeffs)};
+
+      // Angles theta_j = B_j + C_j * T
+      vDSP_vsmaD(&pTable[i].pCoefficients[0].C, 3, &T, &pTable[i].pCoefficients[0].B, 3, pAngles, 1, length);
+
+      // Simultaneous sine and cosine via Apple vForce vvsincos
+      vvsincos(pSines, pCosines, pAngles, &nInt);
+
+      // tempPart1 = sum(i * A * cos(theta))
+      if (i > 0)
+      {
+        vDSP_dotprD(&pTable[i].pCoefficients[0].A, 3, pCosines, 1, &tempPart1, length);
+        tempPart1 *= static_cast<double>(i);
+      }
+
+      // tempPart2 = sum(A * C * sin(theta))
+      // Step A: sinC[k] = sin[k] * C[k]
+      vDSP_vmulD(pSines, 1, &pTable[i].pCoefficients[0].C, 3, pSinC, 1, length);
+      // Step B: tempPart2 = dot(A, sinC)
+      vDSP_dotprD(&pTable[i].pCoefficients[0].A, 3, pSinC, 1, &tempPart2, length);
+    }
+    else
+    {
+      for (size_t j{0}; j<nCoeffs; j++)
+      {
+        const double B_CT{pTable[i].pCoefficients[j].B + (pTable[i].pCoefficients[j].C*T)};
+        tempPart1 += (i*pTable[i].pCoefficients[j].A*cos(B_CT));
+        tempPart2 += (pTable[i].pCoefficients[j].A*pTable[i].pCoefficients[j].C*sin(B_CT));
+      }
+    }
+
+    if (i)
+    {
+      tempPart1 *= TTerm1;
+      tempPart2 *= TTerm2;
+      TTerm1 *= T;
+      TTerm2 *= T;
+    }
+    Result += (tempPart1 - tempPart2);
+  }
+#else
   for (size_t i{0}; i<nTableSize; i++)
   {
     double tempPart1{0};
@@ -115,6 +253,7 @@ double CAAVSOP87::Calculate_Dash(double JD, const VSOP87Coefficient2* pTable, si
     }
     Result += (tempPart1 - tempPart2);
   }
+#endif
 
   //The value returned is in per days
   return Result/365250;
