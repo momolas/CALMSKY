@@ -243,6 +243,14 @@ struct EphemerisDataManagerTests {
         let size = try await manager.cacheSize()
         #expect(size == 0)
     }
+
+    @Test("makeOfflineFirstProvider falls back to AnalyticalEphemerisProvider when cache is empty")
+    func offlineFirstFallback() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let manager = EphemerisDataManager(cacheDirectory: tempDir)
+        let provider = manager.makeOfflineFirstProvider()
+        #expect(provider is AnalyticalEphemerisProvider)
+    }
 }
 
 // MARK: - Vector3D Chebyshev Test

@@ -38,7 +38,7 @@ public enum EarthSolsticeType: Int, Sendable, Codable, Hashable, CaseIterable {
     case southernSummer
 }
 
-public final class Earth: Object, PlanetaryBase, PlanetaryOrbits {
+public final class Earth: Object, PlanetaryBase, PlanetaryOrbits, @unchecked Sendable {
     public static var averageColor: CelestialColor {
         get { return CelestialColor(red:0.133, green:0.212, blue:0.290, alpha:1.000) }
     }

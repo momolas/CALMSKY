@@ -185,5 +185,55 @@ public extension CelestialBody {
     func positionAngle(relativeTo other: any CelestialBody) -> Degree {
         return self.equatorialCoordinates.positionAngle(relativeTo: other.equatorialCoordinates)
     }
+
+    /// Computes topocentric horizontal coordinates for an observer location, factoring in diurnal parallax and local weather.
+    ///
+    /// - Parameters:
+    ///   - location: Geographic coordinates of the observer on Earth.
+    ///   - pressure: Local atmospheric pressure in millibars (default: 1010).
+    ///   - temperature: Local air temperature in Celsius (default: 10).
+    /// - Returns: Topocentric horizontal coordinates (azimuth and altitude with atmospheric refraction).
+    func topocentricHorizontalCoordinates(
+        for location: GeographicCoordinates,
+        pressure: Millibar = 1010,
+        temperature: Celsius = 10
+    ) -> HorizontalCoordinates {
+        let coords = CAAParallax.Equatorial2Topocentric(
+            self.equatorialCoordinates.alpha.value,
+            self.equatorialCoordinates.delta.value,
+            self.radiusVector.value,
+            location.longitude.value,
+            location.latitude.value,
+            location.altitude.value,
+            self.julianDay.value
+        )
+        let topoEqu = EquatorialCoordinates(
+            alpha: Hour(coords.X),
+            delta: Degree(coords.Y),
+            epoch: .epochOfTheDate(self.julianDay),
+            equinox: .meanEquinoxOfTheDate(self.julianDay)
+        )
+        let airlessHoriz = topoEqu.makeHorizontalCoordinates(for: location, at: self.julianDay)
+        let refrDeg = AtmosphericRefractionEngine.refractionFromTrue(
+            altitude: airlessHoriz.altitude.value,
+            pressure: pressure,
+            temperature: temperature
+        )
+        return HorizontalCoordinates(
+            azimuth: airlessHoriz.azimuth,
+            altitude: Degree(airlessHoriz.altitude.value + refrDeg),
+            geographicCoordinates: location,
+            julianDay: self.julianDay
+        )
+    }
+
+    /// Computes topocentric horizontal coordinates for an observer location (SwiftData model), factoring in diurnal parallax and local weather.
+    func topocentricHorizontalCoordinates(
+        for observer: ObserverLocation,
+        pressure: Millibar = 1010,
+        temperature: Celsius = 10
+    ) -> HorizontalCoordinates {
+        topocentricHorizontalCoordinates(for: observer.coordinates, pressure: pressure, temperature: temperature)
+    }
 }
 

@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Jupiter planet.
-public final class Jupiter: Planet, JupiterPhysicalDetails {
+public final class Jupiter: Planet, JupiterPhysicalDetails, @unchecked Sendable {
     
     /// Accessor to all values of the underlying physical details. Will probably become private
     /// once all relevant accessors are implemented and covered.

@@ -227,6 +227,28 @@ public actor EphemerisDataManager {
             lunarSPKURL: lunarURL
         )
     }
+
+    /// Creates an offline-first ephemeris provider.
+    ///
+    /// If both VSOP2013 and DE440 data files are already present in the local cache,
+    /// this returns a ``HybridEphemerisProvider`` (sub-meter/sub-arcsecond numerical precision).
+    /// Otherwise, it returns an ``AnalyticalEphemerisProvider`` (zero-download, analytical VSOP87 + ELP2000),
+    /// guaranteeing instant availability without blocking on network requests or failing offline.
+    ///
+    /// - Returns: A configured ``EphemerisProvider`` (either ``HybridEphemerisProvider`` or ``AnalyticalEphemerisProvider``).
+    public nonisolated func makeOfflineFirstProvider() -> any EphemerisProvider {
+        let vsopURL = cacheDirectory.appendingPathComponent(EphemerisDataset.vsop2013Modern.filename)
+        let lunarURL = cacheDirectory.appendingPathComponent(EphemerisDataset.lunarDE440s.filename)
+        if FileManager.default.fileExists(atPath: vsopURL.path),
+           FileManager.default.fileExists(atPath: lunarURL.path),
+           let hybrid = try? HybridEphemerisProvider(
+               vsop2013DataURL: vsopURL.deletingLastPathComponent(),
+               lunarSPKURL: lunarURL
+           ) {
+            return hybrid
+        }
+        return AnalyticalEphemerisProvider()
+    }
 }
 
 // MARK: - URLSession Download with Progress

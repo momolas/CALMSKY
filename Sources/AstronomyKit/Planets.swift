@@ -10,7 +10,7 @@ import Foundation
 
 /// The Planet class encompasses all the shared properties of the planets, to be understood as "non-Earth" 
 /// and "non-dwarf" planets.
-public class Planet: Object, CelestialBody, PlanetaryDetails, PlanetaryPhenomena, PlanetaryOrbits {
+public class Planet: Object, CelestialBody, PlanetaryDetails, PlanetaryPhenomena, PlanetaryOrbits, @unchecked Sendable {
 
     /// Convenience accesor for the average color of the planet, making it easier to draw a solar system. 
     public class var averageColor: CelestialColor {
@@ -62,7 +62,7 @@ public class Planet: Object, CelestialBody, PlanetaryDetails, PlanetaryPhenomena
 
 /// The DwarfPlanet class encompasses all the shared properties of so-called dwarf planets. 
 /// So far, only Pluto is concerned.
-public class DwarfPlanet: Object, PlanetaryOrbits {
+public class DwarfPlanet: Object, PlanetaryOrbits, @unchecked Sendable {
         
     /// Accessor to all values of the underlying object details. Will probably become private
     /// once all relevant accessors are implemented and covered.

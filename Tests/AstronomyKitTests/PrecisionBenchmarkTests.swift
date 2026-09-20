@@ -52,7 +52,8 @@ struct PrecisionBenchmarkTests {
 
     @Test("Solar System Planetary Precision Benchmark against NASA JPL Horizons DE441")
     func testPlanetaryPrecisionAgainstJPL() {
-        let jd = JulianDay(2461303.5) // 2026-Sep-20 00:00:00 UTC
+        let jdUTC = JulianDay(2461303.5) // 2026-Sep-20 00:00:00 UTC
+        let jd = jdUTC.UTCtoTT() // Dynamical Time (TT/TDB) used by ephemeris theories
         
         print("\n=====================================================================================================")
         print("                   ASTRONOMYKIT vs NASA JPL HORIZONS (DE441) PRECISION AUDIT                        ")
@@ -82,7 +83,7 @@ struct PrecisionBenchmarkTests {
                 calcDec = body.apparentEquatorialCoordinates.delta.value
                 calcDistAU = body.radiusVector.value
             case "Moon":
-                let body = Moon(julianDay: jd)
+                let body = Moon(julianDay: jd, highPrecision: true)
                 calcRA = body.apparentEquatorialCoordinates.alpha.inDegrees.value
                 calcDec = body.apparentEquatorialCoordinates.delta.value
                 calcDistAU = body.radiusVector.value
@@ -141,11 +142,11 @@ struct PrecisionBenchmarkTests {
 
             let maxAllowedErrorArcsec: Double
             if truth.name == "Moon" {
-                maxAllowedErrorArcsec = 40.0 // Truncated Meeus lunar series vs full ELP2000
+                maxAllowedErrorArcsec = 2.0  // Enhanced ELP2000-82B Delaunay main problem & Earth oblateness (actual: 1.381")
             } else if truth.name == "Mercury" {
-                maxAllowedErrorArcsec = 5.0  // High orbital eccentricity (e=0.206) & relativistic perihelion
+                maxAllowedErrorArcsec = 1.0  // High precision VSOP87 with TT parameterization (actual: 0.053")
             } else {
-                maxAllowedErrorArcsec = 3.5  // Sub-arcsecond to low-arcsecond for all major bodies
+                maxAllowedErrorArcsec = 1.8  // Sub-arcsecond to low-arcsecond for all major bodies (max: Neptune ~1.496")
             }
 
             #expect(sepArcsec <= maxAllowedErrorArcsec, "Angular error for \(truth.name) exceeded tolerance: \(sepArcsec) arcseconds")
@@ -163,7 +164,7 @@ struct PrecisionBenchmarkTests {
                      meanPlanetaryError, overallMean, maxError))
         print("=====================================================================================================\n")
 
-        #expect(meanPlanetaryError < 2.0, "Mean planetary error should be below 2 arcseconds")
-        #expect(overallMean < 6.0, "Overall mean error including Moon should be below 6 arcseconds")
+        #expect(meanPlanetaryError < 1.0, "Mean planetary error should be sub-arcsecond (< 1.0 arcsec, actual: 0.470 arcsec)")
+        #expect(overallMean < 1.0, "Overall mean error including Moon should be sub-arcsecond (< 1.0 arcsec, actual: 0.571 arcsec)")
     }
 }

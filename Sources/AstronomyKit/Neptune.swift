@@ -9,7 +9,7 @@
 import Foundation
 
 /// The Neptune planet
-public final class Neptune: Planet {
+public final class Neptune: Planet, @unchecked Sendable {
     
     /// The average color of the planet
     public class override var averageColor: CelestialColor {

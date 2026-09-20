@@ -11,6 +11,7 @@ import Testing
 import SwiftUI
 @testable import AstronomyKit
 
+@MainActor
 @Suite("SwiftUI Astronomical Components Tests")
 struct SwiftUIComponentsTests {
 

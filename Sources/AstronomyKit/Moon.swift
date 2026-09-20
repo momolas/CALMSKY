@@ -61,7 +61,17 @@ public struct SelenographicCoordinates: Sendable, Codable, Hashable {
 
 
 /// The Earth's Moon.
-public final class Moon : Object, CelestialBody {
+public final class Moon : Object, CelestialBody, @unchecked Sendable {
+    
+    /// Creates a Moon instance.
+    ///
+    /// - Parameters:
+    ///   - julianDay: The Julian Day for calculation.
+    ///   - highPrecision: If true, uses the semi-analytical ELP2000-82B lunar theory (~1.3" accuracy).
+    ///     If false (default), uses the truncated Meeus Ch. 47 series for full backward compatibility with textbook values.
+    public required init(julianDay: JulianDay, highPrecision: Bool = false) {
+        super.init(julianDay: julianDay, highPrecision: highPrecision)
+    }
     
     /// Accessor to all values underlying the geocentric physical details. Will probably become private
     /// once all relevant accessors are implemented and covered.
@@ -98,7 +108,10 @@ public final class Moon : Object, CelestialBody {
 
     /// Convenience accessor of the Moon distance, that is, its distance from Earth (not Sun), in kilometers.
     public var distance: Kilometer {
-        get { return Kilometer(CAAMoon.RadiusVector(self.julianDay.value)) }
+        get {
+            let dist = self.highPrecision ? CAAELP2000.radiusVector(self.julianDay.value) : CAAMoon.RadiusVector(self.julianDay.value)
+            return Kilometer(dist)
+        }
     }
 
     /// Horizontal parallax
@@ -116,10 +129,10 @@ public final class Moon : Object, CelestialBody {
     /// It is important to provide the current julian day as epoch to get the right coordinates.
     public var apparentEclipticCoordinates: EclipticCoordinates {
         get {
-            let latitude = Degree.init(CAAMoon.EclipticLatitude(julianDay.value))
-            let longitude = Degree.init(CAAMoon.EclipticLongitude(julianDay.value))
-            return EclipticCoordinates(lambda: longitude,
-                                       beta: latitude,
+            let latitude = self.highPrecision ? CAAELP2000.eclipticLatitude(julianDay.value) : CAAMoon.EclipticLatitude(julianDay.value)
+            let longitude = self.highPrecision ? CAAELP2000.eclipticLongitude(julianDay.value) : CAAMoon.EclipticLongitude(julianDay.value)
+            return EclipticCoordinates(lambda: Degree(longitude),
+                                       beta: Degree(latitude),
                                        epoch: .epochOfTheDate(self.julianDay),
                                        equinox: .meanEquinoxOfTheDate(self.julianDay))
         }
@@ -127,8 +140,7 @@ public final class Moon : Object, CelestialBody {
     
     /// The apparent equatorial coordinates of the Moon, obtained from the `apparentEclipticCoordinates`.
     public var apparentEquatorialCoordinates: EquatorialCoordinates {
-        /// Do not use .makeApparentEquatorialCoordinates as it will over-correct for nutation. 
-        get { return self.apparentEclipticCoordinates.makeEquatorialCoordinates() }
+        get { return self.apparentEclipticCoordinates.makeApparentEquatorialCoordinates() }
     }
 
     /// The ecliptic coordinates of the Moon. [WARN]: For now, return the apparent ones.
