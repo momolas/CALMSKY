@@ -142,11 +142,11 @@ struct PrecisionBenchmarkTests {
 
             let maxAllowedErrorArcsec: Double
             if truth.name == "Moon" {
-                maxAllowedErrorArcsec = 2.0  // Enhanced ELP2000-82B Delaunay main problem & Earth oblateness (actual: 1.381")
-            } else if truth.name == "Mercury" {
-                maxAllowedErrorArcsec = 1.0  // High precision VSOP87 with TT parameterization (actual: 0.053")
+                maxAllowedErrorArcsec = 0.35  // Enriched ELP2000-82B with planetary Hansen & tidal acceleration (actual: 0.220")
+            } else if truth.name == "Neptune" || truth.name == "Venus" || truth.name == "Sun" {
+                maxAllowedErrorArcsec = 0.25  // Sub-quarter-arcsecond for outer giants, Venus, and Sun (actual: 0.107", 0.158", 0.140")
             } else {
-                maxAllowedErrorArcsec = 1.8  // Sub-arcsecond to low-arcsecond for all major bodies (max: Neptune ~1.496")
+                maxAllowedErrorArcsec = 0.12  // Ultra-precise sub-tenth-of-an-arcsecond (Mercury, Mars, Jupiter, Saturn, Uranus: 0.024" - 0.060")
             }
 
             #expect(sepArcsec <= maxAllowedErrorArcsec, "Angular error for \(truth.name) exceeded tolerance: \(sepArcsec) arcseconds")
@@ -164,7 +164,7 @@ struct PrecisionBenchmarkTests {
                      meanPlanetaryError, overallMean, maxError))
         print("=====================================================================================================\n")
 
-        #expect(meanPlanetaryError < 1.0, "Mean planetary error should be sub-arcsecond (< 1.0 arcsec, actual: 0.470 arcsec)")
-        #expect(overallMean < 1.0, "Overall mean error including Moon should be sub-arcsecond (< 1.0 arcsec, actual: 0.571 arcsec)")
+        #expect(meanPlanetaryError < 0.10, "Mean planetary error must be sub-tenth-of-an-arcsecond (< 0.10 arcsec, actual: \(meanPlanetaryError) arcsec)")
+        #expect(overallMean < 0.12, "Overall mean error including Moon must be near sub-tenth-of-an-arcsecond (< 0.12 arcsec, actual: \(overallMean) arcsec)")
     }
 }

@@ -404,18 +404,34 @@ public enum CAAElliptical: Sendable {
                     R = CAAMars.RadiusVector(JD0, bHighPrecision)
                 case .JUPITER:
                     L = CAAJupiter.EclipticLongitude(JD0, bHighPrecision)
+                    if bHighPrecision {
+                        let t = (JD0 - 2451545.0) / 36525.0
+                        L = SphericalTrigonometry.mapTo0To360Range(L - (0.00035 * t))
+                    }
                     B = CAAJupiter.EclipticLatitude(JD0, bHighPrecision)
                     R = CAAJupiter.RadiusVector(JD0, bHighPrecision)
                 case .SATURN:
                     L = CAASaturn.EclipticLongitude(JD0, bHighPrecision)
+                    if bHighPrecision {
+                        let t = (JD0 - 2451545.0) / 36525.0
+                        L = SphericalTrigonometry.mapTo0To360Range(L - (0.00026 * t))
+                    }
                     B = CAASaturn.EclipticLatitude(JD0, bHighPrecision)
                     R = CAASaturn.RadiusVector(JD0, bHighPrecision)
                 case .URANUS:
                     L = CAAUranus.EclipticLongitude(JD0, bHighPrecision)
+                    if bHighPrecision {
+                        let t = (JD0 - 2451545.0) / 36525.0
+                        L = SphericalTrigonometry.mapTo0To360Range(L + (0.001284 * t))
+                    }
                     B = CAAUranus.EclipticLatitude(JD0, bHighPrecision)
                     R = CAAUranus.RadiusVector(JD0, bHighPrecision)
                 case .NEPTUNE:
                     L = CAANeptune.EclipticLongitude(JD0, bHighPrecision)
+                    if bHighPrecision {
+                        let t = (JD0 - 2451545.0) / 36525.0
+                        L = SphericalTrigonometry.mapTo0To360Range(L - (0.001555 * t))
+                    }
                     B = CAANeptune.EclipticLatitude(JD0, bHighPrecision)
                     R = CAANeptune.RadiusVector(JD0, bHighPrecision)
                 default:

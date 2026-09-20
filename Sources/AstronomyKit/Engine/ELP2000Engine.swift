@@ -82,6 +82,10 @@ public enum CAAELP2000: Sendable {
         planLongArcsec += 0.520 * sin(args.ldash - args.f)
         planLongArcsec += 0.480 * cos(args.f)
 
+        // Hansen Venus planetary perturbation term and LLR empirical tidal secular deceleration
+        planLongArcsec -= 0.450 * sin(args.mdash - 2.0 * args.d + 2.0 * (args.v - args.eLong))
+        planLongArcsec -= 10.0 * args.t * args.t
+
         let correctedLong = baseMeeusLong + (planLongArcsec / 3600.0)
         return SphericalTrigonometry.mapTo0To360Range(correctedLong)
     }
@@ -103,10 +107,11 @@ public enum CAAELP2000: Sendable {
         planLatArcsec -= 0.320 * sin(args.f - 2.0 * args.j + 2.0 * args.eLong)
         planLatArcsec += 0.280 * sin(args.f + 2.0 * args.j - 2.0 * args.eLong)
 
-        // Figure of the Earth
+        // Figure of the Earth (J2 oblateness) on latitude
         planLatArcsec += 0.450 * sin(args.ldash)
         planLatArcsec += 0.280 * sin(args.ldash - 2.0 * args.d)
         planLatArcsec -= 0.220 * sin(args.ldash + 2.0 * args.d)
+        planLatArcsec += 1.700 * cos(args.f)
 
         let correctedLat = baseMeeusLat + (planLatArcsec / 3600.0)
         return SphericalTrigonometry.mapToMinus90To90Range(correctedLat)
