@@ -16,15 +16,16 @@ In addition to classical analytical models (Meeus, VSOP87, ELP2000), AstronomyKi
 - **IAU SOFA** : Modern time scales (`UT1`, `UTC`, `TAI`, `TT`, `TDB`), $\Delta T$ (Espenak & Meeus 2006), Earth Rotation Angle (ERA IAU 2000), and CIRS $\leftrightarrow$ TIRS coordinate rotations.
 - **NORAD SGP4** : Artificial satellite orbit propagation from standard Two-Line Element (TLE) sets, with topocentric observer look angles (altitude, azimuth, distance).
 
-### Architecture & Direct C++ Interoperability
+### Architecture & Sub-Arcsecond Precision
 
-AstronomyKit directly leverages **Swift C++ Interoperability (`.interoperabilityMode(.Cxx)`)** atop **AA+ v2.63**, the C++ implementation by P.J. Naughter of the reference textbook *Astronomical Algorithms* by Jean Meeus (2nd ed.). 
+AstronomyKit is built on a **100% Pure Swift 6** architecture, offering professional-grade astrometric precision validated against **NASA JPL Horizons (DE441)**:
 
-- **Zero-cost bridge**: Direct C++ calls with zero runtime wrapper overhead.
-- **Swift 6 & Strict Concurrency ready**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and events.
-- **Autonomous & Zero External Dependencies**: Runs entirely offline without external kernels, binary files, or network calls.
+- **Sub-Arcsecond Accuracy**: Mean planetary error of **`0.470"`** and lunar error of **`1.381"`** ($35.6\,\text{km}$) without downloading external data files. See the full [Precision Benchmark Ledger](PRECISION_BENCHMARK.md) for detailed scorecard and astrophysical analysis.
+- **Pure Swift 6 & Lightning-Fast Build**: 100% pure native Swift with zero C/C++ dependencies. Clean build compiles in **0.51s** (down from 70s+).
+- **Strict Concurrency**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and events.
+- **Offline-First Hybrid Architecture**: Built-in analytical VSOP87 + ELP2000 engines with transparent, non-blocking fallback to centimeter-precision JPL DE440/VSOP2013 kernels via `makeOfflineFirstProvider()`.
 - **Strong Unit Safety**: Type-safe dimensional structures for `Degree`, `ArcSecond`, `Hour`, `JulianDay`, `AstronomicalUnit`, `Kilometer`, etc.
-- **High Test Coverage**: Over 238 unit tests combining `XCTest` and modern `Swift-Testing` (`@Test`, `@Suite`).
+- **High Test Coverage**: 282 unit tests in 54 suites executing in **82 milliseconds** via modern `Swift-Testing` (`@Test`, `@Suite`).
 
 ---
 
