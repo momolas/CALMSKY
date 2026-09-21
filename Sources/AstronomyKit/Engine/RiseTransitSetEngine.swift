@@ -2,7 +2,7 @@
 //  RiseTransitSetEngine.swift
 //  AstronomyKit
 //
-//  Pure Swift implementation of Meeus Chapter 15: Rise, Transit, and Set times,
+//  Pure Swift implementation of astronomical Rise, Transit, and Set times,
 //  and polynomial interpolation.
 //
 

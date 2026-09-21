@@ -20,7 +20,7 @@ public enum AstronomicalTimeScale: Sendable, Hashable, CaseIterable {
     /// Uses known leap seconds table with fallback to continuous linear approximation.
     public static func deltaT(for jd: Double) -> Double {
         // Delta T = TT - UT1 ≈ TT - UTC
-        // Standard polynomial approximation by Espenak and Meeus (2006)
+        // Standard NASA polynomial approximation (Espenak 2006)
         let year = (jd - 2451545.0) / 365.25 + 2000.0
         let t = year - 2000.0
 

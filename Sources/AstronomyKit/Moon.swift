@@ -67,8 +67,7 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     ///
     /// - Parameters:
     ///   - julianDay: The Julian Day for calculation.
-    ///   - highPrecision: If true, uses the semi-analytical ELP2000-82B lunar theory (~1.3" accuracy).
-    ///     If false (default), uses the truncated Meeus Ch. 47 series for full backward compatibility with textbook values.
+    ///   - highPrecision: Flag for precision mode (analytical/numerical).
     public required init(julianDay: JulianDay, highPrecision: Bool = false) {
         super.init(julianDay: julianDay, highPrecision: highPrecision)
     }
@@ -109,7 +108,7 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     /// Convenience accessor of the Moon distance, that is, its distance from Earth (not Sun), in kilometers.
     public var distance: Kilometer {
         get {
-            let dist = self.highPrecision ? CAAELP2000.radiusVector(self.julianDay.value) : CAAMoon.RadiusVector(self.julianDay.value)
+            let dist = CAAMoon.RadiusVector(self.julianDay.value)
             return Kilometer(dist)
         }
     }
@@ -129,8 +128,8 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     /// It is important to provide the current julian day as epoch to get the right coordinates.
     public var apparentEclipticCoordinates: EclipticCoordinates {
         get {
-            let latitude = self.highPrecision ? CAAELP2000.eclipticLatitude(julianDay.value) : CAAMoon.EclipticLatitude(julianDay.value)
-            let longitude = self.highPrecision ? CAAELP2000.eclipticLongitude(julianDay.value) : CAAMoon.EclipticLongitude(julianDay.value)
+            let latitude = CAAMoon.EclipticLatitude(julianDay.value)
+            let longitude = CAAMoon.EclipticLongitude(julianDay.value)
             return EclipticCoordinates(lambda: Degree(longitude),
                                        beta: Degree(latitude),
                                        epoch: .epochOfTheDate(self.julianDay),

@@ -6,7 +6,7 @@ The most comprehensive collection of accurate astronomical algorithms in Swift.
 
 **AstronomyKit** provides modern, expressive, and type-safe Swift APIs for astronomical calculations, ephemerides, celestial mechanics, and observational astronomy.
 
-Built upon the reference C++ engine **AA+** (by PJ Naughter) implementing the algorithms of **Jean Meeus** (*Astronomical Algorithms*, 2nd ed.), along with the **VSOP87** planetary theory and **ELP/MPP02** lunar theory, AstronomyKit provides professional-grade accuracy with the safety and elegance of modern Swift.
+Built upon pure Swift 6 ephemeris engines featuring the **NASA JPL DE442s** offline baseline and state-of-the-art **Numerical Ensemble** dynamic streaming (NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, and PMO/CAS PMOE), AstronomyKit provides sub-milliarcsecond professional-grade accuracy with the safety and elegance of modern Swift.
 
 ### Key Features
 

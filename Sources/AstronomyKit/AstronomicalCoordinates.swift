@@ -172,7 +172,7 @@ public struct EquatorialCoordinates: CustomStringConvertible, Sendable, Codable,
     /// See AA, p149.
     ///
     /// - parameter julianDay:     The julian day for which the aberration is computed.
-    /// - parameter highPrecision: If `false`, the Ron-Vondrák algorithm is used. See AA p.153. If `true`, the newer VSOP87 theory is used.
+    /// - parameter highPrecision: If `false`, the Ron-Vondrák algorithm is used. See AA p.153. If `true`, the high-precision Earth orbit algorithm is used.
     ///
     /// - returns: Corected ecliptic coordinates of the star.
     public func correctedForAnnualAberration(julianDay: JulianDay, highPrecision: Bool = true) -> EquatorialCoordinates {
@@ -266,7 +266,7 @@ public struct EclipticCoordinates: CustomStringConvertible, Sendable, Codable, H
     /// See AA, p149.
     ///
     /// - parameter julianDay:     The julian day for which the aberration is computed.
-    /// - parameter highPrecision: If `false`, the Ron-Vondrák algorithm is used. See AA p.153. If `true`, the newer VSOP87 theory is used.OSun
+    /// - parameter highPrecision: If `false`, the Ron-Vondrák algorithm is used. See AA p.153. If `true`, the high-precision Earth orbit algorithm is used.
     ///
     /// - returns: Corected ecliptic coordinates of the star.
     public func correctedForAnnualAberration(julianDay: JulianDay, highPrecision: Bool = true) -> EclipticCoordinates {

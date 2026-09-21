@@ -43,75 +43,17 @@ struct EphemerisProviderProtocolTests {
         }
     }
 
-    @Test("AnalyticalEphemerisProvider conforms to EphemerisProvider")
-    func analyticalConformance() {
-        let provider: any EphemerisProvider = AnalyticalEphemerisProvider()
-        #expect(provider is AnalyticalEphemerisProvider)
-    }
-}
-
-// MARK: - Analytical Provider Tests
-
-@Suite("AnalyticalEphemerisProvider")
-struct AnalyticalEphemerisProviderTests {
-
-    let provider = AnalyticalEphemerisProvider()
-    let j2000 = JulianDay(2451545.0) // J2000.0 epoch
-
-    @Test("Sun position is zero (heliocentric)")
-    func sunPosition() throws {
-        let pos = try provider.position(for: .sun, at: j2000)
-        #expect(pos.x == 0)
-        #expect(pos.y == 0)
-        #expect(pos.z == 0)
-    }
-
-    @Test("Earth position at J2000.0 has reasonable distance")
-    func earthPosition() throws {
-        let pos = try provider.position(for: .earth, at: j2000)
-        let distance = pos.length
-        // Earth should be approximately 1 AU from the Sun
-        #expect(distance > 0.98)
-        #expect(distance < 1.02)
-    }
-
-    @Test("Mars position at J2000.0 has reasonable distance")
-    func marsPosition() throws {
-        let pos = try provider.position(for: .mars, at: j2000)
-        let distance = pos.length
-        // Mars is between ~1.38 and ~1.67 AU from the Sun
-        #expect(distance > 1.0)
-        #expect(distance < 2.0)
-    }
-
-    @Test("Moon position is near Earth")
-    func moonPosition() throws {
-        let moonPos = try provider.position(for: .moon, at: j2000)
-        let earthPos = try provider.position(for: .earth, at: j2000)
-        let separation = (moonPos - earthPos).length
-        // Moon-Earth distance is approximately 0.00257 AU (384,400 km)
-        #expect(separation > 0.001)
-        #expect(separation < 0.005)
-    }
-
-    @Test("State vector velocity is non-zero for planets")
-    func stateVectorVelocity() throws {
-        let state = try provider.stateVector(for: .mars, at: j2000)
-        #expect(state.velocity.length > 0)
-        // Mars orbital velocity is approximately 0.015 AU/day
-        #expect(state.velocity.length > 0.005)
-        #expect(state.velocity.length < 0.05)
-    }
-
-    @Test("All planets return valid positions")
-    func allPlanetsPosition() throws {
-        let bodies: [SolarSystemBody] = [
-            .mercury, .venus, .earth, .mars, .jupiter, .saturn, .uranus, .neptune, .pluto
-        ]
-        for body in bodies {
-            let pos = try provider.position(for: body, at: j2000)
-            #expect(pos.length > 0, "Position for \(body.name) should be non-zero")
+    private struct DummyProvider: EphemerisProvider {
+        func position(for body: SolarSystemBody, at jd: JulianDay) throws -> Vector3D { .zero }
+        func stateVector(for body: SolarSystemBody, at jd: JulianDay) throws -> StateVector {
+            StateVector(position: .zero, velocity: .zero)
         }
+    }
+
+    @Test("TriadEphemerisProvider conforms to EphemerisProvider")
+    func triadConformance() throws {
+        let provider: any EphemerisProvider = try TriadEphemerisProvider(providers: [.us: DummyProvider()])
+        #expect(provider is TriadEphemerisProvider)
     }
 }
 
@@ -244,12 +186,13 @@ struct EphemerisDataManagerTests {
         #expect(size == 0)
     }
 
-    @Test("makeOfflineFirstProvider falls back to AnalyticalEphemerisProvider when cache is empty")
-    func offlineFirstFallback() {
+    @Test("makeTriadProviderFromCache strictly enforces numerical exclusivity and throws when cache is empty")
+    func triadCacheExclusivity() {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let manager = EphemerisDataManager(cacheDirectory: tempDir)
-        let provider = manager.makeOfflineFirstProvider()
-        #expect(provider is AnalyticalEphemerisProvider)
+        #expect(throws: EphemerisError.self) {
+            _ = try manager.makeTriadProviderFromCache()
+        }
     }
 }
 

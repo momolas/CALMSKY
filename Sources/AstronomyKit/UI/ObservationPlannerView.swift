@@ -59,7 +59,7 @@ public struct ObservationPlannerView: View {
                     .font(.title3.bold())
                     .foregroundStyle(.primary)
 
-                Text("Ephemeris computed at high precision (VSOP87)")
+                Text("Ephemeris computed at high precision")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

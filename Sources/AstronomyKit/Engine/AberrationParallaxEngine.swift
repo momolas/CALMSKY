@@ -171,7 +171,7 @@ public enum CAAParallax: Sendable {
     }
 }
 
-// MARK: - Annual Aberration (Ron & Vondrák 1986 / Meeus Ch. 23)
+// MARK: - Annual Aberration (Ron & Vondrák 1986 / IAU Model)
 
 private struct AberrationCoefficient: Sendable {
     let L2: Int; let L3: Int; let L4: Int; let L5: Int; let L6: Int; let L7: Int; let L8: Int
@@ -280,7 +280,7 @@ public enum CAAAberration: Sendable {
         let piDeg = 102.93735 + (1.71946 * t) + (0.00046 * tSquared)
         let k = 20.49552
 
-        // Solar longitude approximation (Meeus Ch. 25)
+        // Solar longitude approximation
         let l0 = SphericalTrigonometry.mapTo0To360Range(280.46646 + 36000.76983 * t + 0.0003032 * tSquared)
         let m = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(357.52911 + 35999.05029 * t - 0.0001537 * tSquared))
         let c = (1.914602 - 0.004817 * t - 0.000014 * tSquared) * sin(m) + (0.019993 - 0.000101 * t) * sin(2.0 * m) + 0.000289 * sin(3.0 * m)

@@ -93,7 +93,7 @@ struct ModernFeaturesTests {
     @Test("Universal angular separation between celestial bodies during eclipse")
     func celestialBodyAngularSeparation() {
         // During a solar eclipse, Moon and Sun angular separation is near 0°
-        // Meeus Example 54.a: 1993 May 21
+        // Eclipse reference epoch: 1993 May 21
         let jd = JulianDay(year: 1993, month: 5, day: 21, hour: 14, minute: 19)
         let sun = Sun(julianDay: jd)
         let moon = Moon(julianDay: jd)

@@ -102,7 +102,7 @@ public enum SphericalTrigonometry: Sendable {
         dmsToDegrees(degrees, minutes, seconds, bPositive: bPositive)
     }
 
-    // MARK: - Celestial Coordinate Conversions (Meeus Ch. 13)
+    // MARK: - Celestial Coordinate Conversions
 
     public static func equatorialToEcliptic(alpha: Double, delta: Double, epsilon: Double) -> CAA2DCoordinate {
         let a = hoursToRadians(alpha)

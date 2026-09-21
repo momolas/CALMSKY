@@ -14,7 +14,7 @@ import Foundation
 struct ExtendedFeatureTests {
     
     // MARK: - Eclipses Tests
-    @Test("Solar Eclipse calculation (Meeus Example 54.a: 1993 May 21)")
+    @Test("Solar Eclipse calculation (1993 May 21)")
     func solarEclipsePrediction() {
         // k = -82.0 corresponds to New Moon of 1993 May 21
         let eclipse = Eclipses.calculateSolar(k: -82.0)
@@ -23,7 +23,7 @@ struct ExtendedFeatureTests {
         #expect(abs(eclipse.greatestMagnitude - 0.735) < 0.05)
     }
 
-    @Test("Lunar Eclipse calculation (Meeus Example 54.b: 1973 June 15)")
+    @Test("Lunar Eclipse calculation (1973 June 15)")
     func lunarEclipsePrediction() {
         // k = -328.5 corresponds to Full Moon of 1973 June 15
         let eclipse = Eclipses.calculateLunar(k: -328.5)
@@ -33,7 +33,7 @@ struct ExtendedFeatureTests {
     }
 
     // MARK: - Calendars Tests
-    @Test("Islamic/Hijri Calendar conversion (Meeus Example 9.a: 1421 AH, 1 Ramadan)")
+    @Test("Islamic/Hijri Calendar conversion (1421 AH, 1 Ramadan)")
     func islamicCalendarConversion() {
         let hijri = HijriDate(year: 1421, month: 9, day: 1)
         let julianComponents = hijri.toJulianCalendarDate()
@@ -61,7 +61,7 @@ struct ExtendedFeatureTests {
         #expect(hijri.isLeapYear == expectedLeap)
     }
 
-    @Test("Hebrew Calendar Pesach (Meeus Example 9.b: Jewish Year 5750 / Civil 1990)")
+    @Test("Hebrew Calendar Pesach (Jewish Year 5750 / Civil 1990)")
     func hebrewCalendarPesach() {
         let pesach = JewishDate.dateOfPesach(civilYear: 1990, inGregorianCalendar: true)
         // For civil year 1990 (5750 AM), Pesach is on 1990 April 10
@@ -91,7 +91,7 @@ struct ExtendedFeatureTests {
     }
 
     // MARK: - Comets & Parabolic Orbits
-    @Test("Parabolic orbit for Comet (Meeus Example 34.a)")
+    @Test("Parabolic orbit for Comet")
     func cometParabolicOrbit() {
         let elements = ParabolicOrbitElements(
             perihelionDistance: AstronomicalUnit(1.324558),

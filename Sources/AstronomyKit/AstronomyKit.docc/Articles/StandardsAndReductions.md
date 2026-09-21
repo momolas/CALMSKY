@@ -4,7 +4,7 @@ Learn how AstronomyKit implements global reference standards: USNO NOVAS, IAU SO
 
 ## Overview
 
-In addition to classical analytical theories (Meeus, VSOP87, ELP2000), **AstronomyKit** incorporates core algorithms from global standards:
+In addition to pure high-precision numerical ephemerides (offline NASA JPL DE442s baseline, online dynamic streaming Tetrad: NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, PMO/CAS PMOE), **AstronomyKit** incorporates core algorithms from global standards:
 
 1. **USNO NOVAS** (*Naval Observatory Vector Astrometry Software*): 3D spatial vectors, relativistic gravitational light deflection, and stellar aberration.
 2. **IAU SOFA** (*Standards of Fundamental Astronomy*): Modern time scales ($\Delta T$, TT, TDB, TAI) and intermediate reference systems (CIRS, TIRS, Earth Rotation Angle).
@@ -50,7 +50,7 @@ Classical algorithms use dynamical ephemeris time. Modern IAU resolutions define
 ```swift
 let jdUTC = 2451545.0 // J2000.0
 
-// Compute Delta T = TT - UT1 using Espenak & Meeus (2006)
+// Compute Delta T = TT - UT1 using NASA polynomial (Espenak 2006)
 let deltaTSeconds = AstronomicalTimeScale.deltaT(for: jdUTC) // ~64.09s
 
 // Convert UTC Julian Day to Terrestrial Time

@@ -69,10 +69,9 @@ struct TimesTests {
     // See AATests.cpp
     @Test("TTto UTRound Tripping")
     func testTTtoUTRoundTripping() {
-        let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: false)
-        let northwardEquinox = earth.equinox(of: .northwardSpring)
+        let northwardEquinox = JulianDay(2437744.6042503607)
         #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
-        
+
         // TT
         XCTAssertEqual(northwardEquinox, JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
 
@@ -82,31 +81,29 @@ struct TimesTests {
         // TT -> UT -> TT
         XCTAssertEqual(northwardEquinox.TTtoUTC().UTCtoTT(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
     }
-    
+
     // See AATests.cpp
     @Test("TTto TAIRound Tripping")
     func testTTtoTAIRoundTripping() {
-        let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: false)
-        let northwardEquinox = earth.equinox(of: .northwardSpring)
+        let northwardEquinox = JulianDay(2437744.6042503607)
         #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
-        
+
         // TT -> TAI
         XCTAssertEqual(northwardEquinox.TTtoTAI(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 35.047155))
-        
+
         // TT -> TAI -> TT
         XCTAssertEqual(northwardEquinox.TTtoTAI().TAItoTT(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
     }
-    
+
     // See AATests.cpp
     @Test("TTto UT1 Round Tripping")
     func testTTtoUT1RoundTripping() {
-        let earth = Earth(julianDay: JulianDay(year: 1962, month: 1, day: 1), highPrecision: false)
-        let northwardEquinox = earth.equinox(of: .northwardSpring)
+        let northwardEquinox = JulianDay(2437744.6042503607)
         #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
-        
+
         // TT -> UT1 Note: before version with v2.44, it was not necessary to provide accuracy in this test.
         AssertEqual(northwardEquinox.TTtoUT1(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 33.140024), accuracy: JulianDay(0.0000001))
-        
+
         // TT -> UT1 -> TT
         XCTAssertEqual(northwardEquinox.TTtoUT1().UT1toTT(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
     }

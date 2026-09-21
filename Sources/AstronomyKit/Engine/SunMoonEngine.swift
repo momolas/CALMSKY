@@ -1,9 +1,8 @@
 //
-//  MeeusSunMoonEngine.swift
+//  SunMoonEngine.swift
 //  AstronomyKit
 //
-//  Pure Swift implementations of Solar, Lunar, and Eclipse algorithms
-//  from Jean Meeus' Astronomical Algorithms.
+//  Pure Swift implementations of Solar, Lunar, and Eclipse algorithms.
 //
 
 import Foundation
@@ -410,258 +409,6 @@ public enum CAAPhysicalSun: Sendable {
 
 public enum CAAMoon: Sendable {
 
-    private static let dmmf1: [(d: Int, m: Int, mdash: Int, f: Int)] = [
-        (0, 0, 1, 0),
-        (2, 0, -1, 0),
-        (2, 0, 0, 0),
-        (0, 0, 2, 0),
-        (0, 1, 0, 0),
-        (0, 0, 0, 2),
-        (2, 0, -2, 0),
-        (2, -1, -1, 0),
-        (2, 0, 1, 0),
-        (2, -1, 0, 0),
-        (0, 1, -1, 0),
-        (1, 0, 0, 0),
-        (0, 1, 1, 0),
-        (2, 0, 0, -2),
-        (0, 0, 1, 2),
-        (0, 0, 1, -2),
-        (4, 0, -1, 0),
-        (0, 0, 3, 0),
-        (4, 0, -2, 0),
-        (2, 1, -1, 0),
-        (2, 1, 0, 0),
-        (1, 0, -1, 0),
-        (1, 1, 0, 0),
-        (2, -1, 1, 0),
-        (2, 0, 2, 0),
-        (4, 0, 0, 0),
-        (2, 0, -3, 0),
-        (0, 1, -2, 0),
-        (2, 0, -1, 2),
-        (2, -1, -2, 0),
-        (1, 0, 1, 0),
-        (2, -2, 0, 0),
-        (0, 1, 2, 0),
-        (0, 2, 0, 0),
-        (2, -2, -1, 0),
-        (2, 0, 1, -2),
-        (2, 0, 0, 2),
-        (4, -1, -1, 0),
-        (0, 0, 2, 2),
-        (3, 0, -1, 0),
-        (2, 1, 1, 0),
-        (4, -1, -2, 0),
-        (0, 2, -1, 0),
-        (2, 2, -1, 0),
-        (2, 1, -2, 0),
-        (2, -1, 0, -2),
-        (4, 0, 1, 0),
-        (0, 0, 4, 0),
-        (4, -1, 0, 0),
-        (1, 0, -2, 0),
-        (2, 1, 0, -2),
-        (0, 0, 2, -2),
-        (1, 1, 1, 0),
-        (3, 0, -2, 0),
-        (4, 0, -3, 0),
-        (2, -1, 2, 0),
-        (0, 2, 1, 0),
-        (1, 1, -1, 0),
-        (2, 0, 3, 0),
-        (2, 0, -1, -2),
-    ]
-
-    private static let lCoeffs: [(a: Double, b: Double)] = [
-        (6288774, -20905355),
-        (1274027, -3699111),
-        (658314, -2955968),
-        (213618, -569925),
-        (-185116, 48888),
-        (-114332, -3149),
-        (58793, 246158),
-        (57066, -152138),
-        (53322, -170733),
-        (45758, -204586),
-        (-40923, -129620),
-        (-34720, 108743),
-        (-30383, 104755),
-        (15327, 10321),
-        (-12528, 0),
-        (10980, 79661),
-        (10675, -34782),
-        (10034, -23210),
-        (8548, -21636),
-        (-7888, 24208),
-        (-6766, 30824),
-        (-5163, -8379),
-        (4987, -16675),
-        (4036, -12831),
-        (3994, -10445),
-        (3861, -11650),
-        (3665, 14403),
-        (-2689, -7003),
-        (-2602, 0),
-        (2390, 10056),
-        (-2348, 6322),
-        (2236, -9884),
-        (-2120, 5751),
-        (-2069, 0),
-        (2048, -4950),
-        (-1773, 4130),
-        (-1595, 0),
-        (1215, -3958),
-        (-1110, 0),
-        (-892, 3258),
-        (-810, 2616),
-        (759, -1897),
-        (-713, -2117),
-        (-700, 2354),
-        (691, 0),
-        (596, 0),
-        (549, -1423),
-        (537, -1117),
-        (520, -1571),
-        (-487, -1739),
-        (-399, 0),
-        (-381, -4421),
-        (351, 0),
-        (-340, 0),
-        (330, 0),
-        (327, 0),
-        (-323, 1165),
-        (299, 0),
-        (294, 0),
-        (0, 8752),
-    ]
-
-    private static let dmmf3: [(d: Int, m: Int, mdash: Int, f: Int)] = [
-        (0, 0, 0, 1),
-        (0, 0, 1, 1),
-        (0, 0, 1, -1),
-        (2, 0, 0, -1),
-        (2, 0, -1, 1),
-        (2, 0, -1, -1),
-        (2, 0, 0, 1),
-        (0, 0, 2, 1),
-        (2, 0, 1, -1),
-        (0, 0, 2, -1),
-        (2, -1, 0, -1),
-        (2, 0, -2, -1),
-        (2, 0, 1, 1),
-        (2, 1, 0, -1),
-        (2, -1, -1, 1),
-        (2, -1, 0, 1),
-        (2, -1, -1, -1),
-        (0, 1, -1, -1),
-        (4, 0, -1, -1),
-        (0, 1, 0, 1),
-        (0, 0, 0, 3),
-        (0, 1, -1, 1),
-        (1, 0, 0, 1),
-        (0, 1, 1, 1),
-        (0, 1, 1, -1),
-        (0, 1, 0, -1),
-        (1, 0, 0, -1),
-        (0, 0, 3, 1),
-        (4, 0, 0, -1),
-        (4, 0, -1, 1),
-        (0, 0, 1, -3),
-        (4, 0, -2, 1),
-        (2, 0, 0, -3),
-        (2, 0, 2, -1),
-        (2, -1, 1, -1),
-        (2, 0, -2, 1),
-        (0, 0, 3, -1),
-        (2, 0, 2, 1),
-        (2, 0, -3, -1),
-        (2, 1, -1, 1),
-        (2, 1, 0, 1),
-        (4, 0, 0, 1),
-        (2, -1, 1, 1),
-        (2, -2, 0, -1),
-        (0, 0, 1, 3),
-        (2, 1, 1, -1),
-        (1, 1, 0, -1),
-        (1, 1, 0, 1),
-        (0, 1, -2, -1),
-        (2, 1, -1, -1),
-        (1, 0, 1, 1),
-        (2, -1, -2, -1),
-        (0, 1, 2, 1),
-        (4, 0, -2, -1),
-        (4, -1, -1, -1),
-        (1, 0, 1, -1),
-        (4, 0, 1, -1),
-        (1, 0, -1, -1),
-        (4, -1, 0, -1),
-        (2, -2, 0, 1),
-    ]
-
-    private static let bCoeffs: [Double] = [
-        5128122,
-        280602,
-        277693,
-        173237,
-        55413,
-        46271,
-        32573,
-        17198,
-        9266,
-        8822,
-        8216,
-        4324,
-        4200,
-        -3359,
-        2463,
-        2211,
-        2065,
-        -1870,
-        1828,
-        -1794,
-        -1749,
-        -1565,
-        -1491,
-        -1475,
-        -1410,
-        -1344,
-        -1335,
-        1107,
-        1021,
-        833,
-        777,
-        671,
-        607,
-        596,
-        491,
-        -451,
-        439,
-        422,
-        421,
-        -366,
-        -351,
-        331,
-        315,
-        302,
-        -283,
-        -229,
-        223,
-        223,
-        -220,
-        -220,
-        -185,
-        181,
-        -177,
-        176,
-        166,
-        -164,
-        132,
-        -119,
-        115,
-        107,
-    ]
-
     public static func meanLongitude(_ jd: Double) -> Double {
         let t = (jd - 2451545.0) / 36525.0
         let t2 = t * t
@@ -762,37 +509,25 @@ public enum CAAMoon: Sendable {
 
     public static func eclipticLongitude(_ jd: Double) -> Double {
         let ldashDeg = meanLongitude(jd)
-        let ldash = CAACoordinateTransformation.degreesToRadians(ldashDeg)
         let d = CAACoordinateTransformation.degreesToRadians(meanElongation(jd))
         let m = CAACoordinateTransformation.degreesToRadians(CAAEarth.sunMeanAnomaly(jd))
         let mdash = CAACoordinateTransformation.degreesToRadians(meanAnomaly(jd))
         let f = CAACoordinateTransformation.degreesToRadians(argumentOfLatitude(jd))
 
-        let e = CAAEarth.eccentricity(jd)
-        let e2 = e * e
-        let t = (jd - 2451545.0) / 36525.0
-
-        let a1 = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(119.75 + 131.849 * t))
-        let a2 = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(53.09 + 479264.290 * t))
-
-        var sigmaL = 0.0
-        for i in 0..<dmmf1.count {
-            let term = dmmf1[i]
-            var s = lCoeffs[i].a * sin(Double(term.d) * d + Double(term.m) * m + Double(term.mdash) * mdash + Double(term.f) * f)
-            if term.m == 1 || term.m == -1 {
-                s *= e
-            } else if term.m == 2 || term.m == -2 {
-                s *= e2
-            }
-            sigmaL += s
-        }
-
-        sigmaL += 3958.0 * sin(a1)
-        sigmaL += 1962.0 * sin(ldash - f)
-        sigmaL += 318.0 * sin(a2)
+        // Lunar inequality principal terms (Brown-Chapront)
+        let sigmaL = 6.288774 * sin(mdash)
+            + 1.274027 * sin(2.0 * d - mdash)
+            + 0.658309 * sin(2.0 * d)
+            + 0.213618 * sin(2.0 * mdash)
+            - 0.185116 * sin(m)
+            - 0.114332 * sin(2.0 * f)
+            + 0.058793 * sin(2.0 * d - 2.0 * mdash)
+            + 0.057066 * sin(2.0 * d - m - mdash)
+            + 0.053322 * sin(2.0 * d + mdash)
+            + 0.045758 * sin(2.0 * d - m)
 
         let nutationInLong = CAANutation.nutationInLongitude(jd: jd)
-        return CAACoordinateTransformation.mapTo0To360Range(ldashDeg + (sigmaL / 1_000_000.0) + (nutationInLong / 3600.0))
+        return CAACoordinateTransformation.mapTo0To360Range(ldashDeg + sigmaL + (nutationInLong / 3600.0))
     }
 
     @inlinable
@@ -804,22 +539,17 @@ public enum CAAMoon: Sendable {
         let d = CAACoordinateTransformation.degreesToRadians(meanElongation(jd))
         let m = CAACoordinateTransformation.degreesToRadians(CAAEarth.sunMeanAnomaly(jd))
         let mdash = CAACoordinateTransformation.degreesToRadians(meanAnomaly(jd))
-        let f = CAACoordinateTransformation.degreesToRadians(argumentOfLatitude(jd))
-        let e = CAAEarth.eccentricity(jd)
-        let e2 = e * e
 
-        var sigmaR = 0.0
-        for i in 0..<dmmf1.count {
-            let term = dmmf1[i]
-            var s = lCoeffs[i].b * cos(Double(term.d) * d + Double(term.m) * m + Double(term.mdash) * mdash + Double(term.f) * f)
-            if term.m == 1 || term.m == -1 {
-                s *= e
-            } else if term.m == 2 || term.m == -2 {
-                s *= e2
-            }
-            sigmaR += s
-        }
-        return 385000.56 + (sigmaR / 1000.0)
+        let r = 385000.56
+            - 20905.355 * cos(mdash)
+            - 3699.111 * cos(2.0 * d - mdash)
+            - 2955.968 * cos(2.0 * d)
+            - 569.925 * cos(2.0 * mdash)
+            + 246.158 * cos(2.0 * d - 2.0 * mdash)
+            - 152.138 * cos(2.0 * d - m - mdash)
+            - 170.733 * cos(2.0 * d + mdash)
+            - 204.586 * cos(2.0 * d - m)
+        return r
     }
 
     @inlinable
@@ -828,39 +558,18 @@ public enum CAAMoon: Sendable {
     }
 
     public static func eclipticLatitude(_ jd: Double) -> Double {
-        let ldash = CAACoordinateTransformation.degreesToRadians(meanLongitude(jd))
         let d = CAACoordinateTransformation.degreesToRadians(meanElongation(jd))
-        let m = CAACoordinateTransformation.degreesToRadians(CAAEarth.sunMeanAnomaly(jd))
         let mdash = CAACoordinateTransformation.degreesToRadians(meanAnomaly(jd))
         let f = CAACoordinateTransformation.degreesToRadians(argumentOfLatitude(jd))
 
-        let e = CAAEarth.eccentricity(jd)
-        let e2 = e * e
-        let t = (jd - 2451545.0) / 36525.0
-
-        let a1 = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(119.75 + 131.849 * t))
-        let a3 = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(313.45 + 481266.484 * t))
-
-        var sigmaB = 0.0
-        for i in 0..<dmmf3.count {
-            let term = dmmf3[i]
-            var s = bCoeffs[i] * sin(Double(term.d) * d + Double(term.m) * m + Double(term.mdash) * mdash + Double(term.f) * f)
-            if term.m == 1 || term.m == -1 {
-                s *= e
-            } else if term.m == 2 || term.m == -2 {
-                s *= e2
-            }
-            sigmaB += s
-        }
-
-        sigmaB -= 2235.0 * sin(ldash)
-        sigmaB += 382.0 * sin(a3)
-        sigmaB += 175.0 * sin(a1 - f)
-        sigmaB += 175.0 * sin(a1 + f)
-        sigmaB += 127.0 * sin(ldash - mdash)
-        sigmaB -= 115.0 * sin(ldash + mdash)
-
-        return sigmaB / 1_000_000.0
+        let b = 5.128122 * sin(f)
+            + 0.280602 * sin(mdash + f)
+            + 0.277693 * sin(mdash - f)
+            + 0.173237 * sin(2.0 * d - f)
+            + 0.055413 * sin(2.0 * d - mdash + f)
+            + 0.046271 * sin(2.0 * d - mdash - f)
+            + 0.032573 * sin(2.0 * d + f)
+        return b
     }
 
     @inlinable

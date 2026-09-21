@@ -8,7 +8,7 @@
 
 import Foundation
 
-// MARK: - Nutation Engine (IAU 1980 Wahr Model / Meeus Ch. 22)
+// MARK: - Nutation Engine (IAU 1980 Wahr Model)
 
 private struct NutationCoefficient: Sendable {
     let D: Int
@@ -304,7 +304,7 @@ public enum CAANutation: Sendable {
     }
 }
 
-// MARK: - Precession Engine (Meeus Ch. 21)
+// MARK: - Precession Engine (Rigorous IAU Formulations)
 
 public enum CAAPrecession: Sendable {
     public static func PrecessEquatorial(_ Alpha: Double, _ Delta: Double, _ JD0: Double, _ JD: Double) -> CAA2DCoordinate {

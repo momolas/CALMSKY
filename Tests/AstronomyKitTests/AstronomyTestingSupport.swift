@@ -61,7 +61,7 @@ public func expectEqual<T: BinaryFloatingPoint>(
     #expect(abs(value1 - value2) <= accuracy, comment, sourceLocation: sourceLocation)
 }
 
-/// Convenience alias maintaining full backward-compatibility with legacy Meeus test calls.
+/// Convenience alias maintaining full backward-compatibility with legacy test calls.
 public func AssertEqual<T: NumericType>(
     _ value1: T,
     _ value2: T,

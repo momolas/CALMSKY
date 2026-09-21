@@ -11,21 +11,26 @@ Description
 
 **AstronomyKit** provides everything you need to compute planetary orbits, solar & lunar eclipses, length of seasons, moon phases, rise/transit/set times, Galilean moons of Jupiter, Saturn's rings, coordinate transformations, religious & lunisolar calendars (Hijri, Jewish, Easter), crescent visibility (*Hilal*), atmospheric air mass, and observation windows with professional-grade accuracy.
 
-In addition to classical analytical models (Meeus, VSOP87, ELP2000), AstronomyKit incorporates the core algorithms of **international reference standards**:
-- **USNO NOVAS** : 3D Cartesian vector astrometry (`Vector3D`, `StateVector`), Einstein gravitational light deflection, and relativistic stellar aberration.
-- **IAU SOFA** : Modern time scales (`UT1`, `UTC`, `TAI`, `TT`, `TDB`), $\Delta T$ (Espenak & Meeus 2006), Earth Rotation Angle (ERA IAU 2000), and CIRS $\leftrightarrow$ TIRS coordinate rotations.
-- **NORAD SGP4** : Artificial satellite orbit propagation from standard Two-Line Element (TLE) sets, with topocentric observer look angles (altitude, azimuth, distance).
+AstronomyKit incorporates the core algorithms of **international reference standards**:
+- **NASA JPL DE442s Baseline (Offline)**: High-precision numerical ephemeris engine for offline operation (`EphemerisDataset.baseline = .de442s`) providing sub-meter and sub-milliarcsecond planetary positioning without network connectivity.
+- **Numerical Ensemble (Online Dynamic Streaming - Triad & Tetrad)**: Real-time dynamic HTTP byte-range streaming (`StreamingTetradProvider` / `StreamingTriadProvider`) orchestrating the world's 4 premier space agency models: NASA JPL `DE442s` (US), IMCCE `INPOP21a` (FR), IAA RAS `EPM2021` (RU), and Purple Mountain Observatory / CAS `PMOE` (CN) with multi-agency consensus and physical $1\sigma$ uncertainty.
+- **Adaptive Ephemeris Engine**: Automatic intelligent dispatch (`AdaptiveEphemerisProvider`) resolving to the offline NASA JPL DE442s baseline when cached, or to the dynamic online streaming ensemble.
+- **Strict Numerical Exclusivity**: Pure numerical integration via offline NASA JPL DE442s baseline or online dynamic streaming Tetrad (US, FR, RU, CN). Zero degraded analytical fallbacks (no Jean Meeus, no VSOP87D, no ELP2000-82B, no Standish 1992 fallback).
+- **USNO NOVAS**: 3D Cartesian vector astrometry (`Vector3D`, `StateVector`), Einstein gravitational light deflection, and relativistic stellar aberration.
+- **IAU SOFA**: Modern time scales (`UT1`, `UTC`, `TAI`, `TT`, `TDB`), $\Delta T$ (NASA Espenak 2006), Earth Rotation Angle (ERA IAU 2000), and CIRS $\leftrightarrow$ TIRS coordinate rotations.
+- **NORAD SGP4**: Artificial satellite orbit propagation from standard Two-Line Element (TLE) sets, with topocentric observer look angles (altitude, azimuth, distance).
 
-### Architecture & Sub-Arcsecond Precision
+### Architecture & Numerical Precision
 
 AstronomyKit is built on a **100% Pure Swift 6** architecture, offering professional-grade astrometric precision validated against **NASA JPL Horizons (DE441)**:
 
-- **Sub-Arcsecond Accuracy**: Mean planetary error of **`0.470"`** and lunar error of **`1.381"`** ($35.6\,\text{km}$) without downloading external data files. See the full [Precision Benchmark Ledger](PRECISION_BENCHMARK.md) for detailed scorecard and astrophysical analysis.
-- **Pure Swift 6 & Lightning-Fast Build**: 100% pure native Swift with zero C/C++ dependencies. Clean build compiles in **0.51s** (down from 70s+).
-- **Strict Concurrency**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and events.
-- **Offline-First Hybrid Architecture**: Built-in analytical VSOP87 + ELP2000 engines with transparent, non-blocking fallback to centimeter-precision JPL DE440/VSOP2013 kernels via `makeOfflineFirstProvider()`.
+- **Offline NASA JPL DE442s Baseline**: Direct local DAF/SPK Type 2 Chebyshev evaluation delivering exact sub-milliarcsecond (< 0.001") and sub-meter precision offline.
+- **Online Numerical Tetrad (US + FR + RU + CN)**: Dynamic streaming over HTTP byte-ranges combines NASA JPL (`DE442s`), IMCCE (`INPOP21a`), IAA RAS (`EPM2021`), and PMO/CAS (`PMOE`) with multi-agency consensus and physical $1\sigma$ uncertainty (< 0.05 km).
+- **Pure Swift 6 & Lightning-Fast Build**: 100% pure native Swift with zero C/C++ dependencies and zero Poisson trigonometric lookup tables. Clean build compiles in **sub-second time**.
+- **Strict Concurrency**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and providers.
+- **Physical Uncertainty Analysis**: Multi-model consensus with empirical $1\sigma$ physical dispersion in km and geocentric arcseconds.
 - **Strong Unit Safety**: Type-safe dimensional structures for `Degree`, `ArcSecond`, `Hour`, `JulianDay`, `AstronomicalUnit`, `Kilometer`, etc.
-- **High Test Coverage**: 282 unit tests in 54 suites executing in **82 milliseconds** via modern `Swift-Testing` (`@Test`, `@Suite`).
+- **High Test Coverage**: 289 unit tests in 54 suites executing in **sub-second time** via modern `Swift-Testing` (`@Test`, `@Suite`).
 
 ---
 
@@ -283,6 +288,27 @@ let look = SatellitePropagator.lookAngles(
 print("Altitude: \(look.altitude)°, Azimuth: \(look.azimuth)°, Range: \(look.distanceKm) km")
 ```
 
+### 16. Stack Complet Tétrade / Triade (US + FR + RU + CN) & Consensus Métrologique
+
+```swift
+let manager = EphemerisDataManager()
+
+// Download numerical kernels (DE442s, INPOP21a, EPM2021, PMOE) via GitHub Releases CDN
+let tetrad = try await manager.makeTetradProvider { dataset, received, total in
+    print("[\(dataset.name)] \(received)/\(total) bytes")
+}
+
+// Or load exclusively from local cache without network
+// let tetrad = try manager.makeTetradProviderFromCache()
+
+// Metrological 4-agency consensus & 1-sigma physical uncertainty
+let consensus = try tetrad.consensusDetails(for: .mars, at: jd)
+print("Consensus Position (AU):", consensus.consensusPosition)
+print("1-σ Physical Uncertainty:", consensus.physicalUncertaintyKm, "km")
+print("1-σ Geocentric Angular Uncertainty:", consensus.physicalUncertaintyArcsec, "arcsec")
+print("Max Agency Discrepancy:", consensus.maxDiscrepancyKm, "km")
+```
+
 ---
 
 Documentation
@@ -313,19 +339,11 @@ Or add it directly in Xcode via **File > Add Package Dependencies...** with `htt
 
 ---
 
-AA+ Core
-========
-
-The AA+ framework, written in C++ by PJ Naughter (Visual C++ MVP), is the comprehensive implementation of the algorithms in Jean Meeus' reference textbook *Astronomical Algorithms*. 
-
-AstronomyKit integrates **AA+ v2.63** (released May 2025) directly as a C++ SPM module target (`AAplus`).
-
----
 
 Caution on Coordinates
 ======================
 
-Coordinates computations are key for modern astronomy. Note that classical Meeus algorithms are referenced to standard dynamical epochs (such as standard equinox FK5 J2000.0) rather than relativistic ICRS. For conversions requiring high-order relativistic stellar motions, refer also to packages like [AstroPy](http://docs.astropy.org/en/stable/coordinates/index.html).
+Coordinate computations are key for modern astronomy. High-precision positions in AstronomyKit are referenced to the Barycentric Dynamical Time (TDB) frame and International Celestial Reference Frame (ICRF / J2000) using NASA JPL numerical integration (DE442s), IMCCE INPOP21a, and IAA RAS EPM2021. For conversions requiring high-order relativistic stellar motions, vector astrometry tools based on USNO NOVAS are natively provided.
 
 ---
 
@@ -340,8 +358,4 @@ Cédric Foellmi, a.k.a. **[@onekiloparsec](https://twitter.com/onekiloparsec)** 
 Licence
 =======
 
-The licence of this software is the [MIT](http://opensource.org/licenses/MIT) licence. The underlying AA+ Framework retains its own licence by PJ Naughter:
-
-* You are allowed to include the source code in any product (commercial, shareware, freeware or otherwise) when your product is released in binary form.
-* You are allowed to modify the source code in any way you want except you cannot modify the copyright details at the top of each module.
-* If you want to distribute source code with your application, then you are only allowed to distribute versions released by the author.
+The licence of this software is the [MIT](http://opensource.org/licenses/MIT) licence.

@@ -26,7 +26,26 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
     /// Source: NASA NAIF/JPL. Recommended for most applications.
     case lunarDE440s
 
+    /// JPL DE442s compact modern planetary ephemerides covering 1849–2150 CE (≈31.1 MB).
+    /// Primary source: Canonical GitHub Releases Assets (fallback to NASA NAIF).
+    case de442s
+
+    /// IMCCE INPOP21a modern planetary ephemerides covering 1900–2100 CE (≈24.2 MB).
+    /// Primary source: Canonical GitHub Releases Assets (fallback to IMCCE).
+    case inpop21a
+
+    /// IAA RAS EPM2021 modern planetary ephemerides covering 1787–2214 CE (≈39.7 MB).
+    /// Primary source: Canonical GitHub Releases Assets (fallback to IAA RAS).
+    case epm2021
+
+    /// PMO / CAS PMOE modern planetary ephemerides covering 1900–2100 CE (≈25.0 MB).
+    /// Primary source: Canonical GitHub Releases Assets (fallback to PMO CAS).
+    case pmoe
+
     public var id: String { rawValue }
+
+    /// Official baseline ephemeris dataset (NASA JPL DE442s).
+    public static var baseline: EphemerisDataset { .de442s }
 
     /// Human-readable name of the dataset.
     public var name: String {
@@ -35,10 +54,14 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         case .vsop2013Full: return "VSOP2013 Full (−4000 to +8000 CE)"
         case .lunarDE440: return "DE440 Lunar (1550–2650 CE)"
         case .lunarDE440s: return "DE440s Lunar (1900–2050 CE)"
+        case .de442s: return "DE442s Planetary (1849–2150 CE) [US - NASA JPL]"
+        case .inpop21a: return "INPOP21a Planetary (1900–2100 CE) [FR - IMCCE]"
+        case .epm2021: return "EPM2021 Planetary (1787–2214 CE) [RU - IAA RAS]"
+        case .pmoe: return "PMOE Planetary (1900–2100 CE) [CN - PMO / CAS]"
         }
     }
 
-    /// The remote URL of the official source.
+    /// The remote URL of the official source (canonical GitHub Releases Assets for Triad models).
     public var remoteURL: URL {
         switch self {
         case .vsop2013Modern:
@@ -49,6 +72,30 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
             return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp")!
         case .lunarDE440s:
             return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp")!
+        case .de442s:
+            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp")!
+        case .inpop21a:
+            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/inpop21a.bsp")!
+        case .epm2021:
+            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/epm2021.bsp")!
+        case .pmoe:
+            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/pmoe.bsp")!
+        }
+    }
+
+    /// Upstream official repository URL (fallback if GitHub Releases is unreachable).
+    public var fallbackRemoteURL: URL? {
+        switch self {
+        case .de442s:
+            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp")
+        case .inpop21a:
+            return URL(string: "ftp://ftp.imcce.fr/pub/ephem/planets/inpop21a/inpop21a_TDB_m100_p100_spice.tar.gz")
+        case .epm2021:
+            return URL(string: "ftp://ftp.iaaras.ru/pub/epm/EPM2021/SPICE/epm2021.bsp")
+        case .pmoe:
+            return URL(string: "http://www.pmo.cas.cn/ephem/pmoe.bsp")
+        case .vsop2013Modern, .vsop2013Full, .lunarDE440, .lunarDE440s:
+            return nil
         }
     }
 
@@ -64,6 +111,14 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
             return "IMCCE – Observatoire de Paris"
         case .lunarDE440, .lunarDE440s:
             return "NASA NAIF / Jet Propulsion Laboratory"
+        case .de442s:
+            return "NASA NAIF / Jet Propulsion Laboratory (US)"
+        case .inpop21a:
+            return "IMCCE – Observatoire de Paris (FR)"
+        case .epm2021:
+            return "IAA RAS – Institute of Applied Astronomy (RU)"
+        case .pmoe:
+            return "Purple Mountain Observatory / CAS (CN)"
         }
     }
 }
@@ -135,20 +190,35 @@ public actor EphemerisDataManager {
         // Ensure cache directory exists
         try FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
 
-        // Download with progress tracking
-        let (tempURL, response) = try await URLSession.shared.download(from: dataset.remoteURL) { totalBytesWritten, totalBytesExpectedToWrite in
+        // Attempt download from primary URL (canonical GitHub Releases Assets)
+        do {
+            return try await performDownload(from: dataset.remoteURL, targetFilename: dataset.filename, progress: progress)
+        } catch {
+            // Fallback to official upstream repository URL if available
+            if let fallbackURL = dataset.fallbackRemoteURL {
+                return try await performDownload(from: fallbackURL, targetFilename: dataset.filename, progress: progress)
+            }
+            throw error
+        }
+    }
+
+    /// Performs the network download and moves the file to the local cache.
+    private func performDownload(
+        from url: URL,
+        targetFilename: String,
+        progress: (@Sendable (Int64, Int64) -> Void)?
+    ) async throws -> URL {
+        let (tempURL, response) = try await URLSession.shared.download(from: url) { totalBytesWritten, totalBytesExpectedToWrite in
             progress?(totalBytesWritten, totalBytesExpectedToWrite)
         }
 
-        // Validate HTTP response
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             throw EphemerisError.dataFileNotFound(
-                "HTTP \(httpResponse.statusCode) downloading \(dataset.remoteURL.absoluteString)"
+                "HTTP \(httpResponse.statusCode) downloading \(url.absoluteString)"
             )
         }
 
-        // Move to final location
-        let finalURL = cacheDirectory.appendingPathComponent(dataset.filename)
+        let finalURL = cacheDirectory.appendingPathComponent(targetFilename)
         if FileManager.default.fileExists(atPath: finalURL.path) {
             try FileManager.default.removeItem(at: finalURL)
         }
@@ -200,7 +270,7 @@ public actor EphemerisDataManager {
         }
     }
 
-    // MARK: - Provider Factory
+    // MARK: - Provider Factories
 
     /// Creates a ``HybridEphemerisProvider`` by downloading any missing data files.
     ///
@@ -228,26 +298,242 @@ public actor EphemerisDataManager {
         )
     }
 
-    /// Creates an offline-first ephemeris provider.
+    /// Creates a ``TriadEphemerisProvider`` combining US (DE442s), FR (INPOP21a), and RU (EPM2021) numerical ephemerides.
     ///
-    /// If both VSOP2013 and DE440 data files are already present in the local cache,
-    /// this returns a ``HybridEphemerisProvider`` (sub-meter/sub-arcsecond numerical precision).
-    /// Otherwise, it returns an ``AnalyticalEphemerisProvider`` (zero-download, analytical VSOP87 + ELP2000),
-    /// guaranteeing instant availability without blocking on network requests or failing offline.
+    /// Downloads missing kernels from the canonical GitHub Releases CDN (with upstream fallback)
+    /// and instantiates the multi-agency consensus provider.
     ///
-    /// - Returns: A configured ``EphemerisProvider`` (either ``HybridEphemerisProvider`` or ``AnalyticalEphemerisProvider``).
-    public nonisolated func makeOfflineFirstProvider() -> any EphemerisProvider {
-        let vsopURL = cacheDirectory.appendingPathComponent(EphemerisDataset.vsop2013Modern.filename)
-        let lunarURL = cacheDirectory.appendingPathComponent(EphemerisDataset.lunarDE440s.filename)
-        if FileManager.default.fileExists(atPath: vsopURL.path),
-           FileManager.default.fileExists(atPath: lunarURL.path),
-           let hybrid = try? HybridEphemerisProvider(
-               vsop2013DataURL: vsopURL.deletingLastPathComponent(),
-               lunarSPKURL: lunarURL
-           ) {
-            return hybrid
+    /// Strictly enforces numerical exclusivity: no silent fallback to analytical models.
+    ///
+    /// - Parameters:
+    ///   - datasets: Datasets to include (defaults to all three: `.de442s`, `.inpop21a`, `.epm2021`).
+    ///   - progress: Optional closure called with `(dataset, bytesReceived, totalBytes)`.
+    /// - Returns: A configured ``TriadEphemerisProvider``.
+    /// - Throws: An error if download fails or kernels cannot be parsed.
+    public func makeTriadProvider(
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021],
+        progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
+    ) async throws -> TriadEphemerisProvider {
+        var providers: [TriadAgency: any EphemerisProvider] = [:]
+
+        for ds in datasets {
+            let fileURL = try await download(ds) { received, total in
+                progress?(ds, received, total)
+            }
+            let spkProvider = try SPKEphemerisProvider(spkFileURL: fileURL)
+            switch ds {
+            case .de442s:
+                providers[.us] = spkProvider
+            case .inpop21a:
+                providers[.fr] = spkProvider
+            case .epm2021:
+                providers[.ru] = spkProvider
+            case .pmoe:
+                providers[.cn] = spkProvider
+            default:
+                break
+            }
         }
-        return AnalyticalEphemerisProvider()
+
+        return try TriadEphemerisProvider(providers: providers)
+    }
+
+    /// Instantiates a ``TriadEphemerisProvider`` from locally cached numerical kernels without network access.
+    ///
+    /// Strictly enforces numerical exclusivity: if none of the requested kernels are present in cache,
+    /// throws ``EphemerisError/dataFileNotFound(_:)``. Never falls back to analytical models.
+    ///
+    /// - Parameter datasets: Candidate datasets to look for in local cache (defaults to `.de442s`, `.inpop21a`, `.epm2021`).
+    /// - Returns: A configured ``TriadEphemerisProvider``.
+    /// - Throws: ``EphemerisError`` if no cached kernel is available or if data is corrupted.
+    public nonisolated func makeTriadProviderFromCache(
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021]
+    ) throws -> TriadEphemerisProvider {
+        var providers: [TriadAgency: any EphemerisProvider] = [:]
+
+        for ds in datasets {
+            let fileURL = cacheDirectory.appendingPathComponent(ds.filename)
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                let spk = try SPKEphemerisProvider(spkFileURL: fileURL)
+                switch ds {
+                case .de442s: providers[.us] = spk
+                case .inpop21a: providers[.fr] = spk
+                case .epm2021: providers[.ru] = spk
+                case .pmoe: providers[.cn] = spk
+                default: break
+                }
+            }
+        }
+
+        guard !providers.isEmpty else {
+            throw EphemerisError.dataFileNotFound(
+                "No Triad/Tetrad numerical kernels (.de442s, .inpop21a, .epm2021, .pmoe) found in cache directory \(cacheDirectory.path). " +
+                "Numerical exclusivity strictly enforced (analytical fallback disabled)."
+            )
+        }
+
+        return try TriadEphemerisProvider(providers: providers)
+    }
+
+    // MARK: - Tetrad Ensemble Factories (US + FR + RU + CN)
+
+    /// Instantiates a 4-agency ``TetradEphemerisProvider`` (NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, PMO/CAS PMOE).
+    ///
+    /// Downloads missing numerical kernels in parallel with progress reporting.
+    public func makeTetradProvider(
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe],
+        progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
+    ) async throws -> TetradEphemerisProvider {
+        try await makeTriadProvider(datasets: datasets, progress: progress)
+    }
+
+    /// Instantiates a 4-agency ``TetradEphemerisProvider`` from locally cached numerical kernels without network access.
+    public nonisolated func makeTetradProviderFromCache(
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe]
+    ) throws -> TetradEphemerisProvider {
+        try makeTriadProviderFromCache(datasets: datasets)
+    }
+
+    // MARK: - Dynamic Temporal Streaming Factories
+
+    /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of a dataset.
+    ///
+    /// Fetches only the required byte chunks for requested dates without downloading the full kernel.
+    public func makeStreamingProvider(for dataset: EphemerisDataset) -> StreamingSPKEphemerisProvider {
+        let datasetCacheDir = cacheDirectory.appendingPathComponent("streaming_\(dataset.rawValue)")
+        return StreamingSPKEphemerisProvider(
+            reader: StreamingSPKReader(
+                primaryURL: dataset.remoteURL,
+                fallbackURL: dataset.fallbackRemoteURL,
+                cacheDirectory: datasetCacheDir
+            )
+        )
+    }
+
+    /// Creates a ``StreamingTriadProvider`` combining US, FR, and RU ephemerides in parallel HTTP streaming mode.
+    ///
+    /// Fetches and evaluates Chebyshev polynomial slices across all three models in parallel,
+    /// transferring less than 10 KB per requested date while providing full consensus and 1-sigma physical uncertainty.
+    public func makeStreamingTriadProvider(
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021]
+    ) throws -> StreamingTriadProvider {
+        var providers: [TriadAgency: StreamingSPKEphemerisProvider] = [:]
+        for ds in datasets {
+            let sp = makeStreamingProvider(for: ds)
+            switch ds {
+            case .de442s: providers[.us] = sp
+            case .inpop21a: providers[.fr] = sp
+            case .epm2021: providers[.ru] = sp
+            case .pmoe: providers[.cn] = sp
+            default: break
+            }
+        }
+        return try StreamingTriadProvider(providers: providers)
+    }
+
+    /// Creates a ``StreamingTetradProvider`` combining US, FR, RU, and CN ephemerides in parallel HTTP streaming mode.
+    public func makeStreamingTetradProvider(
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe]
+    ) throws -> StreamingTetradProvider {
+        try makeStreamingTriadProvider(datasets: datasets)
+    }
+
+    // MARK: - Baseline Numerical Ephemeris (NASA JPL DE442s)
+
+    /// Instantiates the official baseline numerical ephemeris provider (NASA JPL DE442s).
+    ///
+    /// Downloads the kernel from the canonical GitHub Releases CDN (or NASA NAIF fallback) if not present.
+    /// - Parameter progress: Optional closure called with `(bytesReceived, totalBytes)`.
+    /// - Returns: An ``SPKEphemerisProvider`` initialized with NASA JPL DE442s.
+    public func makeBaselineProvider(
+        progress: (@Sendable (Int64, Int64) -> Void)? = nil
+    ) async throws -> SPKEphemerisProvider {
+        let fileURL = try await download(.de442s) { received, total in
+            progress?(received, total)
+        }
+        return try SPKEphemerisProvider(spkFileURL: fileURL)
+    }
+
+    /// Instantiates the official baseline numerical ephemeris provider (NASA JPL DE442s) from local cache for offline use.
+    ///
+    /// - Returns: An ``SPKEphemerisProvider`` initialized with cached NASA JPL DE442s.
+    /// - Throws: ``EphemerisError/dataFileNotFound(_:)`` if the DE442s kernel is not in local cache.
+    public nonisolated func makeBaselineProviderFromCache() throws -> SPKEphemerisProvider {
+        let fileURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            throw EphemerisError.dataFileNotFound(
+                "Offline baseline numerical kernel (DE442s) not found in cache at: \(fileURL.path). " +
+                "Call makeBaselineProvider() to download it from the canonical repository."
+            )
+        }
+        return try SPKEphemerisProvider(spkFileURL: fileURL)
+    }
+
+    /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of the NASA JPL DE442s baseline.
+    public func makeStreamingBaselineProvider() -> StreamingSPKEphemerisProvider {
+        makeStreamingProvider(for: .de442s)
+    }
+
+    /// Creates an optimal adaptive numerical provider adhering to the policy:
+    /// - **Hors-ligne (Offline)** : Utilise la Baseline numérique NASA JPL DE442s si disponible en cache local (`.offlineBaseline`).
+    /// - **Sinon (En ligne / Streaming)** : Utilise la Triade numérique (DE442s US + INPOP21a FR + EPM2021 RU) via streaming dynamique HTTP Range (`.onlineTriad`).
+    public func makeAdaptiveProvider() throws -> AdaptiveEphemerisProvider {
+        let baselineURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
+        if FileManager.default.fileExists(atPath: baselineURL.path) {
+            let baseline = try makeBaselineProviderFromCache()
+            return AdaptiveEphemerisProvider(engine: .offlineBaseline(baseline))
+        } else {
+            let triad = try makeStreamingTriadProvider()
+            return AdaptiveEphemerisProvider(engine: .onlineTriad(triad))
+        }
+    }
+}
+
+// MARK: - Adaptive Ephemeris Provider
+
+/// Adaptive ephemeris orchestrator dynamically selecting between:
+/// - Offline Baseline: NASA JPL DE442s local numerical SPK kernel.
+/// - Online Consensus: Streaming Triad (NASA JPL DE442s + IMCCE INPOP21a + IAA RAS EPM2021) via parallel HTTP Range requests.
+public final class AdaptiveEphemerisProvider: Sendable {
+    public enum Engine: Sendable {
+        case offlineBaseline(SPKEphemerisProvider)
+        case onlineTriad(StreamingTriadProvider)
+    }
+
+    public let engine: Engine
+
+    public init(engine: Engine) {
+        self.engine = engine
+    }
+
+    public var isOfflineBaseline: Bool {
+        if case .offlineBaseline = engine { return true }
+        return false
+    }
+
+    public var isStreamingTriad: Bool {
+        if case .onlineTriad = engine { return true }
+        return false
+    }
+
+    public func position(for body: SolarSystemBody, at jd: JulianDay) async throws -> Vector3D {
+        switch engine {
+        case .offlineBaseline(let baseline):
+            return try baseline.position(for: body, at: jd)
+        case .onlineTriad(let triad):
+            let details = try await triad.consensusDetails(for: body, at: jd)
+            return details.consensusPosition
+        }
+    }
+
+    public func stateVector(for body: SolarSystemBody, at jd: JulianDay) async throws -> StateVector {
+        switch engine {
+        case .offlineBaseline(let baseline):
+            return try baseline.stateVector(for: body, at: jd)
+        case .onlineTriad(let triad):
+            let details = try await triad.consensusDetails(for: body, at: jd)
+            return StateVector(position: details.consensusPosition, velocity: details.consensusVelocity)
+        }
     }
 }
 

@@ -15,7 +15,7 @@ public protocol ObjectBase: Sendable {
     /// The julian day at which one considers the object.
     var julianDay: JulianDay { get }
     
-    /// A boolean indicating whether high precision (i.e. VSOP87 theory) must be used.
+    /// A boolean indicating whether high precision algorithms must be used.
     var highPrecision: Bool { get }
     
     /// The object name
@@ -25,8 +25,7 @@ public protocol ObjectBase: Sendable {
     ///
     /// - Parameters:
     ///   - julianDay: The julian day at which one will consider the object
-    ///   - highPrecision: If true (default), the VSOP87 theory is used when relevant to increase precision 
-    ///     significantly. Is probably computationally slower compared to low-precision algorithms.
+    ///   - highPrecision: If true (default), high precision algorithms are used when relevant to increase precision.
     init(julianDay: JulianDay, highPrecision: Bool)
 }
 
@@ -47,8 +46,7 @@ open class Object : ObjectBase, @unchecked Sendable {
     ///
     /// - Parameters:
     ///   - julianDay: The julian day at which one will consider the object
-    ///   - highPrecision: A optional boolean indicating whether high precision (i.e. VSOP87 theory) must be used. 
-    ///     Default is true.
+    ///   - highPrecision: An optional boolean indicating whether high precision must be used. Default is true.
     public required init(julianDay: JulianDay, highPrecision: Bool = true) {
         self.julianDay = julianDay
         self.highPrecision = highPrecision

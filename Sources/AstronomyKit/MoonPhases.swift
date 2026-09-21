@@ -102,7 +102,7 @@ public extension MoonPhase {
         }
     }
 
-    /// Fractional offset to the lunation index k in Meeus algorithm.
+    /// Fractional offset to the lunation index k.
     var kOffset: Double {
         switch self {
         case .newMoon: return 0.0

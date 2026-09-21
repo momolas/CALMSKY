@@ -36,7 +36,7 @@ public final class Saturn: Planet, @unchecked Sendable {
     ///
     /// - Parameters:
     ///   - julianDay: The julian day at which the planet is considered.
-    ///   - highPrecision: A boolean indicating whether high precision (VSOP87 theory) must be used. Default is true.
+    ///   - highPrecision: A boolean indicating whether high precision must be used. Default is true.
     public required init(julianDay: JulianDay, highPrecision: Bool = true) {
         let details = CAASaturnMoons.Calculate(julianDay.value, highPrecision)
         self.Mimas = SaturnianMoon(name: "Mimas", details: details.Satellite1, synodicPeriod: 0.9425, visualMagnitude: 12.9, diameter: 400.0)

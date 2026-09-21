@@ -36,6 +36,11 @@ public struct Vector3D: Sendable, Hashable, Equatable, CustomStringConvertible {
         simd_length(rawValue)
     }
 
+    /// Squared Euclidean length of the vector
+    public var lengthSquared: Double {
+        simd_length_squared(rawValue)
+    }
+
     /// Unit vector pointing in the same direction. Returns `.zero` if length is 0.
     public var normalized: Vector3D {
         let len = simd_length(rawValue)

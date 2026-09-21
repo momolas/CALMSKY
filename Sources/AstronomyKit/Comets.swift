@@ -87,7 +87,7 @@ public struct ParabolicOrbit: Sendable {
     /// - Parameters:
     ///   - jd: Julian Day of observation.
     ///   - elements: Parabolic orbital elements.
-    ///   - highPrecision: If true, uses high-precision VSOP87 calculations.
+    ///   - highPrecision: If true, uses high-precision planetary calculations.
     /// - Returns: ParabolicOrbitDetails.
     public static func calculate(julianDay: JulianDay, elements: ParabolicOrbitElements, highPrecision: Bool = true) -> ParabolicOrbitDetails {
         var cElements = CAAParabolicObjectElements()
