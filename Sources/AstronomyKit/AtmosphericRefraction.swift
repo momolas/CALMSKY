@@ -33,3 +33,50 @@ public func refraction(fromTrueAltitude h: Degree, pressure: Millibar = 1010, te
     // AA returns a value in Degrees
     return Degree(CAARefraction.RefractionFromTrue(h.value, pressure, temperature)).inArcMinutes
 }
+
+/// Compute modern atmospheric refraction from apparent altitude using the BIPM Ciddor (1996/2002) model.
+///
+/// - Parameters:
+///   - h0: The measured apparent altitude.
+///   - pressure: The atmospheric pressure at Earth's surface in Millibar / hPa (default: 1010).
+///   - temperature: The air temperature at Earth's surface in Celsius (default: 10).
+///   - parameters: Environmental and spectral parameters (wavelength, CO2, humidity).
+/// - Returns: The refraction amplitude, in arcminutes.
+public func refractionCiddor(
+    fromApparentAltitude h0: Degree,
+    pressure: Millibar = 1010,
+    temperature: Celsius = 10,
+    parameters: CiddorParameters = .visual
+) -> ArcMinute {
+    let deg = AtmosphericRefractionEngine.ciddorRefraction(
+        apparentAltitude: h0.value,
+        pressureHPa: pressure,
+        temperatureC: temperature,
+        params: parameters
+    )
+    return Degree(deg).inArcMinutes
+}
+
+/// Compute modern atmospheric refraction from true "airless" altitude using the BIPM Ciddor (1996/2002) model.
+///
+/// - Parameters:
+///   - h: The geometric airless true altitude.
+///   - pressure: The atmospheric pressure at Earth's surface in Millibar / hPa (default: 1010).
+///   - temperature: The air temperature at Earth's surface in Celsius (default: 10).
+///   - parameters: Environmental and spectral parameters (wavelength, CO2, humidity).
+/// - Returns: The refraction amplitude, in arcminutes.
+public func refractionCiddor(
+    fromTrueAltitude h: Degree,
+    pressure: Millibar = 1010,
+    temperature: Celsius = 10,
+    parameters: CiddorParameters = .visual
+) -> ArcMinute {
+    let appAlt = AtmosphericRefractionEngine.apparentAltitudeFromTrue(
+        trueAltitude: h.value,
+        pressureHPa: pressure,
+        temperatureC: temperature,
+        params: parameters
+    )
+    return Degree(appAlt - h.value).inArcMinutes
+}
+

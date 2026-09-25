@@ -37,6 +37,9 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
 - For Chebyshev polynomial evaluation with derivatives (positions and velocities), use the exact joint Clenshaw recurrence in a single SIMD pass (`simd_double3`) to compute position and velocity simultaneously.
 - In asynchronous actors fetching remote or streaming resources, never rely on naive `if let cached = ...` checks before an `await` suspension point without memoizing the in-flight task; concurrent callers arriving before the fetch completes will trigger an actor request stampede, executing duplicate network requests and overwriting shared actor state. Use task coalescence by holding a shared in-flight `Task<T, Error>?` that concurrent callers await.
 - Never cast floating-point numbers to integers (`Int((val - base) / step)`) without an explicit `guard val.isFinite else { throw ... }` check; converting `Double.nan` or `Double.infinity` to `Int` triggers a fatal uncatchable runtime crash in Swift 6 that bypasses error handling.
+- In high-precision astrometry or numerical ephemeris evaluation, always convert terrestrial time (`jdTT`) to Barycentric Dynamical Time (`TDB`) via `AstronomicalTimeScale.ttToTDB` before Chebyshev polynomial sampling to account for the geocentric relativistic oscillation ($\pm 1.66\,\text{ms}$, IAU 2006 / Fairhead & Bretagnon 1990).
+- For Earth rotation timing ($\Delta T = \text{TT} - \text{UT1}$), use Stephenson, Morrison & Hohenkerk (2016) secular deceleration coupled with observed telescopic measurements (1657–2025) and IERS Bulletin A.
+- For precision atmospheric refraction with spectral filtering (H-$\alpha$, O-III, Near-IR), use the BIPM Ciddor (1996/2002) model with smooth $C^\infty$ cosine blending towards the physical horizon rather than uncorrected monochromatic approximations.
 
 ## SwiftUI instructions
 
