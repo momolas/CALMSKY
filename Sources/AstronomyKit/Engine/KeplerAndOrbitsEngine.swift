@@ -1098,14 +1098,224 @@ public enum CAAPlanetaryPhenomena: Sendable {
     }
 }
 
+// MARK: - Planetary Orbital Elements Data Types
+
+/// Comprehensive snapshot of planetary orbital elements for equinox of date.
+public struct PlanetaryOrbitalElements: Sendable, Equatable {
+    public let meanLongitude: Double
+    public let semimajorAxis: Double
+    public let eccentricity: Double
+    public let inclination: Double
+    public let longitudeAscendingNode: Double
+    public let longitudePerihelion: Double
+
+    public init(
+        meanLongitude: Double,
+        semimajorAxis: Double,
+        eccentricity: Double,
+        inclination: Double,
+        longitudeAscendingNode: Double,
+        longitudePerihelion: Double
+    ) {
+        self.meanLongitude = meanLongitude
+        self.semimajorAxis = semimajorAxis
+        self.eccentricity = eccentricity
+        self.inclination = inclination
+        self.longitudeAscendingNode = longitudeAscendingNode
+        self.longitudePerihelion = longitudePerihelion
+    }
+}
+
+/// Comprehensive snapshot of planetary orbital elements for J2000 equinox.
+public struct PlanetaryOrbitalElementsJ2000: Sendable, Equatable {
+    public let meanLongitude: Double
+    public let inclination: Double
+    public let longitudeAscendingNode: Double
+    public let longitudePerihelion: Double
+
+    public init(
+        meanLongitude: Double,
+        inclination: Double,
+        longitudeAscendingNode: Double,
+        longitudePerihelion: Double
+    ) {
+        self.meanLongitude = meanLongitude
+        self.inclination = inclination
+        self.longitudeAscendingNode = longitudeAscendingNode
+        self.longitudePerihelion = longitudePerihelion
+    }
+}
+
 // MARK: - Planetary Orbital Elements (CAAElementsPlanetaryOrbit)
 
 public enum CAAElementsPlanetaryOrbit: Sendable {
-    private static func T(_ JD: Double) -> (T: Double, T2: Double, T3: Double) {
+    @usableFromInline
+    internal static func T(_ JD: Double) -> (T: Double, T2: Double, T3: Double) {
         let t = (JD - 2451545.0) / 36525.0
         let t2 = t * t
         return (t, t2, t2 * t)
     }
+
+    /// Joint evaluation of planetary orbital elements for equinox of date in a single pass.
+    @inlinable
+    public static func elements(for planet: KPCAAPlanetStrict, jd: Double) -> PlanetaryOrbitalElements {
+        let t = T(jd)
+        switch planet {
+        case .KPCAAPlanetStrictMercury:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(252.250906 + (149474.0722491 * t.T) + (0.00030350 * t.T2) + (0.000000018 * t.T3)),
+                semimajorAxis: 0.387098310,
+                eccentricity: 0.20563175 + (0.000020407 * t.T) - (0.0000000283 * t.T2) - (0.00000000018 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(7.004986 + (0.0018215 * t.T) - (0.00001810 * t.T2) + (0.000000056 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(48.330893 + (1.1861883 * t.T) + (0.00017542 * t.T2) + (0.000000215 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(77.456119 + (1.5564776 * t.T) + (0.00029544 * t.T2) + (0.000000009 * t.T3))
+            )
+        case .KPCAAPlanetStrictVenus:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(181.979801 + (58519.2130302 * t.T) + (0.00031014 * t.T2) + (0.000000015 * t.T3)),
+                semimajorAxis: 0.723329820,
+                eccentricity: 0.00677192 - (0.000047765 * t.T) + (0.0000000981 * t.T2) + (0.00000000046 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(3.394662 + (0.0010037 * t.T) - (0.00000088 * t.T2) - (0.000000007 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(76.679920 + (0.9011206 * t.T) + (0.00040618 * t.T2) - (0.000000093 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(131.563707 + (1.4022288 * t.T) - (0.00107618 * t.T2) - (0.000005678 * t.T3))
+            )
+        case .KPCAAPlanetStrictEarth:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(100.466449 + (36000.7698231 * t.T) + (0.00030368 * t.T2) + (0.000000002 * t.T3)),
+                semimajorAxis: 1.000001018,
+                eccentricity: 0.01670863 - (0.000042037 * t.T) - (0.0000001267 * t.T2) + (0.00000000014 * t.T3),
+                inclination: 0.0,
+                longitudeAscendingNode: 0.0,
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(102.937348 + (1.7195269 * t.T) + (0.00045962 * t.T2) + (0.000000499 * t.T3))
+            )
+        case .KPCAAPlanetStrictMars:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(355.433000 + (19141.6964471 * t.T) + (0.00031052 * t.T2) + (0.000000016 * t.T3)),
+                semimajorAxis: 1.523679342,
+                eccentricity: 0.09340065 + (0.000090484 * t.T) - (0.0000000806 * t.T2) - (0.00000000025 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(1.849726 - (0.0006011 * t.T) + (0.00001276 * t.T2) - (0.000000007 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(49.558093 + (0.7720959 * t.T) + (0.00001557 * t.T2) + (0.000002267 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(336.060234 + (1.8410449 * t.T) + (0.00013477 * t.T2) + (0.000000536 * t.T3))
+            )
+        case .KPCAAPlanetStrictJupiter:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(34.351519 + (3034.9056616 * t.T) - (0.00008501 * t.T2) + (0.000000004 * t.T3)),
+                semimajorAxis: 5.202603209 + (0.0000001913 * t.T),
+                eccentricity: 0.04849793 + (0.000163225 * t.T) - (0.0000004714 * t.T2) - (0.00000000201 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(1.303267 - (0.0054965 * t.T) + (0.00000466 * t.T2) - (0.000000002 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(100.464407 + (1.0209774 * t.T) + (0.00040315 * t.T2) + (0.000000404 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(14.331209 + (1.6126352 * t.T) + (0.00103042 * t.T2) - (0.000004464 * t.T3))
+            )
+        case .KPCAAPlanetStrictSaturn:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(50.077444 + (1222.1138488 * t.T) + (0.00021004 * t.T2) - (0.000000019 * t.T3)),
+                semimajorAxis: 9.554909192 - (0.0000021390 * t.T) + (0.000000004 * t.T2),
+                eccentricity: 0.05554814 - (0.0003446641 * t.T) - (0.0000006436 * t.T2) + (0.00000000340 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(2.488879 - (0.0037362 * t.T) - (0.00001519 * t.T2) + (0.000000087 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(113.665503 + (0.8770880 * t.T) - (0.00012176 * t.T2) - (0.000002249 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(93.057237 + (1.9637613 * t.T) + (0.00083753 * t.T2) + (0.000004928 * t.T3))
+            )
+        case .KPCAAPlanetStrictUranus:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(314.055005 + (428.4669983 * t.T) - (0.00000486 * t.T2) - (0.000000006 * t.T3)),
+                semimajorAxis: 19.218446062 - (0.0000000372 * t.T) + (0.00000000098 * t.T2),
+                eccentricity: 0.04638122 - (0.000027293 * t.T) + (0.0000000789 * t.T2) + (0.00000000024 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(0.773197 + (0.0007744 * t.T) + (0.00003749 * t.T2) - (0.000000092 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(74.005957 + (0.5211278 * t.T) + (0.00133947 * t.T2) + (0.000001848 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(173.005291 + (1.4863790 * t.T) + (0.00021444 * t.T2) + (0.000000434 * t.T3))
+            )
+        case .KPCAAPlanetStrictNeptune:
+            return PlanetaryOrbitalElements(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(304.348665 + (218.4862002 * t.T) + (0.00005927 * t.T2) - (0.000000002 * t.T3)),
+                semimajorAxis: 30.110386869 - (0.0000001663 * t.T) + (0.00000000069 * t.T2),
+                eccentricity: 0.00945575 + (0.000006033 * t.T) - (0.00000000005 * t.T3),
+                inclination: SphericalTrigonometry.mapTo0To360Range(1.769953 - (0.0093082 * t.T) - (0.00000708 * t.T2) + (0.000000027 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(131.784057 + (1.1022039 * t.T) + (0.00025952 * t.T2) - (0.000000637 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(48.120276 + (1.4262957 * t.T) + (0.00038434 * t.T2) + (0.000000020 * t.T3))
+            )
+        default:
+            return PlanetaryOrbitalElements(
+                meanLongitude: 0.0,
+                semimajorAxis: 0.0,
+                eccentricity: 0.0,
+                inclination: 0.0,
+                longitudeAscendingNode: 0.0,
+                longitudePerihelion: 0.0
+            )
+        }
+    }
+
+    /// Joint evaluation of planetary orbital elements for J2000 equinox in a single pass.
+    @inlinable
+    public static func elementsJ2000(for planet: KPCAAPlanetStrict, jd: Double) -> PlanetaryOrbitalElementsJ2000 {
+        let t = T(jd)
+        switch planet {
+        case .KPCAAPlanetStrictMercury:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(252.250906 + (149472.6746358 * t.T) - (0.00000535 * t.T2) + (0.000000002 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(7.004986 + (0.0059015 * t.T) - (0.00001928 * t.T2) - (0.000000014 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(48.330893 - (0.1254229 * t.T) - (0.00008833 * t.T2) - (0.000000196 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(77.456119 + (0.1588643 * t.T) - (0.00001343 * t.T2) + (0.000000039 * t.T3))
+            )
+        case .KPCAAPlanetStrictVenus:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(181.979801 + (58517.8156760 * t.T) + (0.00000165 * t.T2) - (0.000000002 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(3.394662 + (0.0004343 * t.T) - (0.00000288 * t.T2) - (0.000000003 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(76.679920 - (0.2780080 * t.T) - (0.00014256 * t.T2) - (0.000000198 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(131.563707 + (0.0048646 * t.T) - (0.00138349 * t.T2) - (0.000005672 * t.T3))
+            )
+        case .KPCAAPlanetStrictEarth:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(100.466449 + (35999.3730633 * t.T) - (0.00000529 * t.T2) - (0.000000016 * t.T3)),
+                inclination: (0.0130548 * t.T) - (0.00000931 * t.T2) - (0.000000034 * t.T3),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(174.873174 - (8.679270 * t.T) + (0.00013 * t.T2)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(102.937348 + (0.3225934 * t.T) + (0.00015037 * t.T2) + (0.000000479 * t.T3))
+            )
+        case .KPCAAPlanetStrictMars:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(355.433000 + (19140.2993424 * t.T) + (0.00000261 * t.T2) - (0.000000003 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(1.849726 - (0.0081479 * t.T) - (0.00002235 * t.T2) - (0.000000032 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(49.558093 - (0.2949846 * t.T) - (0.00063993 * t.T2) - (0.000002143 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(336.060234 + (0.4438902 * t.T) - (0.00017348 * t.T2) + (0.000000523 * t.T3))
+            )
+        case .KPCAAPlanetStrictJupiter:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(34.351519 + (3033.5076412 * t.T) - (0.00038848 * t.T2) - (0.000000015 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(1.303267 - (0.0057202 * t.T) + (0.00000414 * t.T2) + (0.000000004 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(100.464407 - (0.1820786 * t.T) + (0.00003883 * t.T2) + (0.000000599 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(14.331209 + (0.2155523 * t.T) + (0.00072252 * t.T2) - (0.000004590 * t.T3))
+            )
+        case .KPCAAPlanetStrictSaturn:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(50.077444 + (1220.7143997 * t.T) - (0.00009385 * t.T2) - (0.000000038 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(2.488879 - (0.0016499 * t.T) - (0.00002573 * t.T2) + (0.000000067 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(113.665503 - (0.2566732 * t.T) - (0.00018408 * t.T2) - (0.000002341 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(93.057237 + (0.5665487 * t.T) + (0.00052865 * t.T2) + (0.000004882 * t.T3))
+            )
+        case .KPCAAPlanetStrictUranus:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(314.055005 + (427.0694158 * t.T) - (0.00030855 * t.T2) - (0.000000025 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(0.773197 - (0.0024293 * t.T) + (0.00003449 * t.T2) - (0.000000113 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(74.005957 - (0.0423049 * t.T) + (0.00070086 * t.T2) + (0.000001662 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(173.005291 + (0.0892994 * t.T) + (0.00009405 * t.T2) + (0.000000413 * t.T3))
+            )
+        case .KPCAAPlanetStrictNeptune:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: SphericalTrigonometry.mapTo0To360Range(304.348665 + (217.0877995 * t.T) - (0.00024442 * t.T2) - (0.000000020 * t.T3)),
+                inclination: SphericalTrigonometry.mapTo0To360Range(1.769953 + (0.0003537 * t.T) - (0.00000911 * t.T2) + (0.000000009 * t.T3)),
+                longitudeAscendingNode: SphericalTrigonometry.mapTo0To360Range(131.784057 - (0.0060938 * t.T) - (0.00002573 * t.T2) - (0.000000732 * t.T3)),
+                longitudePerihelion: SphericalTrigonometry.mapTo0To360Range(48.120276 + (0.0272097 * t.T) + (0.00007993 * t.T2) - (0.000000002 * t.T3))
+            )
+        default:
+            return PlanetaryOrbitalElementsJ2000(
+                meanLongitude: 0.0,
+                inclination: 0.0,
+                longitudeAscendingNode: 0.0,
+                longitudePerihelion: 0.0
+            )
+        }
+    }
+
 
     // Mercury
     public static func MercuryMeanLongitude(_ JD: Double) -> Double {

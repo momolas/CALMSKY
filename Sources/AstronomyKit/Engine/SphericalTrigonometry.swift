@@ -15,22 +15,22 @@ public enum SphericalTrigonometry: Sendable {
 
     @inlinable
     public static func degreesToRadians(_ degrees: Double) -> Double {
-        degrees * 0.017453292519943295769236907684886
+        degrees * (Double.pi / 180.0)
     }
 
     @inlinable
     public static func radiansToDegrees(_ radians: Double) -> Double {
-        radians * 57.295779513082320876798154814105
+        radians * (180.0 / Double.pi)
     }
 
     @inlinable
     public static func radiansToHours(_ radians: Double) -> Double {
-        radians * 3.8197186342054880584532103209403
+        radians * (12.0 / Double.pi)
     }
 
     @inlinable
     public static func hoursToRadians(_ hours: Double) -> Double {
-        hours * 0.26179938779914943653855361527329
+        hours * (Double.pi / 12.0)
     }
 
     @inlinable

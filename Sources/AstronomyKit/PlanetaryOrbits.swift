@@ -8,153 +8,64 @@
 
 import Foundation
 
+@inlinable
 func orbitMeanLongitude(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryMeanLongitude(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusMeanLongitude(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthMeanLongitude(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsMeanLongitude(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterMeanLongitude(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnMeanLongitude(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusMeanLongitude(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneMeanLongitude(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd).meanLongitude
 }
 
+@inlinable
 func orbitMeanLongitudeJ2000(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusMeanLongitudeJ2000(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneMeanLongitudeJ2000(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elementsJ2000(for: planet, jd: jd).meanLongitude
 }
 
+@inlinable
 func orbitSemimajorAxis(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercurySemimajorAxis(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusSemimajorAxis(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthSemimajorAxis(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsSemimajorAxis(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterSemimajorAxis(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnSemimajorAxis(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusSemimajorAxis(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneSemimajorAxis(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd).semimajorAxis
 }
 
+@inlinable
 func orbitEccentricity(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryEccentricity(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusEccentricity(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthEccentricity(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsEccentricity(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterEccentricity(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnEccentricity(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusEccentricity(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneEccentricity(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd).eccentricity
 }
 
+@inlinable
 func orbitInclination(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryInclination(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusInclination(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthInclination(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsInclination(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterInclination(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnInclination(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusInclination(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneInclination(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd).inclination
 }
 
+@inlinable
 func orbitInclinationJ2000(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryInclinationJ2000(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusInclinationJ2000(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthInclinationJ2000(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsInclinationJ2000(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterInclinationJ2000(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnInclinationJ2000(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusInclinationJ2000(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneInclinationJ2000(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elementsJ2000(for: planet, jd: jd).inclination
 }
 
+@inlinable
 func orbitLongitudeAscendingNode(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryLongitudeAscendingNode(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusLongitudeAscendingNode(jd)
-    case .KPCAAPlanetStrictEarth: return 0.0
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsLongitudeAscendingNode(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterLongitudeAscendingNode(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnLongitudeAscendingNode(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusLongitudeAscendingNode(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneLongitudeAscendingNode(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd).longitudeAscendingNode
 }
 
+@inlinable
 func orbitLongitudeAscendingNodeJ2000(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusLongitudeAscendingNodeJ2000(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneLongitudeAscendingNodeJ2000(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elementsJ2000(for: planet, jd: jd).longitudeAscendingNode
 }
 
+@inlinable
 func orbitLongitudePerihelion(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusLongitudePerihelion(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneLongitudePerihelion(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd).longitudePerihelion
 }
 
+@inlinable
 func orbitLongitudePerihelionJ2000(_ planet: KPCAAPlanetStrict, jd: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAElementsPlanetaryOrbit.MercuryLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictVenus: return CAAElementsPlanetaryOrbit.VenusLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictEarth: return CAAElementsPlanetaryOrbit.EarthLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictMars: return CAAElementsPlanetaryOrbit.MarsLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictJupiter: return CAAElementsPlanetaryOrbit.JupiterLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictSaturn: return CAAElementsPlanetaryOrbit.SaturnLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictUranus: return CAAElementsPlanetaryOrbit.UranusLongitudePerihelionJ2000(jd)
-    case .KPCAAPlanetStrictNeptune: return CAAElementsPlanetaryOrbit.NeptuneLongitudePerihelionJ2000(jd)
-    default: return 0
-    }
+    CAAElementsPlanetaryOrbit.elementsJ2000(for: planet, jd: jd).longitudePerihelion
 }
 
 func calculateObjectDetailsNoElements(jd: Double, planetStrict: KPCAAPlanetStrict, highPrecision: Bool) -> CAAEllipticalObjectDetails {
+    let orb = CAAElementsPlanetaryOrbit.elements(for: planetStrict, jd: jd)
     var elements = CAAEllipticalObjectElements()
-    elements.a = orbitSemimajorAxis(planetStrict, jd: jd)
-    elements.e = orbitEccentricity(planetStrict, jd: jd)
-    elements.i = orbitInclination(planetStrict, jd: jd)
-    elements.w = orbitLongitudePerihelion(planetStrict, jd: jd)
-    elements.omega = orbitLongitudeAscendingNode(planetStrict, jd: jd)
+    elements.a = orb.semimajorAxis
+    elements.e = orb.eccentricity
+    elements.i = orb.inclination
+    elements.w = orb.longitudePerihelion
+    elements.omega = orb.longitudeAscendingNode
     elements.JDEquinox = 2451545.0 // J2000
     
     let fractionalYear = CAADate(jd, true).FractionalYear()

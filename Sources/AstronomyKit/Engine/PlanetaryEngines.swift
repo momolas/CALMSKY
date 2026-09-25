@@ -271,26 +271,41 @@ public enum CAAEarth: Sendable {
     @inlinable
     public static func SunMeanAnomaly(_ jd: Double) -> Double { sunMeanAnomaly(jd) }
 
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.earth.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.earth.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.earth.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.earth.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.earth.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.earth.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.earth.coordinatesJ2000(jd: jd).latitude
     }
@@ -300,26 +315,42 @@ public enum CAAEarth: Sendable {
 // MARK: - CAAMercury
 
 public enum CAAMercury: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.mercury.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.mercury.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mercury.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mercury.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mercury.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mercury.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mercury.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -328,26 +359,42 @@ public enum CAAMercury: Sendable {
 // MARK: - CAAVenus
 
 public enum CAAVenus: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.venus.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.venus.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.venus.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.venus.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.venus.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.venus.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.venus.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -356,26 +403,42 @@ public enum CAAVenus: Sendable {
 // MARK: - CAAMars
 
 public enum CAAMars: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.mars.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.mars.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mars.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mars.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mars.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mars.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.mars.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -384,26 +447,42 @@ public enum CAAMars: Sendable {
 // MARK: - CAAJupiter
 
 public enum CAAJupiter: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.jupiter.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.jupiter.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.jupiter.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.jupiter.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.jupiter.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.jupiter.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.jupiter.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -412,26 +491,42 @@ public enum CAAJupiter: Sendable {
 // MARK: - CAASaturn
 
 public enum CAASaturn: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.saturn.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.saturn.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.saturn.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.saturn.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.saturn.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.saturn.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.saturn.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -440,26 +535,42 @@ public enum CAASaturn: Sendable {
 // MARK: - CAAUranus
 
 public enum CAAUranus: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.uranus.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.uranus.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.uranus.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.uranus.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.uranus.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.uranus.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.uranus.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -468,26 +579,42 @@ public enum CAAUranus: Sendable {
 // MARK: - CAANeptune
 
 public enum CAANeptune: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.neptune.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.neptune.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.neptune.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.neptune.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitude(jd, bHighPrecision) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.neptune.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { radiusVector(jd, bHighPrecision) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.neptune.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLongitudeJ2000(jd, bHighPrecision) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         NASAJPLPlanets.neptune.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double { eclipticLatitudeJ2000(jd, bHighPrecision) }
@@ -496,27 +623,44 @@ public enum CAANeptune: Sendable {
 // MARK: - CAAPluto
 
 public enum CAAPluto: Sendable {
+    @inlinable
+    public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.pluto.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        NASAJPLPlanets.pluto.coordinatesJ2000(jd: jd)
+    }
+
+    @inlinable
     public static func eclipticLongitude(_ jd: Double) -> Double {
         NASAJPLPlanets.pluto.coordinatesDate(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitude(_ jd: Double) -> Double { eclipticLongitude(jd) }
 
+    @inlinable
     public static func eclipticLatitude(_ jd: Double) -> Double {
         NASAJPLPlanets.pluto.coordinatesDate(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitude(_ jd: Double) -> Double { eclipticLatitude(jd) }
 
+    @inlinable
     public static func radiusVector(_ jd: Double) -> Double {
         NASAJPLPlanets.pluto.coordinatesDate(jd: jd).radius
     }
     @inlinable public static func RadiusVector(_ jd: Double) -> Double { radiusVector(jd) }
 
-    @inlinable public static func eclipticLongitudeJ2000(_ jd: Double) -> Double {
+    @inlinable
+    public static func eclipticLongitudeJ2000(_ jd: Double) -> Double {
         NASAJPLPlanets.pluto.coordinatesJ2000(jd: jd).longitude
     }
     @inlinable public static func EclipticLongitudeJ2000(_ jd: Double) -> Double { eclipticLongitudeJ2000(jd) }
-    @inlinable public static func eclipticLatitudeJ2000(_ jd: Double) -> Double {
+
+    @inlinable
+    public static func eclipticLatitudeJ2000(_ jd: Double) -> Double {
         NASAJPLPlanets.pluto.coordinatesJ2000(jd: jd).latitude
     }
     @inlinable public static func EclipticLatitudeJ2000(_ jd: Double) -> Double { eclipticLatitudeJ2000(jd) }
 }
+

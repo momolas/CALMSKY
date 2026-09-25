@@ -28,4 +28,36 @@ struct PlanetaryOrbitsTests {
         #expect(abs(mercury.eccentricity() - 0.20564510) <= 0.00000001)
     }
 
+    @Test("Joint PlanetaryOrbitalElements matches individual scalar getters")
+    func testJointOrbitalElementsMercury() {
+        let jd = 2475460.5
+        let elements = CAAElementsPlanetaryOrbit.elements(for: .KPCAAPlanetStrictMercury, jd: jd)
+
+        #expect(elements.semimajorAxis == 0.387098310)
+        #expect(abs(elements.inclination - 7.006171) <= 0.000001)
+        #expect(abs(elements.longitudeAscendingNode - 49.107650) <= 0.000001)
+        #expect(abs(elements.longitudePerihelion - 78.475382) <= 0.000001)
+        #expect(abs(elements.eccentricity - 0.20564510) <= 0.00000001)
+    }
+
+    @Test("Joint PlanetaryOrbitalElements are physically valid for all 8 major planets", arguments: [
+        KPCAAPlanetStrict.KPCAAPlanetStrictMercury,
+        .KPCAAPlanetStrictVenus,
+        .KPCAAPlanetStrictEarth,
+        .KPCAAPlanetStrictMars,
+        .KPCAAPlanetStrictJupiter,
+        .KPCAAPlanetStrictSaturn,
+        .KPCAAPlanetStrictUranus,
+        .KPCAAPlanetStrictNeptune
+    ])
+    func testJointOrbitalElementsAllPlanets(planet: KPCAAPlanetStrict) {
+        let jd = 2451545.0 // J2000.0
+        let dateElements = CAAElementsPlanetaryOrbit.elements(for: planet, jd: jd)
+        let j2000Elements = CAAElementsPlanetaryOrbit.elementsJ2000(for: planet, jd: jd)
+
+        #expect(dateElements.semimajorAxis > 0.0)
+        #expect(dateElements.eccentricity >= 0.0 && dateElements.eccentricity < 1.0)
+        #expect(dateElements.meanLongitude >= 0.0 && dateElements.meanLongitude <= 360.0)
+        #expect(j2000Elements.meanLongitude >= 0.0 && j2000Elements.meanLongitude <= 360.0)
+    }
 }
