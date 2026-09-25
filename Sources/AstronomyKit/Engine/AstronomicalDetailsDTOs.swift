@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import simd
 
 // MARK: - 2D & 3D Coordinates
 
@@ -57,32 +58,49 @@ public struct CAA3DCoordinate: Sendable, Codable, Hashable {
         set { Z = newValue }
     }
 
+    @inlinable
     public init(X: Double = 0, Y: Double = 0, Z: Double = 0) {
         self.X = X
         self.Y = Y
         self.Z = Z
     }
 
+    @inlinable
     public init(_ x: Double, _ y: Double, _ z: Double) {
         self.X = x
         self.Y = y
         self.Z = z
     }
 
+    @inlinable
     public init(x: Double, y: Double, z: Double) {
         self.X = x
         self.Y = y
         self.Z = z
     }
 
+    @inlinable
     public init(_ vector: Vector3D) {
         self.X = vector.x
         self.Y = vector.y
         self.Z = vector.z
     }
 
+    @inlinable
+    public init(_ simd: simd_double3) {
+        self.X = simd.x
+        self.Y = simd.y
+        self.Z = simd.z
+    }
+
+    @inlinable
     public var vector3D: Vector3D {
         Vector3D(x: X, y: Y, z: Z)
+    }
+
+    @inlinable
+    public var simd: simd_double3 {
+        simd_double3(X, Y, Z)
     }
 }
 

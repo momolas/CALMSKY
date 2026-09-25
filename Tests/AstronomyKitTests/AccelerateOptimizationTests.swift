@@ -467,5 +467,59 @@ struct AccelerateOptimizationTests {
 
         return data
     }
+
+    // MARK: - 8. Aberration, Geodesy & VSOP2013 SIMD Acceleration
+
+    @Test("CAAAberration earth velocity is physically bounded and deterministic")
+    func testAberrationEarthVelocitySIMD() {
+        let jdJ2000 = 2451545.0
+        let v1 = CAAAberration.earthVelocity(jd: jdJ2000)
+        let v2 = CAAAberration.earthVelocity(jd: jdJ2000)
+
+        // Exact determinism
+        #expect(v1.X == v2.X)
+        #expect(v1.Y == v2.Y)
+        #expect(v1.Z == v2.Z)
+
+        // Conversion to simd_double3
+        let simdVec = v1.simd
+        #expect(simdVec.x == v1.X)
+        #expect(simdVec.y == v1.Y)
+        #expect(simdVec.z == v1.Z)
+
+        let reconstructed = CAA3DCoordinate(simdVec)
+        #expect(reconstructed.X == v1.X)
+        #expect(reconstructed.Y == v1.Y)
+        #expect(reconstructed.Z == v1.Z)
+
+        // Annual aberration values for standard coordinates
+        let eqAberr = CAAAberration.EquatorialAberration(12.0, 45.0, jdJ2000)
+        #expect(eqAberr.X.isFinite)
+        #expect(eqAberr.Y.isFinite)
+        #expect(abs(eqAberr.Y) < 1.0) // aberration is within tens of arcseconds
+    }
+
+    @Test("VSOP2013 Ecliptic2Equatorial SIMD matrix transformation")
+    func testVSOP2013Ecliptic2EquatorialSIMD() {
+        let posEcliptic = CAAVSOP2013Position(X: 1.0, Y: 0.0, Z: 0.0, X_DASH: 0.0, Y_DASH: 0.017, Z_DASH: 0.0)
+        let posEquatorial = CAAVSOP2013.Ecliptic2Equatorial(posEcliptic)
+
+        // Length of position and velocity vectors must be preserved (pure rotation within numerical precision)
+        let lenEcl = sqrt(posEcliptic.X * posEcliptic.X + posEcliptic.Y * posEcliptic.Y + posEcliptic.Z * posEcliptic.Z)
+        let lenEq = sqrt(posEquatorial.X * posEquatorial.X + posEquatorial.Y * posEquatorial.Y + posEquatorial.Z * posEquatorial.Z)
+        #expect(abs(lenEcl - lenEq) < 1e-12)
+
+        let velEcl = sqrt(posEcliptic.X_DASH * posEcliptic.X_DASH + posEcliptic.Y_DASH * posEcliptic.Y_DASH + posEcliptic.Z_DASH * posEcliptic.Z_DASH)
+        let velEq = sqrt(posEquatorial.X_DASH * posEquatorial.X_DASH + posEquatorial.Y_DASH * posEquatorial.Y_DASH + posEquatorial.Z_DASH * posEquatorial.Z_DASH)
+        #expect(abs(velEcl - velEq) < 1e-12)
+    }
+
+    @Test("GlobeEngine great-circle geodesic distance calculation")
+    func testGlobeEngineGeodesicDistance() {
+        // Paris (48.8566 N, 2.3522 E) to New York (40.7128 N, 74.0060 W)
+        let dist = GlobeEngine.distanceBetweenPoints(lat1: 48.8566, lon1: 2.3522, lat2: 40.7128, lon2: -74.0060)
+        // Standard geodesic distance is ~5837 km (within ± 20 km ellipsoid flattening)
+        #expect(dist > 5800.0 && dist < 5900.0)
+    }
 }
 

@@ -7,6 +7,9 @@
 //
 
 import Foundation
+import Accelerate
+import simd
+import os
 
 // MARK: - VSOP2013 Data Structures
 
@@ -45,8 +48,6 @@ public struct CAAVSOP2013Orbit: Sendable, Codable, Hashable {
         self.p = p
     }
 }
-
-import os
 
 // MARK: - Ephemerides File Reader
 
@@ -109,17 +110,18 @@ private struct VSOP2013EphemeridesFile: Sendable {
         return mappedData != nil
     }
 
-    func getTableRecord(at index: Int) -> UnsafeBufferPointer<Double>? {
+    func withTableRecord<R>(at index: Int, _ body: (UnsafeBufferPointer<Double>) -> R) -> R? {
         guard let data = mappedData, index >= 0, index < Self.chebyshevTables else { return nil }
         let headerOffset = 125
         let recordByteOffset = headerOffset + (index * Self.recordFloats * MemoryLayout<Double>.size)
-        return data.withUnsafeBytes { rawBuffer -> UnsafeBufferPointer<Double>? in
+        return data.withUnsafeBytes { rawBuffer -> R? in
             guard let baseAddress = rawBuffer.baseAddress,
                   recordByteOffset + Self.recordFloats * MemoryLayout<Double>.size <= rawBuffer.count else {
                 return nil
             }
             let base = baseAddress.advanced(by: recordByteOffset).assumingMemoryBound(to: Double.self)
-            return UnsafeBufferPointer(start: base, count: Self.recordFloats)
+            let buffer = UnsafeBufferPointer(start: base, count: Self.recordFloats)
+            return body(buffer)
         }
     }
 }
@@ -214,51 +216,60 @@ public final class CAAVSOP2013: Sendable {
 
             let file = state.ephemerideFiles[nIndex]
             let iper = Int((JD - file.startJD) / VSOP2013EphemeridesFile.sizeBasicInterval)
-            guard let aperiod = file.getTableRecord(at: iper) else {
-                return CAAVSOP2013Position()
-            }
-
-        let pIdx = planet.rawValue
-        let iad = Int(file.firstCoefficientRank[pIdx]) - 1
-        let ncf = Int(file.coefficientsPerCoordinate[pIdx])
-        let nsi = Int(file.subIntervals[pIdx])
-        let delta2 = VSOP2013EphemeridesFile.sizeBasicInterval / Double(nsi)
-
-        var ik = Int((JD - aperiod[0]) / delta2)
-        if ik == nsi {
-            ik -= 1
-        }
-
-        let iloc = iad + (6 * ncf * ik)
-        let dj0 = aperiod[0] + (Double(ik) * delta2)
-        let x = (2.0 * (JD - dj0) / delta2) - 1.0
-
-        // Chebyshev terms
-        var tn = Array(repeating: 0.0, count: max(20, ncf))
-        tn[0] = 1.0
-        tn[1] = x
-        for i in 2..<ncf {
-            tn[i] = (2.0 * x * tn[i - 1]) - tn[i - 2]
-        }
-
-        // Calculate position and velocity
-        var r = Array(repeating: 0.0, count: 6)
-        for i in 0..<6 {
-            var sum = 0.0
-            for j in 0..<ncf {
-                let jp = ncf - j - 1
-                let jt = iloc + (ncf * i) + jp + 2
-                if jt < aperiod.count {
-                    sum += tn[jp] * aperiod[jt]
+            return file.withTableRecord(at: iper) { aperiod in
+                let pIdx = planet.rawValue
+                let iad = Int(file.firstCoefficientRank[pIdx]) - 1
+                let ncf = Int(file.coefficientsPerCoordinate[pIdx])
+                let nsi = Int(file.subIntervals[pIdx])
+                guard nsi > 0, ncf > 0, let aperiodBase = aperiod.baseAddress else {
+                    return CAAVSOP2013Position()
                 }
-            }
-            r[i] = sum
-        }
+                let delta2 = VSOP2013EphemeridesFile.sizeBasicInterval / Double(nsi)
 
-        return CAAVSOP2013Position(
-            X: r[0], Y: r[1], Z: r[2],
-            X_DASH: r[3], Y_DASH: r[4], Z_DASH: r[5]
-        )
+                var ik = Int((JD - aperiod[0]) / delta2)
+                if ik == nsi {
+                    ik -= 1
+                }
+
+                let iloc = iad + (6 * ncf * ik)
+                let dj0 = aperiod[0] + (Double(ik) * delta2)
+                let x = (2.0 * (JD - dj0) / delta2) - 1.0
+
+                return withUnsafeTemporaryAllocation(of: Double.self, capacity: max(32, ncf)) { tnBuffer in
+                    guard let tn = tnBuffer.baseAddress else {
+                        return CAAVSOP2013Position()
+                    }
+                    tn[0] = 1.0
+                    if ncf > 1 {
+                        tn[1] = x
+                        let twoX = 2.0 * x
+                        for i in 2..<ncf {
+                            tn[i] = (twoX * tn[i - 1]) - tn[i - 2]
+                        }
+                    }
+
+                    var r0 = 0.0, r1 = 0.0, r2 = 0.0, r3 = 0.0, r4 = 0.0, r5 = 0.0
+                    let len = vDSP_Length(ncf)
+
+                    let jt0 = iloc + 2
+                    if jt0 + ncf <= aperiod.count { vDSP_dotprD(tn, 1, aperiodBase + jt0, 1, &r0, len) }
+                    let jt1 = iloc + ncf + 2
+                    if jt1 + ncf <= aperiod.count { vDSP_dotprD(tn, 1, aperiodBase + jt1, 1, &r1, len) }
+                    let jt2 = iloc + 2 * ncf + 2
+                    if jt2 + ncf <= aperiod.count { vDSP_dotprD(tn, 1, aperiodBase + jt2, 1, &r2, len) }
+                    let jt3 = iloc + 3 * ncf + 2
+                    if jt3 + ncf <= aperiod.count { vDSP_dotprD(tn, 1, aperiodBase + jt3, 1, &r3, len) }
+                    let jt4 = iloc + 4 * ncf + 2
+                    if jt4 + ncf <= aperiod.count { vDSP_dotprD(tn, 1, aperiodBase + jt4, 1, &r4, len) }
+                    let jt5 = iloc + 5 * ncf + 2
+                    if jt5 + ncf <= aperiod.count { vDSP_dotprD(tn, 1, aperiodBase + jt5, 1, &r5, len) }
+
+                    return CAAVSOP2013Position(
+                        X: r0, Y: r1, Z: r2,
+                        X_DASH: r3, Y_DASH: r4, Z_DASH: r5
+                    )
+                }
+            } ?? CAAVSOP2013Position()
         }
     }
 
@@ -293,23 +304,20 @@ public final class CAAVSOP2013: Sendable {
         return elements
     }
 
-    public static func Ecliptic2Equatorial(_ value: CAAVSOP2013Position) -> CAAVSOP2013Position {
-        let coeff11 = 0.99999999999996836
-        let coeff12 = 2.3076633339445195e-07
-        let coeff13 = -1.0004940139786859e-07
-        let coeff21 = -2.5152133775962465e-07
-        let coeff22 = 0.91748213272857493
-        let coeff23 = -0.39777699295429642
-        let coeff32 = 0.39777699295430902
-        let coeff33 = 0.91748213272860391
+    @usableFromInline
+    internal static let eclipticToEquatorialMatrix = simd_double3x3(rows: [
+        simd_double3(0.99999999999996836, 2.3076633339445195e-07, -1.0004940139786859e-07),
+        simd_double3(-2.5152133775962465e-07, 0.91748213272857493, -0.39777699295429642),
+        simd_double3(0.0, 0.39777699295430902, 0.91748213272860391)
+    ])
 
-        var eq = CAAVSOP2013Position()
-        eq.X = (coeff11 * value.X) + (coeff12 * value.Y) + (coeff13 * value.Z)
-        eq.Y = (coeff21 * value.X) + (coeff22 * value.Y) + (coeff23 * value.Z)
-        eq.Z = (coeff32 * value.Y) + (coeff33 * value.Z)
-        eq.X_DASH = (coeff11 * value.X_DASH) + (coeff12 * value.Y_DASH) + (coeff13 * value.Z_DASH)
-        eq.Y_DASH = (coeff21 * value.X_DASH) + (coeff22 * value.Y_DASH) + (coeff23 * value.Z_DASH)
-        eq.Z_DASH = (coeff32 * value.Y_DASH) + (coeff33 * value.Z_DASH)
-        return eq
+    @inlinable
+    public static func Ecliptic2Equatorial(_ value: CAAVSOP2013Position) -> CAAVSOP2013Position {
+        let pos = eclipticToEquatorialMatrix * simd_double3(value.X, value.Y, value.Z)
+        let vel = eclipticToEquatorialMatrix * simd_double3(value.X_DASH, value.Y_DASH, value.Z_DASH)
+        return CAAVSOP2013Position(
+            X: pos.x, Y: pos.y, Z: pos.z,
+            X_DASH: vel.x, Y_DASH: vel.y, Z_DASH: vel.z
+        )
     }
 }

@@ -7,34 +7,41 @@
 //
 
 import Foundation
+import Accelerate
+import simd
 
 // MARK: - Geodesy & Earth Globe
 
 public enum GlobeEngine: Sendable {
+    @inlinable
     public static func rhoSinThetaPrime(latitude: Double, height: Double) -> Double {
         let phi = SphericalTrigonometry.degreesToRadians(latitude)
         let u = atan(0.99664719 * tan(phi))
         return (0.99664719 * sin(u)) + ((height / 6378140.0) * sin(phi))
     }
 
+    @inlinable
     public static func rhoCosThetaPrime(latitude: Double, height: Double) -> Double {
         let phi = SphericalTrigonometry.degreesToRadians(latitude)
         let u = atan(0.99664719 * tan(phi))
         return cos(u) + ((height / 6378140.0) * cos(phi))
     }
 
+    @inlinable
     public static func radiusOfParallelOfLatitude(latitude: Double) -> Double {
         let phi = SphericalTrigonometry.degreesToRadians(latitude)
         let sinGeo = sin(phi)
         return (6378.14 * cos(phi)) / sqrt(1.0 - (0.0066943847614084 * sinGeo * sinGeo))
     }
 
+    @inlinable
     public static func radiusOfCurvature(latitude: Double) -> Double {
         let phi = SphericalTrigonometry.degreesToRadians(latitude)
         let sinGeo = sin(phi)
         return (6378.14 * (1.0 - 0.0066943847614084)) / pow(1.0 - (0.0066943847614084 * sinGeo * sinGeo), 1.5)
     }
 
+    @inlinable
     public static func distanceBetweenPoints(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
         let phi1 = SphericalTrigonometry.degreesToRadians(lat1)
         let phi2 = SphericalTrigonometry.degreesToRadians(lat2)
@@ -99,6 +106,7 @@ public enum CAAGlobe: Sendable {
 // MARK: - Parallactic Angle
 
 public enum CAAParallactic: Sendable {
+    @inlinable
     public static func ParallacticAngle(_ HourAngle: Double, _ Latitude: Double, _ delta: Double) -> Double {
         let h = SphericalTrigonometry.hoursToRadians(HourAngle)
         let lat = SphericalTrigonometry.degreesToRadians(Latitude)
@@ -107,6 +115,7 @@ public enum CAAParallactic: Sendable {
         return SphericalTrigonometry.radiansToDegrees(atan2(sin(h), (tan(lat) * cos(d)) - (sin(d) * cos(h))))
     }
 
+    @inlinable
     public static func EclipticLongitudeOnHorizon(_ LocalSiderealTime: Double, _ ObliquityOfEcliptic: Double, _ Latitude: Double) -> Double {
         let theta = SphericalTrigonometry.hoursToRadians(LocalSiderealTime)
         let lat = SphericalTrigonometry.degreesToRadians(Latitude)
@@ -116,6 +125,7 @@ public enum CAAParallactic: Sendable {
         return SphericalTrigonometry.mapTo0To360Range(value)
     }
 
+    @inlinable
     public static func AngleBetweenEclipticAndHorizon(_ LocalSiderealTime: Double, _ ObliquityOfEcliptic: Double, _ Latitude: Double) -> Double {
         let theta = SphericalTrigonometry.hoursToRadians(LocalSiderealTime)
         let lat = SphericalTrigonometry.degreesToRadians(Latitude)
@@ -125,6 +135,7 @@ public enum CAAParallactic: Sendable {
         return SphericalTrigonometry.mapTo0To360Range(value)
     }
 
+    @inlinable
     public static func AngleBetweenNorthCelestialPoleAndNorthPoleOfEcliptic(_ Lambda: Double, _ Beta: Double, _ ObliquityOfEcliptic: Double) -> Double {
         let lam = SphericalTrigonometry.degreesToRadians(Lambda)
         let bet = SphericalTrigonometry.degreesToRadians(Beta)
@@ -140,15 +151,18 @@ public enum CAAParallactic: Sendable {
 public enum CAAParallax: Sendable {
     public static let c1 = 4.2635232628103847e-05
 
+    @inlinable
     public static func DistanceToParallax(_ Distance: Double) -> Double {
         let pi = asin(c1 / Distance)
         return SphericalTrigonometry.radiansToDegrees(pi)
     }
 
+    @inlinable
     public static func ParallaxToDistance(_ Parallax: Double) -> Double {
         return c1 / sin(SphericalTrigonometry.degreesToRadians(Parallax))
     }
 
+    @inlinable
     public static func Equatorial2Topocentric(_ Alpha: Double, _ Delta: Double, _ Distance: Double, _ Longitude: Double, _ Latitude: Double, _ Height: Double, _ JD: Double) -> CAA2DCoordinate {
         let rhoSin = GlobeEngine.rhoSinThetaPrime(latitude: Latitude, height: Height)
         let rhoCos = GlobeEngine.rhoCosThetaPrime(latitude: Latitude, height: Height)
@@ -173,51 +187,67 @@ public enum CAAParallax: Sendable {
 
 // MARK: - Annual Aberration (Ron & Vondrák 1986 / IAU Model)
 
-private struct AberrationCoefficient: Sendable {
+private struct AberrationTerm: Sendable {
     let L2: Int; let L3: Int; let L4: Int; let L5: Int; let L6: Int; let L7: Int; let L8: Int
     let Ldash: Int; let D: Int; let Mdash: Int; let F: Int
-    let xsin: Double; let xsint: Double; let xcos: Double; let xcost: Double
-    let ysin: Double; let ysint: Double; let ycos: Double; let ycost: Double
-    let zsin: Double; let zsint: Double; let zcos: Double; let zcost: Double
+    let sin0: simd_double3
+    let sinT: simd_double3
+    let cos0: simd_double3
+    let cosT: simd_double3
+
+    init(
+        L2: Int, L3: Int, L4: Int, L5: Int, L6: Int, L7: Int, L8: Int,
+        Ldash: Int, D: Int, Mdash: Int, F: Int,
+        xsin: Double, xsint: Double, xcos: Double, xcost: Double,
+        ysin: Double, ysint: Double, ycos: Double, ycost: Double,
+        zsin: Double, zsint: Double, zcos: Double, zcost: Double
+    ) {
+        self.L2 = L2; self.L3 = L3; self.L4 = L4; self.L5 = L5; self.L6 = L6; self.L7 = L7; self.L8 = L8
+        self.Ldash = Ldash; self.D = D; self.Mdash = Mdash; self.F = F
+        self.sin0 = simd_double3(xsin, ysin, zsin)
+        self.sinT = simd_double3(xsint, ysint, zsint)
+        self.cos0 = simd_double3(xcos, ycos, zcos)
+        self.cosT = simd_double3(xcost, ycost, zcost)
+    }
 }
 
-private let gAberrationCoeffs: [AberrationCoefficient] = [
-    AberrationCoefficient(L2: 0, L3: 1, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -1719914, xsint: -2, xcos: -25, xcost: 0, ysin: 25, ysint: -13, ycos: 1578089, ycost: 156, zsin: 10, zsint: 32, zcos: 684185, zcost: -358),
-    AberrationCoefficient(L2: 0, L3: 2, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 6434, xsint: 141, xcos: 28007, xcost: -107, ysin: 25697, ysint: -95, ycos: -5904, ycost: -130, zsin: 11141, zsint: -48, zcos: -2559, zcost: -55),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 715, xsint: 0, xcos: 0, xcost: 0, ysin: 6, ysint: 0, ycos: -657, ycost: 0, zsin: -15, zsint: 0, zcos: -282, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: 0, Mdash: 0, F: 0, xsin: 715, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -656, ycost: 0, zsin: 0, zsint: 0, zcos: -285, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 3, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 486, xsint: -5, xcos: -236, xcost: -4, ysin: -216, ysint: -4, ycos: -446, ycost: 5, zsin: -94, zsint: 0, zcos: -193, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 1, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 159, xsint: 0, xcos: 0, xcost: 0, ysin: 2, ysint: 0, ycos: -147, ycost: 0, zsin: -6, zsint: 0, zcos: -61, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 1, xsin: 0, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 26, ycost: 0, zsin: 0, zsint: 0, zcos: -59, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: 0, Mdash: 1, F: 0, xsin: 39, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -36, ycost: 0, zsin: 0, zsint: 0, zcos: -16, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 33, xsint: 0, xcos: -10, xcost: 0, ysin: -9, ysint: 0, ycos: -30, ycost: 0, zsin: -5, zsint: 0, zcos: -13, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 2, L4: 0, L5: -1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 31, xsint: 0, xcos: 1, xcost: 0, ysin: 1, ysint: 0, ycos: -28, ycost: 0, zsin: 0, zsint: 0, zcos: -12, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 3, L4: -8, L5: 3, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 8, xsint: 0, xcos: -28, xcost: 0, ysin: 25, ysint: 0, ycos: 8, ycost: 0, zsin: 11, zsint: 0, zcos: 3, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 5, L4: -8, L5: 3, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 8, xsint: 0, xcos: -28, xcost: 0, ysin: -25, ysint: 0, ycos: -8, ycost: 0, zsin: -11, zsint: 0, zcos: -3, zcost: 0),
-    AberrationCoefficient(L2: 2, L3: -1, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 21, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -19, ycost: 0, zsin: 0, zsint: 0, zcos: -8, zcost: 0),
-    AberrationCoefficient(L2: 1, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -19, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 17, ycost: 0, zsin: 0, zsint: 0, zcos: 8, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 1, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 17, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -16, ycost: 0, zsin: 0, zsint: 0, zcos: -7, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 1, L4: 0, L5: -2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 16, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 15, ycost: 0, zsin: 1, zsint: 0, zcos: 7, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 1, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 16, xsint: 0, xcos: 0, xcost: 0, ysin: 1, ysint: 0, ycos: -15, ycost: 0, zsin: -3, zsint: 0, zcos: -6, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 1, L4: 0, L5: 1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 11, xsint: 0, xcos: -1, xcost: 0, ysin: -1, ysint: 0, ycos: -10, ycost: 0, zsin: -1, zsint: 0, zcos: -5, zcost: 0),
-    AberrationCoefficient(L2: 2, L3: -2, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -11, xcost: 0, ysin: -10, ysint: 0, ycos: 0, ycost: 0, zsin: -4, zsint: 0, zcos: 0, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 1, L4: 0, L5: -1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -11, xsint: 0, xcos: -2, xcost: 0, ysin: -2, ysint: 0, ycos: 9, ycost: 0, zsin: -1, zsint: 0, zcos: 4, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 4, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -7, xsint: 0, xcos: -8, xcost: 0, ysin: -8, ysint: 0, ycos: 6, ycost: 0, zsin: -3, zsint: 0, zcos: 3, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 3, L4: 0, L5: -2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -10, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 9, ycost: 0, zsin: 0, zsint: 0, zcos: 4, zcost: 0),
-    AberrationCoefficient(L2: 1, L3: -2, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -9, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -9, ycost: 0, zsin: 0, zsint: 0, zcos: -4, zcost: 0),
-    AberrationCoefficient(L2: 2, L3: -3, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -9, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -8, ycost: 0, zsin: 0, zsint: 0, zcos: -4, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 2, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -9, xcost: 0, ysin: -8, ysint: 0, ycos: 0, ycost: 0, zsin: -3, zsint: 0, zcos: 0, zcost: 0),
-    AberrationCoefficient(L2: 2, L3: -4, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -9, xcost: 0, ysin: 8, ysint: 0, ycos: 0, ycost: 0, zsin: 3, zsint: 0, zcos: 0, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 3, L4: -2, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 8, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -8, ycost: 0, zsin: 0, zsint: 0, zcos: -3, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: 2, Mdash: -1, F: 0, xsin: 8, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -7, ycost: 0, zsin: 0, zsint: 0, zcos: -3, zcost: 0),
-    AberrationCoefficient(L2: 8, L3: -12, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -4, xsint: 0, xcos: -7, xcost: 0, ysin: -6, ysint: 0, ycos: 4, ycost: 0, zsin: -3, zsint: 0, zcos: 2, zcost: 0),
-    AberrationCoefficient(L2: 8, L3: -14, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -4, xsint: 0, xcos: -7, xcost: 0, ysin: 6, ysint: 0, ycos: -4, ycost: 0, zsin: 3, zsint: 0, zcos: -2, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 2, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -6, xsint: 0, xcos: -5, xcost: 0, ysin: -4, ysint: 0, ycos: 5, ycost: 0, zsin: -2, zsint: 0, zcos: 2, zcost: 0),
-    AberrationCoefficient(L2: 3, L3: -4, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -1, xsint: 0, xcos: -1, xcost: 0, ysin: -2, ysint: 0, ycos: -7, ycost: 0, zsin: 1, zsint: 0, zcos: -4, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 2, L4: 0, L5: -2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 4, xsint: 0, xcos: -6, xcost: 0, ysin: -5, ysint: 0, ycos: -4, ycost: 0, zsin: -2, zsint: 0, zcos: -2, zcost: 0),
-    AberrationCoefficient(L2: 3, L3: -3, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -7, xcost: 0, ysin: -6, ysint: 0, ycos: 0, ycost: 0, zsin: -3, zsint: 0, zcos: 0, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 2, L4: -2, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 5, xsint: 0, xcos: -5, xcost: 0, ysin: -4, ysint: 0, ycos: -5, ycost: 0, zsin: -2, zsint: 0, zcos: -2, zcost: 0),
-    AberrationCoefficient(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: -2, Mdash: 0, F: 0, xsin: 5, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -5, ycost: 0, zsin: 0, zsint: 0, zcos: -2, zcost: 0),
+private let gAberrationTerms: [AberrationTerm] = [
+    AberrationTerm(L2: 0, L3: 1, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -1719914, xsint: -2, xcos: -25, xcost: 0, ysin: 25, ysint: -13, ycos: 1578089, ycost: 156, zsin: 10, zsint: 32, zcos: 684185, zcost: -358),
+    AberrationTerm(L2: 0, L3: 2, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 6434, xsint: 141, xcos: 28007, xcost: -107, ysin: 25697, ysint: -95, ycos: -5904, ycost: -130, zsin: 11141, zsint: -48, zcos: -2559, zcost: -55),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 715, xsint: 0, xcos: 0, xcost: 0, ysin: 6, ysint: 0, ycos: -657, ycost: 0, zsin: -15, zsint: 0, zcos: -282, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: 0, Mdash: 0, F: 0, xsin: 715, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -656, ycost: 0, zsin: 0, zsint: 0, zcos: -285, zcost: 0),
+    AberrationTerm(L2: 0, L3: 3, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 486, xsint: -5, xcos: -236, xcost: -4, ysin: -216, ysint: -4, ycos: -446, ycost: 5, zsin: -94, zsint: 0, zcos: -193, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 1, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 159, xsint: 0, xcos: 0, xcost: 0, ysin: 2, ysint: 0, ycos: -147, ycost: 0, zsin: -6, zsint: 0, zcos: -61, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 1, xsin: 0, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 26, ycost: 0, zsin: 0, zsint: 0, zcos: -59, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: 0, Mdash: 1, F: 0, xsin: 39, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -36, ycost: 0, zsin: 0, zsint: 0, zcos: -16, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 33, xsint: 0, xcos: -10, xcost: 0, ysin: -9, ysint: 0, ycos: -30, ycost: 0, zsin: -5, zsint: 0, zcos: -13, zcost: 0),
+    AberrationTerm(L2: 0, L3: 2, L4: 0, L5: -1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 31, xsint: 0, xcos: 1, xcost: 0, ysin: 1, ysint: 0, ycos: -28, ycost: 0, zsin: 0, zsint: 0, zcos: -12, zcost: 0),
+    AberrationTerm(L2: 0, L3: 3, L4: -8, L5: 3, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 8, xsint: 0, xcos: -28, xcost: 0, ysin: 25, ysint: 0, ycos: 8, ycost: 0, zsin: 11, zsint: 0, zcos: 3, zcost: 0),
+    AberrationTerm(L2: 0, L3: 5, L4: -8, L5: 3, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 8, xsint: 0, xcos: -28, xcost: 0, ysin: -25, ysint: 0, ycos: -8, ycost: 0, zsin: -11, zsint: 0, zcos: -3, zcost: 0),
+    AberrationTerm(L2: 2, L3: -1, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 21, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -19, ycost: 0, zsin: 0, zsint: 0, zcos: -8, zcost: 0),
+    AberrationTerm(L2: 1, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -19, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 17, ycost: 0, zsin: 0, zsint: 0, zcos: 8, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 1, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 17, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -16, ycost: 0, zsin: 0, zsint: 0, zcos: -7, zcost: 0),
+    AberrationTerm(L2: 0, L3: 1, L4: 0, L5: -2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 16, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 15, ycost: 0, zsin: 1, zsint: 0, zcos: 7, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 1, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 16, xsint: 0, xcos: 0, xcost: 0, ysin: 1, ysint: 0, ycos: -15, ycost: 0, zsin: -3, zsint: 0, zcos: -6, zcost: 0),
+    AberrationTerm(L2: 0, L3: 1, L4: 0, L5: 1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 11, xsint: 0, xcos: -1, xcost: 0, ysin: -1, ysint: 0, ycos: -10, ycost: 0, zsin: -1, zsint: 0, zcos: -5, zcost: 0),
+    AberrationTerm(L2: 2, L3: -2, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -11, xcost: 0, ysin: -10, ysint: 0, ycos: 0, ycost: 0, zsin: -4, zsint: 0, zcos: 0, zcost: 0),
+    AberrationTerm(L2: 0, L3: 1, L4: 0, L5: -1, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -11, xsint: 0, xcos: -2, xcost: 0, ysin: -2, ysint: 0, ycos: 9, ycost: 0, zsin: -1, zsint: 0, zcos: 4, zcost: 0),
+    AberrationTerm(L2: 0, L3: 4, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -7, xsint: 0, xcos: -8, xcost: 0, ysin: -8, ysint: 0, ycos: 6, ycost: 0, zsin: -3, zsint: 0, zcos: 3, zcost: 0),
+    AberrationTerm(L2: 0, L3: 3, L4: 0, L5: -2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -10, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: 9, ycost: 0, zsin: 0, zsint: 0, zcos: 4, zcost: 0),
+    AberrationTerm(L2: 1, L3: -2, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -9, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -9, ycost: 0, zsin: 0, zsint: 0, zcos: -4, zcost: 0),
+    AberrationTerm(L2: 2, L3: -3, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -9, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -8, ycost: 0, zsin: 0, zsint: 0, zcos: -4, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 2, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -9, xcost: 0, ysin: -8, ysint: 0, ycos: 0, ycost: 0, zsin: -3, zsint: 0, zcos: 0, zcost: 0),
+    AberrationTerm(L2: 2, L3: -4, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -9, xcost: 0, ysin: 8, ysint: 0, ycos: 0, ycost: 0, zsin: 3, zsint: 0, zcos: 0, zcost: 0),
+    AberrationTerm(L2: 0, L3: 3, L4: -2, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 8, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -8, ycost: 0, zsin: 0, zsint: 0, zcos: -3, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: 2, Mdash: -1, F: 0, xsin: 8, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -7, ycost: 0, zsin: 0, zsint: 0, zcos: -3, zcost: 0),
+    AberrationTerm(L2: 8, L3: -12, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -4, xsint: 0, xcos: -7, xcost: 0, ysin: -6, ysint: 0, ycos: 4, ycost: 0, zsin: -3, zsint: 0, zcos: 2, zcost: 0),
+    AberrationTerm(L2: 8, L3: -14, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -4, xsint: 0, xcos: -7, xcost: 0, ysin: 6, ysint: 0, ycos: -4, ycost: 0, zsin: 3, zsint: 0, zcos: -2, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 2, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -6, xsint: 0, xcos: -5, xcost: 0, ysin: -4, ysint: 0, ycos: 5, ycost: 0, zsin: -2, zsint: 0, zcos: 2, zcost: 0),
+    AberrationTerm(L2: 3, L3: -4, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: -1, xsint: 0, xcos: -1, xcost: 0, ysin: -2, ysint: 0, ycos: -7, ycost: 0, zsin: 1, zsint: 0, zcos: -4, zcost: 0),
+    AberrationTerm(L2: 0, L3: 2, L4: 0, L5: -2, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 4, xsint: 0, xcos: -6, xcost: 0, ysin: -5, ysint: 0, ycos: -4, ycost: 0, zsin: -2, zsint: 0, zcos: -2, zcost: 0),
+    AberrationTerm(L2: 3, L3: -3, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 0, xsint: 0, xcos: -7, xcost: 0, ysin: -6, ysint: 0, ycos: 0, ycost: 0, zsin: -3, zsint: 0, zcos: 0, zcost: 0),
+    AberrationTerm(L2: 0, L3: 2, L4: -2, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 0, D: 0, Mdash: 0, F: 0, xsin: 5, xsint: 0, xcos: -5, xcost: 0, ysin: -4, ysint: 0, ycos: -5, ycost: 0, zsin: -2, zsint: 0, zcos: -2, zcost: 0),
+    AberrationTerm(L2: 0, L3: 0, L4: 0, L5: 0, L6: 0, L7: 0, L8: 0, Ldash: 1, D: -2, Mdash: 0, F: 0, xsin: 5, xsint: 0, xcos: 0, xcost: 0, ysin: 0, ysint: 0, ycos: -5, ycost: 0, zsin: 0, zsint: 0, zcos: -2, zcost: 0),
 ]
 
 public enum CAAAberration: Sendable {
@@ -235,26 +265,37 @@ public enum CAAAberration: Sendable {
         let mdash = 2.3555559 + (8328.6914289 * t)
         let f = 1.6279052 + (8433.4661601 * t)
 
-        var vx = 0.0
-        var vy = 0.0
-        var vz = 0.0
+        let nTerms = gAberrationTerms.count
 
-        for coeff in gAberrationCoeffs {
-            let argument = (Double(coeff.L2) * l2) + (Double(coeff.L3) * l3) + (Double(coeff.L4) * l4) + (Double(coeff.L5) * l5) +
-                           (Double(coeff.L6) * l6) + (Double(coeff.L7) * l7) + (Double(coeff.L8) * l8) + (Double(coeff.Ldash) * ldash) +
-                           (Double(coeff.D) * d) + (Double(coeff.Mdash) * mdash) + (Double(coeff.F) * f)
+        return withUnsafeTemporaryAllocation(of: Double.self, capacity: nTerms * 3) { buffer in
+            guard let base = buffer.baseAddress else { return CAA3DCoordinate() }
+            let argsRad = base
+            let sines = base + nTerms
+            let cosines = base + 2 * nTerms
 
-            let sinArg = sin(argument)
-            let cosArg = cos(argument)
+            for i in 0..<nTerms {
+                let term = gAberrationTerms[i]
+                argsRad[i] = (Double(term.L2) * l2) + (Double(term.L3) * l3) + (Double(term.L4) * l4) + (Double(term.L5) * l5) +
+                             (Double(term.L6) * l6) + (Double(term.L7) * l7) + (Double(term.L8) * l8) + (Double(term.Ldash) * ldash) +
+                             (Double(term.D) * d) + (Double(term.Mdash) * mdash) + (Double(term.F) * f)
+            }
 
-            vx += (coeff.xsin + (coeff.xsint * t)) * sinArg + (coeff.xcos + (coeff.xcost * t)) * cosArg
-            vy += (coeff.ysin + (coeff.ysint * t)) * sinArg + (coeff.ycos + (coeff.ycost * t)) * cosArg
-            vz += (coeff.zsin + (coeff.zsint * t)) * sinArg + (coeff.zcos + (coeff.zcost * t)) * cosArg
+            var count32 = Int32(nTerms)
+            vvsincos(sines, cosines, argsRad, &count32)
+
+            var v = simd_double3(0, 0, 0)
+            for i in 0..<nTerms {
+                let term = gAberrationTerms[i]
+                let sinCoeff = term.sin0 + (term.sinT * t)
+                let cosCoeff = term.cos0 + (term.cosT * t)
+                v += (sinCoeff * sines[i]) + (cosCoeff * cosines[i])
+            }
+
+            return CAA3DCoordinate(v)
         }
-
-        return CAA3DCoordinate(vx, vy, vz)
     }
 
+    @inlinable
     public static func EquatorialAberration(_ Alpha: Double, _ Delta: Double, _ JD: Double, _ bHighPrecision: Bool = true) -> CAA2DCoordinate {
         let alphaRad = SphericalTrigonometry.degreesToRadians(Alpha * 15.0)
         let deltaRad = SphericalTrigonometry.degreesToRadians(Delta)
@@ -273,6 +314,7 @@ public enum CAAAberration: Sendable {
         return CAA2DCoordinate(x, y)
     }
 
+    @inlinable
     public static func EclipticAberration(_ Lambda: Double, _ Beta: Double, _ JD: Double, _ bHighPrecision: Bool = true) -> CAA2DCoordinate {
         let t = (JD - 2451545.0) / 36525.0
         let tSquared = t * t
