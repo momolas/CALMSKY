@@ -92,7 +92,7 @@ public func riseTransitSet(forJulianDay julianDay: JulianDay,
 
 /// Convenient class for storing the Rise, Transit and Set times of a celestial body.
 public struct RiseTransitSetTimes: Sendable {
-    private var details: RiseTransitSetTimesDetails? = nil
+    @usableFromInline internal var details: RiseTransitSetTimesDetails? = nil
     public fileprivate(set) var transitError: CelestialBodyTransitError? = nil
     public fileprivate(set) var geographicCoordinates: GeographicCoordinates
     public fileprivate(set) var riseSetAltitude: Degree
@@ -237,18 +237,21 @@ public struct RiseTransitSetTimes: Sendable {
     }
     
     /// The rise time of the celestial body, in Julian Day.
+    @inlinable
     public var riseTime: JulianDay? {
         guard let details = self.details, details.isRiseValid else { return nil }
         return details.riseTime
     }
     
     /// The transit time of the celestial body, in Julian Day.
+    @inlinable
     public var transitTime: JulianDay? {
         guard let details = self.details, details.isTransitValid else { return nil }
         return details.transitTime
     }
     
     /// The set time of the celestial body, in Julian Day.
+    @inlinable
     public var setTime: JulianDay? {
         guard let details = self.details, details.isSetValid else { return nil }
         return details.setTime

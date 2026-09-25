@@ -31,29 +31,29 @@ public struct GalileanMoonRectangularCoordinates: Sendable, Codable, Hashable {
 
 /// The GalileanMoon struct encompasses all properties of Galilean moons
 public struct GalileanMoon: Sendable {
-    fileprivate var details: CAAGalileanMoonDetail
+    @usableFromInline internal var details: CAAGalileanMoonDetail
 
     /// The name of the Moon
     public var name: String
 
-    public var MeanLongitude: Degree { get { return Degree(self.details.MeanLongitude) } }
-    public var TrueLongitude: Degree { get { return Degree(self.details.TrueLongitude) } }
-    public var TropicalLongitude: Degree { get { return Degree(self.details.TropicalLongitude) } }
-    public var EquatorialLatitude: Degree { get { return Degree(self.details.EquatorialLatitude) } }
+    @inlinable public var MeanLongitude: Degree { get { return Degree(self.details.MeanLongitude) } }
+    @inlinable public var TrueLongitude: Degree { get { return Degree(self.details.TrueLongitude) } }
+    @inlinable public var TropicalLongitude: Degree { get { return Degree(self.details.TropicalLongitude) } }
+    @inlinable public var EquatorialLatitude: Degree { get { return Degree(self.details.EquatorialLatitude) } }
 
-    public var radiusVector: AstronomicalUnit { get { return AstronomicalUnit(self.details.r) } }
+    @inlinable public var radiusVector: AstronomicalUnit { get { return AstronomicalUnit(self.details.r) } }
 
     /// Returns whether the Moon is in transit or not (i.e. in front of Jupiter disk).
-    public var inTransit: Bool { get { return self.details.bInTransit } }
+    @inlinable public var inTransit: Bool { get { return self.details.bInTransit } }
     
     /// Returns whether the Moon is in occultation or not (i.e. behind the Jupiter disk).
-    public var inOccultation: Bool { get { return self.details.bInOccultation } }
+    @inlinable public var inOccultation: Bool { get { return self.details.bInOccultation } }
 
     /// Returns whether the Moon is eclipsing Jupiter.
-    public var inEclipse: Bool { get { return self.details.bInEclipse } }
+    @inlinable public var inEclipse: Bool { get { return self.details.bInEclipse } }
     
     /// Returns whether the Moon is eclipsed by Jupiter.
-    public var inShadowTransit: Bool { get { return self.details.bInShadowTransit } }
+    @inlinable public var inShadowTransit: Bool { get { return self.details.bInShadowTransit } }
 
     /// Returns a GalileanMoon object
     ///

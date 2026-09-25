@@ -8,6 +8,7 @@
 
 import Foundation
 
+@inlinable
 func calculatePlanetaryPhenomenon(mean: Bool, jd: Double, object: KPCPlanetaryObject, type: CAAPlanetaryPhenomena.EventType) -> Double {
     let fractionalYear = CAADate(jd, true).FractionalYear()
     let planet = toPhenomenaPlanet(object)
@@ -72,38 +73,47 @@ public protocol PlanetaryPhenomena: PlanetaryBase {
 
 public extension PlanetaryPhenomena {
     
+    @inlinable
     func inferiorConjunction(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .INFERIOR_CONJUNCTION))
     }
 
+    @inlinable
     func superiorConjunction(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .SUPERIOR_CONJUNCTION))
     }
 
+    @inlinable
     func opposition(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .OPPOSITION))
     }
 
+    @inlinable
     func conjunction(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .CONJUNCTION))
     }
 
+    @inlinable
     func easternElongation(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .EASTERN_ELONGATION))
     }
 
+    @inlinable
     func westernElongation(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .WESTERN_ELONGATION))
     }
 
+    @inlinable
     func station1(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .STATION1))
     }
 
+    @inlinable
     func station2(mean: Bool = true) -> JulianDay {
         return JulianDay(calculatePlanetaryPhenomenon(mean: mean, jd: self.julianDay.value, object: self.planetaryObject, type: .STATION2))
     }
 
+    @inlinable
     func elongationValue(eastern: Bool = true) -> Degree {
         let fractionalYear = CAADate(self.julianDay.value, true).FractionalYear()
         let planet = toPhenomenaPlanet(self.planetaryObject)

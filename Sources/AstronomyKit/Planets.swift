@@ -29,6 +29,19 @@ public class Planet: Object, CelestialBody, PlanetaryDetails, PlanetaryPhenomena
         get { return calculateObjectDetailsNoElements(jd: self.julianDay.value, planetStrict: self.planetStrict, highPrecision: self.highPrecision) }
     }
     
+    open var planet: KPCAAPlanet {
+        return KPCAAPlanet.fromString(self.name)
+    }
+    open var planetStrict: KPCAAPlanetStrict {
+        return KPCAAPlanetStrict.fromPlanet(self.planet)
+    }
+    open var planetaryObject: KPCPlanetaryObject {
+        return KPCPlanetaryObject.fromPlanet(self.planet)
+    }
+    open var ellipticalObject: KPCAAEllipticalObject {
+        return KPCAAEllipticalObject.fromPlanet(self.planet)
+    }
+    
     
     /// The coordinates of the object in the equatorial system (based on Earth equator), with the Earth's center as its origin.
     public var equatorialCoordinates: EquatorialCoordinates {
@@ -70,6 +83,19 @@ public class DwarfPlanet: Object, PlanetaryOrbits, @unchecked Sendable {
     /// once all relevant accessors are implemented and covered.
     public var allObjectDetails: CAAEllipticalObjectDetails {
         get { return calculateObjectDetailsNoElements(jd: self.julianDay.value, planetStrict: self.planetStrict, highPrecision: self.highPrecision) }
+    }
+    
+    open var planet: KPCAAPlanet {
+        return KPCAAPlanet.fromString(self.name)
+    }
+    open var planetStrict: KPCAAPlanetStrict {
+        return KPCAAPlanetStrict.fromPlanet(self.planet)
+    }
+    open var planetaryObject: KPCPlanetaryObject {
+        return KPCPlanetaryObject.fromPlanet(self.planet)
+    }
+    open var ellipticalObject: KPCAAEllipticalObject {
+        return KPCAAEllipticalObject.fromPlanet(self.planet)
     }
 }
 

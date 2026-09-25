@@ -11,10 +11,18 @@ import Foundation
 /// The Mars planet.
 public final class Mars: Planet, MarsPhysicalDetails, @unchecked Sendable {
 
-    /// Accessor to all values of the underlying physical details. Will probably become private
-    /// once all relevant accessors are implemented and covered.
-    public var physicalDetails: CAAPhysicalMarsDetails {
-        return CAAPhysicalMars.Calculate(self.julianDay.value, self.highPrecision)
+    public override var name: String { "Mars" }
+    public override var planet: KPCAAPlanet { .KPCAAPlanetMars }
+    public override var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictMars }
+    public override var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectMARS }
+    public override var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectMARS }
+
+    /// Accessor to all values of the underlying physical details.
+    public let physicalDetails: CAAPhysicalMarsDetails
+
+    public required init(julianDay: JulianDay, highPrecision: Bool = true) {
+        self.physicalDetails = CAAPhysicalMars.Calculate(julianDay.value, highPrecision)
+        super.init(julianDay: julianDay, highPrecision: highPrecision)
     }
 
     /// The average color of the Planet.

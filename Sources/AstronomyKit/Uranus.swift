@@ -11,6 +11,12 @@ import Foundation
 /// The Uranus planet
 public final class Uranus: Planet, @unchecked Sendable {
     
+    public override var name: String { "Uranus" }
+    public override var planet: KPCAAPlanet { .KPCAAPlanetUranus }
+    public override var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictUranus }
+    public override var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectURANUS }
+    public override var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectURANUS }
+
     /// The average color of the planet
     public class override var averageColor: CelestialColor {
         get { return CelestialColor(red: 0.639, green:0.804, blue:0.839, alpha: 1.0) }

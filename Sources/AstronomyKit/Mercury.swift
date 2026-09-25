@@ -11,6 +11,12 @@ import Foundation
 /// The Mercury planet.
 public final class Mercury: Planet, @unchecked Sendable {
     
+    public override var name: String { "Mercury" }
+    public override var planet: KPCAAPlanet { .KPCAAPlanetMercury }
+    public override var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictMercury }
+    public override var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectMERCURY }
+    public override var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectMERCURY }
+
     /// An average color of the planet
     public class override var averageColor: CelestialColor {
         get { return CelestialColor(red: 0.569, green:0.545, blue:0.506, alpha: 1.0) }

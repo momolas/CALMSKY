@@ -24,7 +24,7 @@ import Foundation
 /// Additional data can be taken from this source (referenced by Wikipedia):
 /// http://nssdc.gsfc.nasa.gov/planetary/factsheet/saturniansatfact.html
 public struct SaturnianMoon: Sendable {
-    fileprivate var details: CAASaturnMoonDetail
+    @usableFromInline internal var details: CAASaturnMoonDetail
 
     /// The name of the Moon
     public var name: String
@@ -39,16 +39,16 @@ public struct SaturnianMoon: Sendable {
     public var diameter: Kilometer
 
     /// Returns whether the Moon is in transit or not (i.e. in front of Jupiter disk).
-    public var inTransit: Bool { get { return self.details.bInTransit } }
+    @inlinable public var inTransit: Bool { get { return self.details.bInTransit } }
     
-    /// Returns whether the Moon is in occultation or not (i.e. behind the Jupiter disk).
-    public var inOccultation: Bool { get { return self.details.bInOccultation } }
+    /// Returns whether the Moon is occultation or not (i.e. behind the Jupiter disk).
+    @inlinable public var inOccultation: Bool { get { return self.details.bInOccultation } }
     
     /// Returns whether the Moon is eclipsing Jupiter.
-    public var inEclipse: Bool { get { return self.details.bInEclipse } }
+    @inlinable public var inEclipse: Bool { get { return self.details.bInEclipse } }
     
     /// Returns whether the Moon is eclipsed by Jupiter.
-    public var inShadowTransit: Bool { get { return self.details.bInShadowTransit } }
+    @inlinable public var inShadowTransit: Bool { get { return self.details.bInShadowTransit } }
 
     
     /// Returns a SaturnianMoon object.

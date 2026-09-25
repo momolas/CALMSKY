@@ -11,6 +11,12 @@ import Foundation
 /// The Saturn planet.
 public final class Saturn: Planet, @unchecked Sendable {
     
+    public override var name: String { "Saturn" }
+    public override var planet: KPCAAPlanet { .KPCAAPlanetSaturn }
+    public override var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictSaturn }
+    public override var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectSATURN }
+    public override var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectSATURN }
+
     /// The average color of the planet.
     public class override var averageColor: CelestialColor {
         get { return CelestialColor(red: 0.941, green:0.827, blue:0.616, alpha: 1.0) }

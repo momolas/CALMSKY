@@ -39,6 +39,12 @@ public enum EarthSolsticeType: Int, Sendable, Codable, Hashable, CaseIterable {
 }
 
 public final class Earth: Object, PlanetaryBase, PlanetaryOrbits, @unchecked Sendable {
+    public override var name: String { "Earth" }
+    public var planet: KPCAAPlanet { .KPCAAPlanetEarth }
+    public var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictEarth }
+    public var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectUNDEFINED }
+    public var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectSUN }
+
     public static var averageColor: CelestialColor {
         get { return CelestialColor(red:0.133, green:0.212, blue:0.290, alpha:1.000) }
     }

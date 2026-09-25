@@ -10,6 +10,7 @@ import Foundation
 
 /// The Sun.
 public final class Sun: Object, CelestialBody, @unchecked Sendable {
+    public override var name: String { "Sun" }
     
     /// Accessor to all values of the underlying physical details. Will probably become private
     /// once all relevant accessors are implemented and covered.

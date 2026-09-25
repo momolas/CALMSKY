@@ -62,6 +62,7 @@ public struct SelenographicCoordinates: Sendable, Codable, Hashable {
 
 /// The Earth's Moon.
 public final class Moon : Object, CelestialBody, @unchecked Sendable {
+    public override var name: String { "Moon" }
 
     /// High-precision numerical ephemeris provider (e.g. NASA JPL DE442s Baseline or custom provider).
     public let ephemerisProvider: (any EphemerisProvider)?
@@ -571,11 +572,9 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     ///
     /// - returns: The phase angle of the Moon (full moon = 0°, first/last quarter = +90°, new moon = +180°)
     public func phaseAngle() -> Degree {
-        let earth = Earth(julianDay: self.julianDay, highPrecision: self.highPrecision)
-        
         // Both must be in the same unit
         let moonEarthDistance = self.radiusVector.value
-        let earthSunDistance = earth.radiusVector.value // in AU by default
+        let earthSunDistance = CAAEarth.radiusVector(self.julianDay.value, self.highPrecision)
         
         return Degree(CAAMoonIlluminatedFraction.PhaseAngle(self.geocentricElongation().value, moonEarthDistance, earthSunDistance))
     }

@@ -11,11 +11,14 @@ import Foundation
 /// The Jupiter planet.
 public final class Jupiter: Planet, JupiterPhysicalDetails, @unchecked Sendable {
     
-    /// Accessor to all values of the underlying physical details. Will probably become private
-    /// once all relevant accessors are implemented and covered.
-    public var physicalDetails: CAAPhysicalJupiterDetails {
-        return CAAPhysicalJupiter.Calculate(self.julianDay.value, self.highPrecision)
-    }
+    public override var name: String { "Jupiter" }
+    public override var planet: KPCAAPlanet { .KPCAAPlanetJupiter }
+    public override var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictJupiter }
+    public override var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectJUPITER }
+    public override var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectJUPITER }
+
+    /// Accessor to all values of the underlying physical details.
+    public let physicalDetails: CAAPhysicalJupiterDetails
     
     /// The average color of the planet.
     public class override var averageColor: CelestialColor {
@@ -32,6 +35,7 @@ public final class Jupiter: Planet, JupiterPhysicalDetails, @unchecked Sendable 
     }
 
     public required init(julianDay: JulianDay, highPrecision: Bool = true) {
+        self.physicalDetails = CAAPhysicalJupiter.Calculate(julianDay.value, highPrecision)
         let details = CAAGalileanMoons.Calculate(julianDay.value, highPrecision)
         self.Io = GalileanMoon(name: "Io", details: details.Satellite1)
         self.Europa = GalileanMoon(name: "Europa", details: details.Satellite2)

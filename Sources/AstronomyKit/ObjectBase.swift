@@ -38,7 +38,7 @@ open class Object : ObjectBase, @unchecked Sendable {
     public let highPrecision: Bool
     
     /// A convenience accesor returning the name of the object class.
-    public var name: String {
+    open var name: String {
          return String(describing: type(of: self)) 
     }
 

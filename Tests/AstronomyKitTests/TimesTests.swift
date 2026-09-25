@@ -13,46 +13,46 @@ import Testing
 struct TimesTests {
     @Test("Hour Minus Sign Constructor")
     func testHourMinusSignConstructor() {
-        XCTAssertEqual(Hour(.minus, 1, 7, 30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, -1, 7, 30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, 1, -7, 30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, 1, 7, -30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, -1, -7, 30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, 1, -7, -30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, -1, 7, -30.0).value, -1.125)
-        XCTAssertEqual(Hour(.minus, -1, -7, -30.0).value, -1.125)
+        #expect(Hour(.minus, 1, 7, 30.0).value == -1.125)
+        #expect(Hour(.minus, -1, 7, 30.0).value == -1.125)
+        #expect(Hour(.minus, 1, -7, 30.0).value == -1.125)
+        #expect(Hour(.minus, 1, 7, -30.0).value == -1.125)
+        #expect(Hour(.minus, -1, -7, 30.0).value == -1.125)
+        #expect(Hour(.minus, 1, -7, -30.0).value == -1.125)
+        #expect(Hour(.minus, -1, 7, -30.0).value == -1.125)
+        #expect(Hour(.minus, -1, -7, -30.0).value == -1.125)
     }
     
     @Test("Hour Plus Sign Constructor")
     func testHourPlusSignConstructor() {
-        XCTAssertEqual(Hour(.plus, 1, 7, 30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, -1, 7, 30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, 1, -7, 30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, 1, 7, -30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, -1, -7, 30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, -1, -7, -30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, -1, 7, -30.0).value, 1.125)
-        XCTAssertEqual(Hour(.plus, 1, -7, -30.0).value, 1.125)
+        #expect(Hour(.plus, 1, 7, 30.0).value == 1.125)
+        #expect(Hour(.plus, -1, 7, 30.0).value == 1.125)
+        #expect(Hour(.plus, 1, -7, 30.0).value == 1.125)
+        #expect(Hour(.plus, 1, 7, -30.0).value == 1.125)
+        #expect(Hour(.plus, -1, -7, 30.0).value == 1.125)
+        #expect(Hour(.plus, -1, -7, -30.0).value == 1.125)
+        #expect(Hour(.plus, -1, 7, -30.0).value == 1.125)
+        #expect(Hour(.plus, 1, -7, -30.0).value == 1.125)
     }
     
     @Test("Hour Minus Zero Sign Constructor")
     func testHourMinusZeroSignConstructor() {
-        XCTAssertEqual(Hour(.minus, 0, 7, 30.0).value, -0.125)
-        XCTAssertEqual(Hour(.minus, 0, -7, 30.0).value, -0.125)
-        XCTAssertEqual(Hour(.minus, 0, 7, -30.0).value, -0.125)
-        XCTAssertEqual(Hour(.minus, 0, -7, -30.0).value, -0.125)
-        XCTAssertEqual(Hour(.minus, 0, 0, 90.0).value, -0.025)
-        XCTAssertEqual(Hour(.minus, 0, 0, -90.0).value, -0.025)
+        #expect(Hour(.minus, 0, 7, 30.0).value == -0.125)
+        #expect(Hour(.minus, 0, -7, 30.0).value == -0.125)
+        #expect(Hour(.minus, 0, 7, -30.0).value == -0.125)
+        #expect(Hour(.minus, 0, -7, -30.0).value == -0.125)
+        #expect(Hour(.minus, 0, 0, 90.0).value == -0.025)
+        #expect(Hour(.minus, 0, 0, -90.0).value == -0.025)
     }
     
     @Test("Hour Plus Zero Sign Constructor")
     func testHourPlusZeroSignConstructor() {
-        XCTAssertEqual(Hour(.plus, 0, 7, 30.0).value, 0.125)
-        XCTAssertEqual(Hour(.plus, 0, -7, 30.0).value, 0.125)
-        XCTAssertEqual(Hour(.plus, 0, 7, -30.0).value, 0.125)
-        XCTAssertEqual(Hour(.plus, 0, -7, -30.0).value, 0.125)
-        XCTAssertEqual(Hour(.plus, 0, 0, 90.0).value, 0.025)
-        XCTAssertEqual(Hour(.plus, 0, 0, -90.0).value, 0.025)
+        #expect(Hour(.plus, 0, 7, 30.0).value == 0.125)
+        #expect(Hour(.plus, 0, -7, 30.0).value == 0.125)
+        #expect(Hour(.plus, 0, 7, -30.0).value == 0.125)
+        #expect(Hour(.plus, 0, -7, -30.0).value == 0.125)
+        #expect(Hour(.plus, 0, 0, 90.0).value == 0.025)
+        #expect(Hour(.plus, 0, 0, -90.0).value == 0.025)
     }
     
     @Test("Hour Sexagesimal Transform")
@@ -73,13 +73,13 @@ struct TimesTests {
         #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
 
         // TT
-        XCTAssertEqual(northwardEquinox, JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
+        #expect(northwardEquinox == JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
 
         // TT -> UT
-        XCTAssertEqual(northwardEquinox.TTtoUTC(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 33.112424))
+        #expect(northwardEquinox.TTtoUTC() == JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 33.112424))
 
         // TT -> UT -> TT
-        XCTAssertEqual(northwardEquinox.TTtoUTC().UTCtoTT(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
+        #expect(northwardEquinox.TTtoUTC().UTCtoTT() == JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
     }
 
     // See AATests.cpp
@@ -89,10 +89,10 @@ struct TimesTests {
         #expect(northwardEquinox.value == JulianDay(2437744.6042503607).value)
 
         // TT -> TAI
-        XCTAssertEqual(northwardEquinox.TTtoTAI(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 35.047155))
+        #expect(northwardEquinox.TTtoTAI() == JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 35.047155))
 
         // TT -> TAI -> TT
-        XCTAssertEqual(northwardEquinox.TTtoTAI().TAItoTT(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
+        #expect(northwardEquinox.TTtoTAI().TAItoTT() == JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
     }
 
     // See AATests.cpp
@@ -105,7 +105,7 @@ struct TimesTests {
         AssertEqual(northwardEquinox.TTtoUT1(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 29, second: 33.140024), accuracy: JulianDay(0.0000001))
 
         // TT -> UT1 -> TT
-        XCTAssertEqual(northwardEquinox.TTtoUT1().UT1toTT(), JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
+        #expect(northwardEquinox.TTtoUT1().UT1toTT() == JulianDay(year: 1962, month: 3, day: 21, hour: 2, minute: 30, second: 7.231168))
     }
     
     // Based on data downloadable from http://tycho.usno.navy.mil/systime.html
@@ -126,7 +126,7 @@ struct TimesTests {
     
     @Test("Days Since2000 January1")
     func testDaysSince2000January1() {
-        XCTAssertEqual(JulianDay(year: 2017, month: 9, day: 23, hour: 9, minute: 0, second: 0.0).date.daysSince2000January1(), 6476)
+        #expect(JulianDay(year: 2017, month: 9, day: 23, hour: 9, minute: 0, second: 0.0).date.daysSince2000January1() == 6476)
     }
     
     @Test("Day Conversions")

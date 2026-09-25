@@ -88,7 +88,7 @@ public extension PlanetaryDetails {
     /// The phase angle, that is the angle (Sun-planet-Earth).
     var phaseAngle: Degree {
         get { return Degree(CAAIlluminatedFraction.PhaseAngle(self.radiusVector.value,
-                                                              Earth(julianDay: self.julianDay).radiusVector.value,
+                                                              CAAEarth.radiusVector(self.julianDay.value, self.highPrecision),
                                                               self.apparentGeocentricDistance.value)) }
     }
     

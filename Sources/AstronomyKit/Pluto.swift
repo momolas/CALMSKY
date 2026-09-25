@@ -11,6 +11,12 @@ import Foundation
 /// The Pluto dwarf planet.
 public final class Pluto: DwarfPlanet, @unchecked Sendable {
 
+    public override var name: String { "Pluto" }
+    public override var planet: KPCAAPlanet { .KPCAAPlanetPluto }
+    public override var planetStrict: KPCAAPlanetStrict { .KPCAAPlanetStrictUndefined }
+    public override var planetaryObject: KPCPlanetaryObject { .KPCPlanetaryObjectUNDEFINED }
+    public override var ellipticalObject: KPCAAEllipticalObject { .KPCAAEllipticalObjectUNDEFINED }
+
     /// The average color of the planet.
     public class var averageColor: CelestialColor {
         get { return CelestialColor(red: 0.776, green:0.620, blue:0.486, alpha: 1.0) }
