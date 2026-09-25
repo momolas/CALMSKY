@@ -91,7 +91,7 @@ public final class LunarDE440Provider: Sendable {
     /// Scale factor converting Moon/EMB vector to Moon/Earth (geocentric) vector.
     /// If segment center is already Earth (399), factor is 1.0.
     /// If segment center is EMB (3), r_Moon/Earth = r_Moon/EMB * (1 + 1 / 81.30056907).
-    private var lunarScaleFactor: Double {
+    public var lunarScaleFactor: Double {
         isMoonRelativeToEarth ? 1.0 : (1.0 + 1.0 / 81.30056907)
     }
 

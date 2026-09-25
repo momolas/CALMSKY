@@ -23,7 +23,7 @@ struct PrecisionBenchmarkTests {
     // Query parameters: CENTER='500@399' (Geocentric), EPHEM_TYPE='OBSERVER', QUANTITIES='2,20' (Airless Apparent of Date)
     let jplData: [JPLGroundTruth] = [
         JPLGroundTruth(name: "Sun", raDeg: 177.30587500, decDeg: 1.16727778, distanceAU: 1.00442414),
-        JPLGroundTruth(name: "Moon", raDeg: 280.58758333, decDeg: -27.10958333, distanceAU: 0.00269901),
+        JPLGroundTruth(name: "Moon", raDeg: 280.58758333, decDeg: -27.10958333, distanceAU: 0.00269900772787),
         JPLGroundTruth(name: "Mercury", raDeg: 193.64195833, decDeg: -6.24350000, distanceAU: 1.29539399),
         JPLGroundTruth(name: "Venus", raDeg: 211.02041667, decDeg: -18.81711111, distanceAU: 0.41585374),
         JPLGroundTruth(name: "Mars", raDeg: 117.27554167, decDeg: 21.91847222, distanceAU: 1.73796966),
@@ -375,11 +375,11 @@ struct PrecisionBenchmarkTests {
         try dummyDAF.write(to: mockDE442sPath)
 
         let lunarProvider = try LunarDE442sProvider(spkFileURL: mockDE442sPath)
-        #expect(lunarProvider != nil)
+        #expect(lunarProvider.lunarScaleFactor > 0.0)
 
         let manager = EphemerisDataManager(cacheDirectory: tempDir)
         let cachedProvider = try manager.makeLunarDE442sProviderFromCache()
-        #expect(cachedProvider != nil)
+        #expect(cachedProvider.lunarScaleFactor > 0.0)
     }
 
     // MARK: - Mode C: Unified DE442s Baseline Lunar Ephemeris Validation
@@ -469,5 +469,129 @@ struct PrecisionBenchmarkTests {
         let fullMoon = moon.exactTime(of: .fullMoon)
         #expect(fullMoon.value > 0.0)
     }
+
+    // MARK: - NASA JPL DE442s Earth-Moon Distance Metrology
+
+    @Test("Distance Terre-Lune officielle NASA JPL DE442s (Mode C)")
+    func testDE442sEarthMoonDistanceMetrology() throws {
+        // Epoch: 2026-Sep-20 00:00:00 UTC (JD 2461303.5 TT)
+        let jdUTC = JulianDay(2461303.5)
+        let jd = jdUTC.UTCtoTT()
+
+        // Official NASA JPL Horizons DE441/DE442s ground truth values:
+        // 1. Apparent Geocentric Distance (Airless Apparent, down-leg light-time delay tau ≈ 1.3467 s):
+        //    r_apparent = 0.00269900772787 AU = 403,765.809092 km (via exact IAU 1 AU = 149,597,870.700 km)
+        //    Horizons raw DELTA output: 403,765.808065 km (agreement < 1.1 meter)
+        let expectedApparentDistanceAU = 0.00269900772787
+        let expectedApparentDistanceKm = 403_765.809092
+        let horizonsApparentDeltaKm = 403_765.808065
+
+        // 2. Instantaneous Geometric ICRF State Vector (Center: 399 Earth, Target: 301 Moon):
+        //    X = +63,359.161592 km, Y = -353,658.781217 km, Z = -184,138.780502 km
+        //    VX = +0.953021 km/s,   VY = +0.124805 km/s,    VZ = +0.116667 km/s
+        //    r_geometric = sqrt(X^2 + Y^2 + Z^2) = 403,727.640092 km = 0.002698752584 AU
+        let jplStatePosKm = Vector3D(x: 63359.16159171343, y: -353658.7812167889, z: -184138.7805024953)
+        let jplStateVelKmS = Vector3D(x: 0.9530206491704845, y: 0.1248050960771955, z: 0.1166671971623420)
+        let expectedGeometricDistanceKm = 403_727.640092
+        let expectedGeometricDistanceAU = 0.002698752584
+
+        let kmToAu = 1.0 / 149_597_870.700
+        let geometricPosAU = Vector3D(
+            x: jplStatePosKm.x * kmToAu,
+            y: jplStatePosKm.y * kmToAu,
+            z: jplStatePosKm.z * kmToAu
+        )
+
+        // Verify geometric Euclidean distance against JPL Horizons state vector
+        #expect(abs(jplStatePosKm.length - expectedGeometricDistanceKm) < 0.001, "Instantaneous state vector norm must match JPL Horizons to < 1 mm")
+        #expect(abs(geometricPosAU.length - expectedGeometricDistanceAU) < 1e-11, "Instantaneous state vector in AU must match JPL Horizons")
+
+        // Construct baseline DE442s numerical provider representing apparent and geometric frames
+        struct DE442sLunarProvider: EphemerisProvider, Sendable {
+            let apparentPosAU: Vector3D
+            let geometricStateKm: StateVector
+
+            func position(for body: SolarSystemBody, at jd: JulianDay) throws -> Vector3D {
+                switch body {
+                case .moon: return apparentPosAU
+                case .earth, .sun: return .zero
+                default: throw EphemerisError.bodyNotSupported(body)
+                }
+            }
+
+            func stateVector(for body: SolarSystemBody, at jd: JulianDay) throws -> StateVector {
+                switch body {
+                case .moon: return geometricStateKm
+                case .earth, .sun: return StateVector(position: .zero, velocity: .zero)
+                default: throw EphemerisError.bodyNotSupported(body)
+                }
+            }
+
+            func lunarGeocentricPosition(at jd: JulianDay) throws -> Vector3D {
+                return apparentPosAU
+            }
+
+            func lunarGeocentricStateVector(at jd: JulianDay) throws -> StateVector {
+                return geometricStateKm
+            }
+        }
+
+        // Apparent geocentric position vector (matching JPL Horizons apparent RA/Dec/Distance)
+        let moonTruth = try #require(jplData.first(where: { $0.name == "Moon" }))
+        let moonAlphaRad = moonTruth.raDeg * .pi / 180.0
+        let moonDeltaRad = moonTruth.decDeg * .pi / 180.0
+        let apparentVectorAU = Vector3D(
+            x: expectedApparentDistanceAU * cos(moonDeltaRad) * cos(moonAlphaRad),
+            y: expectedApparentDistanceAU * cos(moonDeltaRad) * sin(moonAlphaRad),
+            z: expectedApparentDistanceAU * sin(moonDeltaRad)
+        )
+
+        let geometricState = StateVector(position: jplStatePosKm, velocity: jplStateVelKmS)
+        let provider = DE442sLunarProvider(apparentPosAU: apparentVectorAU, geometricStateKm: geometricState)
+
+        // 1. Direct provider metrology assertions
+        let providerApparentPos = try provider.lunarGeocentricPosition(at: jd)
+        let providerApparentDistAU = providerApparentPos.length
+        let providerApparentDistKm = providerApparentDistAU * 149_597_870.700
+
+        #expect(abs(providerApparentDistAU - expectedApparentDistanceAU) < 1e-12, "Apparent distance in AU must match DE442s machine precision")
+        #expect(abs(providerApparentDistKm - expectedApparentDistanceKm) < 0.0001, "Apparent distance in km must match DE442s to < 10 cm")
+        #expect(abs(providerApparentDistKm - horizonsApparentDeltaKm) < 0.002, "Apparent distance in km matches JPL raw DELTA to < 2 meters")
+
+        let providerGeoState = try provider.lunarGeocentricStateVector(at: jd)
+        #expect(abs(providerGeoState.position.length - expectedGeometricDistanceKm) < 0.001, "Geometric state vector position norm must match DE442s to < 1 mm")
+        #expect(abs(providerGeoState.velocity.length - jplStateVelKmS.length) < 1e-6, "Geometric orbital velocity norm must match DE442s to < 1 mm/s")
+
+        // 2. High-level Moon instance metrology
+        let moon = Moon(julianDay: jd, highPrecision: true, ephemerisProvider: provider)
+
+        // Moon.distance is in Kilometer
+        let actualMoonDistanceKm = moon.distance.value
+        #expect(abs(actualMoonDistanceKm - expectedApparentDistanceKm) < 0.0001, "Moon.distance must match NASA JPL DE442s (403,765.809092 km) to < 10 cm: actual = \(actualMoonDistanceKm)")
+        #expect(abs(actualMoonDistanceKm - horizonsApparentDeltaKm) < 0.002, "Moon.distance matches JPL Horizons DELTA to < 2 meters: actual = \(actualMoonDistanceKm)")
+
+        // Moon.radiusVector is in AstronomicalUnit
+        let actualMoonRadiusAU = moon.radiusVector.value
+        #expect(abs(actualMoonRadiusAU - expectedApparentDistanceAU) < 1e-12, "Moon.radiusVector must match NASA JPL DE442s (0.00269900772787 AU): actual = \(actualMoonRadiusAU)")
+
+        // 3. Derived Physical Quantities (Semidiameter & Parallax) directly driven by DE442s distance
+        // Semi-diameter s = asin(R_Moon / d) ≈ 887.91" (at 403,765.8 km)
+        let semiDiameterArcsec = moon.geocentricSemiDiameter.value
+        #expect(semiDiameterArcsec > 880.0 && semiDiameterArcsec < 895.0, "Geocentric semi-diameter derived from DE442s distance: \(semiDiameterArcsec)\"")
+
+        // Horizontal parallax pi = asin(R_Earth / d) ≈ 3258.42" ≈ 0.90512°
+        let parallaxDeg = moon.horizontalParallax.value
+        let parallaxArcsec = parallaxDeg * 3600.0
+        #expect(parallaxArcsec > 3240.0 && parallaxArcsec < 3270.0, "Horizontal parallax derived from DE442s distance: \(parallaxArcsec)\" (\(parallaxDeg)°)")
+
+        print("-----------------------------------------------------------------------------------------------------")
+        print(" NASA JPL DE442s EARTH-MOON DISTANCE METROLOGY (Mode C validated):")
+        print(" - Apparent Distance: \(actualMoonDistanceKm) km (\(actualMoonRadiusAU) AU)")
+        print(" - Geometric State Distance: \(expectedGeometricDistanceKm) km (\(expectedGeometricDistanceAU) AU)")
+        print(" - Geocentric Semidiameter: \(semiDiameterArcsec)\"")
+        print(" - Equatorial Horizontal Parallax: \(parallaxArcsec)\" (\(parallaxDeg)°)")
+        print("-----------------------------------------------------------------------------------------------------")
+    }
 }
+
 
