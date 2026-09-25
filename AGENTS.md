@@ -41,6 +41,7 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
 - For Earth rotation timing ($\Delta T = \text{TT} - \text{UT1}$), use Stephenson, Morrison & Hohenkerk (2016) secular deceleration coupled with observed telescopic measurements (1657–2025) and IERS Bulletin A.
 - For precision atmospheric refraction with spectral filtering (H-$\alpha$, O-III, Near-IR), use the BIPM Ciddor (1996/2002) model with smooth $C^\infty$ cosine blending towards the physical horizon rather than uncorrected monochromatic approximations.
 - For primary lunar phases (New Moon, Quarters, Full Moon), do not rely on truncated analytical series (Meeus Ch. 49, errors up to $\pm 2$ to $\pm 4$ minutes); always solve numerically via Newton-Raphson on the apparent geocentric ecliptic elongation $(\lambda_\text{moon} - \lambda_\text{sun} \equiv \theta_\text{target})$ (`LunarPhaseNumericalEngine.solveExactPhase` / `Moon.exactPhase`) to achieve sub-second ($< 0.05\,\text{s}$) physical precision.
+- For topocentric rise, transit, and set times, do not rely on 3-point parabolic interpolation (Meeus Ch. 15, errors up to $\pm 1$ to $\pm 15$ minutes under high elevation or polar latitudes); always solve continuously using the vector topocentric horizon engine with observer elevation dip ($1.76' \times \sqrt{h_\text{meters}}$) and Brent root-finding (`TopocentricHorizonEngine` / `CelestialBody.topocentricRiseTransitSetTimes`).
 
 ## SwiftUI instructions
 

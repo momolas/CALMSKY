@@ -94,6 +94,25 @@ public extension CelestialBody {
     func riseTransitSetTimes(for geographicCoordinates: GeographicCoordinates) -> RiseTransitSetTimes {
         return RiseTransitSetTimes(celestialBody: self, geographicCoordinates: geographicCoordinates)
     }
+
+    /// Returns the exact topocentric Rise, Transit and Set times of the body using continuous vector
+    /// altitude detection, observer elevation horizon depression (dip), and Brent numerical root-finding.
+    ///
+    /// - Parameters:
+    ///   - geographicCoordinates: The coordinates and elevation of the observer on Earth.
+    ///   - riseSetAltitude: Optional custom altitude threshold (default: nominal body threshold).
+    /// - Returns: High-precision `RiseTransitSetTimes` with continuous polar circle support.
+    func topocentricRiseTransitSetTimes(
+        for geographicCoordinates: GeographicCoordinates,
+        riseSetAltitude: Degree? = nil
+    ) -> RiseTransitSetTimes {
+        RiseTransitSetTimes(
+            celestialBody: self,
+            geographicCoordinates: geographicCoordinates,
+            riseSetAltitude: riseSetAltitude,
+            highPrecision: true
+        )
+    }
     
     /// Returns the Hour Angle of the celestial body, that is, the difference between its local mean sidereal time
     /// and its right ascension.

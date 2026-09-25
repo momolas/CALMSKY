@@ -104,15 +104,97 @@ public struct RiseTransitSetTimes: Sendable {
     ///   - celestialBody: The celestial body under study.
     ///   - geographicCoordinates: The geographic coordinates of the observer.
     ///   - riseSetAltitude: The altitude considered for rise and set times.
-    public init(celestialBody: CelestialBody, geographicCoordinates: GeographicCoordinates, riseSetAltitude: Degree? = nil)
-    {
+    ///   - highPrecision: If `true`, solves continuously using vector topocentric horizon detection,
+    ///                    observer elevation dip, and Brent numerical root-finding (< 0.1s error).
+    ///                    If `false`, uses the classical Meeus Ch. 15 3-point parabolic interpolation.
+    public init(
+        celestialBody: CelestialBody,
+        geographicCoordinates: GeographicCoordinates,
+        riseSetAltitude: Degree? = nil,
+        highPrecision: Bool = false
+    ) {
         self.geographicCoordinates = geographicCoordinates
         self.riseSetAltitude = riseSetAltitude ?? type(of: celestialBody).apparentRiseSetAltitude
-        
+
+        if highPrecision {
+            let nominalAltitude = self.riseSetAltitude
+            let targetAlt = TopocentricHorizonEngine.targetRiseSetAltitude(
+                standardAltitudeDeg: nominalAltitude.value,
+                altitudeMeters: geographicCoordinates.altitude.value
+            )
+
+            let jdMidnight = celestialBody.julianDay.midnight.value
+            let hp = celestialBody.highPrecision
+            let bodyType = type(of: celestialBody)
+
+            let altitudeAt: (Double) -> Double
+            if let obj = celestialBody as? AstronomicalObject {
+                let alpha = obj.equatorialCoordinates.alpha.value
+                let delta = obj.equatorialCoordinates.delta.value
+                altitudeAt = { t in
+                    TopocentricHorizonEngine.altitudeForFixedEquatorial(
+                        alphaHours: alpha,
+                        deltaDeg: delta,
+                        jd: t,
+                        geoCoords: geographicCoordinates
+                    )
+                }
+            } else {
+                altitudeAt = { t in
+                    let inst = bodyType.init(julianDay: JulianDay(t), highPrecision: hp)
+                    let topoEqu = inst.equatorialCoordinates
+                    let coords = CAAParallax.Equatorial2Topocentric(
+                        topoEqu.alpha.value,
+                        topoEqu.delta.value,
+                        inst.radiusVector.value,
+                        geographicCoordinates.longitude.value,
+                        geographicCoordinates.latitude.value,
+                        geographicCoordinates.altitude.value,
+                        t
+                    )
+                    let siderealDeg = CAASidereal.apparentGreenwichSiderealTime(t) * 15.0 - geographicCoordinates.longitude.value
+                    let hourAngleHours = (siderealDeg - coords.X * 15.0) / 15.0
+                    let horiz = CAACoordinateTransformation.equatorial2Horizontal(
+                        alpha: hourAngleHours,
+                        delta: coords.Y,
+                        latitude: geographicCoordinates.latitude.value
+                    )
+                    return horiz.y
+                }
+            }
+
+            let result = TopocentricHorizonEngine.solve(
+                centerJD: jdMidnight,
+                targetAltitudeDeg: targetAlt,
+                altitudeAt: altitudeAt
+            )
+
+            let rise = result.riseJD.map { JulianDay($0) } ?? JulianDay(0)
+            let transit = result.transitJD.map { JulianDay($0) } ?? JulianDay(0)
+            let set = result.setJD.map { JulianDay($0) } ?? JulianDay(0)
+
+            self.details = RiseTransitSetTimesDetails(
+                isRiseValid: result.isRiseValid,
+                riseTime: rise,
+                isTransitValid: result.isTransitValid,
+                isTransitAboveHorizon: result.maxAltitudeDeg > targetAlt,
+                transitTime: transit,
+                isSetValid: result.isSetValid,
+                setTime: set
+            )
+
+            if result.isCircumpolarAbove {
+                self.transitError = .alwaysAboveAltitude
+            } else if result.isCircumpolarBelow {
+                self.transitError = .alwaysBelowAltitude
+            }
+            return
+        }
+
         // AA+ p.102 indicates one need to get day D at 0h Dynamical Time, thus, midnight UT.
         let jd = celestialBody.julianDay.midnight
         let hp = celestialBody.highPrecision
-        
+
         let celestialBodyType = type(of: celestialBody)
         if (celestialBodyType is AstronomicalObject.Type) {
             self.details = riseTransitSet(forJulianDay: jd,
@@ -121,21 +203,21 @@ public struct RiseTransitSetTimes: Sendable {
                                           equCoords3: celestialBody.equatorialCoordinates,
                                           geoCoords: geographicCoordinates,
                                           apparentRiseSetAltitude: AstronomicalObject.apparentRiseSetAltitude)
-            
+
         } else {
             let body1: CelestialBody = celestialBodyType.init(julianDay: jd-1, highPrecision: hp)
             let body2: CelestialBody = celestialBodyType.init(julianDay: jd, highPrecision: hp)
             let body3: CelestialBody = celestialBodyType.init(julianDay: jd+1, highPrecision: hp)
-            
+
             self.details = riseTransitSet(forJulianDay: jd,
                                           equCoords1: body1.equatorialCoordinates,
                                           equCoords2: body2.equatorialCoordinates,
                                           equCoords3: body3.equatorialCoordinates,
                                           geoCoords: self.geographicCoordinates,
                                           apparentRiseSetAltitude: self.riseSetAltitude)
-            
+
         }
-        
+
         if (!self.details!.isRiseValid && !self.details!.isSetValid) {
             self.transitError = (self.details!.isTransitAboveHorizon) ? .alwaysAboveAltitude : .alwaysBelowAltitude
         }
