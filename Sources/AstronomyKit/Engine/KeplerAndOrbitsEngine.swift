@@ -370,9 +370,10 @@ public enum CAAElliptical: Sendable {
         var details = CAAEllipticalPlanetaryDetails()
 
         var JD0 = JD
-        var L0 = CAAEarth.EclipticLongitude(JD0, bHighPrecision)
-        var B0 = CAAEarth.EclipticLatitude(JD0, bHighPrecision)
-        let R0 = CAAEarth.RadiusVector(JD0, bHighPrecision)
+        let earthCoords = CAAEarth.heliocentricCoordinates(JD0, bHighPrecision)
+        var L0 = earthCoords.longitude
+        var B0 = earthCoords.latitude
+        let R0 = earthCoords.radiusVector
         L0 = SphericalTrigonometry.degreesToRadians(L0)
         B0 = SphericalTrigonometry.degreesToRadians(B0)
         let cosB0 = cos(B0)
@@ -391,33 +392,40 @@ public enum CAAElliptical: Sendable {
             while bRecalc {
                 switch object {
                 case .MERCURY:
-                    L = CAAMercury.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAAMercury.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAAMercury.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAAMercury.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 case .VENUS:
-                    L = CAAVenus.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAAVenus.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAAVenus.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAAVenus.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 case .MARS:
-                    L = CAAMars.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAAMars.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAAMars.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAAMars.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 case .JUPITER:
-                    L = CAAJupiter.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAAJupiter.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAAJupiter.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAAJupiter.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 case .SATURN:
-                    L = CAASaturn.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAASaturn.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAASaturn.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAASaturn.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 case .URANUS:
-                    L = CAAUranus.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAAUranus.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAAUranus.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAAUranus.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 case .NEPTUNE:
-                    L = CAANeptune.EclipticLongitude(JD0, bHighPrecision)
-                    B = CAANeptune.EclipticLatitude(JD0, bHighPrecision)
-                    R = CAANeptune.RadiusVector(JD0, bHighPrecision)
+                    let coords = CAANeptune.heliocentricCoordinates(JD0, bHighPrecision)
+                    L = coords.longitude
+                    B = coords.latitude
+                    R = coords.radiusVector
                 default:
                     break
                 }
@@ -462,9 +470,10 @@ public enum CAAElliptical: Sendable {
             var RPrevious = 0.0
 
             while bRecalc {
-                L = CAAEarth.EclipticLongitude(JD0, bHighPrecision)
-                B = CAAEarth.EclipticLatitude(JD0, bHighPrecision)
-                R = CAAEarth.RadiusVector(JD0, bHighPrecision)
+                let coords = CAAEarth.heliocentricCoordinates(JD0, bHighPrecision)
+                L = coords.longitude
+                B = coords.latitude
+                R = coords.radiusVector
 
                 var bFirstCalc = false
                 if !bFirstRecalc {

@@ -17,12 +17,14 @@ import Foundation
 // MARK: - Planetary Illuminated Fraction & Magnitudes (CAAIlluminatedFraction)
 
 public enum CAAIlluminatedFraction: Sendable {
+    @inlinable
     public static func PhaseAngle(_ r: Double, _ R: Double, _ Delta: Double) -> Double {
         let arg = ((r * r) + (Delta * Delta) - (R * R)) / (2.0 * r * Delta)
         let clamped = min(max(arg, -1.0), 1.0)
         return SphericalTrigonometry.mapTo0To360Range(SphericalTrigonometry.radiansToDegrees(acos(clamped)))
     }
 
+    @inlinable
     public static func PhaseAngle(_ R: Double, _ R0: Double, _ B: Double, _ L: Double, _ L0: Double, _ Delta: Double) -> Double {
         let Brad = SphericalTrigonometry.degreesToRadians(B)
         let Lrad = SphericalTrigonometry.degreesToRadians(L)
@@ -32,6 +34,7 @@ public enum CAAIlluminatedFraction: Sendable {
         return SphericalTrigonometry.mapTo0To360Range(SphericalTrigonometry.radiansToDegrees(acos(clamped)))
     }
 
+    @inlinable
     public static func PhaseAngleRectangular(_ x: Double, _ y: Double, _ z: Double, _ B: Double, _ L: Double, _ Delta: Double) -> Double {
         let Brad = SphericalTrigonometry.degreesToRadians(B)
         let Lrad = SphericalTrigonometry.degreesToRadians(L)
@@ -41,11 +44,13 @@ public enum CAAIlluminatedFraction: Sendable {
         return SphericalTrigonometry.mapTo0To360Range(SphericalTrigonometry.radiansToDegrees(acos(clamped)))
     }
 
+    @inlinable
     public static func IlluminatedFraction(_ PhaseAngle: Double) -> Double {
         let PhaseAngleRad = SphericalTrigonometry.degreesToRadians(PhaseAngle)
         return (1.0 + cos(PhaseAngleRad)) / 2.0
     }
 
+    @inlinable
     public static func IlluminatedFraction(_ r: Double, _ R: Double, _ Delta: Double) -> Double {
         return (((r + Delta) * (r + Delta) - (R * R)) / (4.0 * r * Delta))
     }
@@ -210,25 +215,27 @@ public enum CAAPhysicalJupiter: Sendable {
         let W2 = SphericalTrigonometry.mapTo0To360Range(16.838 + (870.27003539 * d))
 
         // Step 3
-        let l0 = CAAEarth.EclipticLongitude(JD, bHighPrecision)
+        let earthCoords = CAAEarth.heliocentricCoordinates(JD, bHighPrecision)
+        let l0 = earthCoords.longitude
         let l0rad = SphericalTrigonometry.degreesToRadians(l0)
         let cosl0rad = cos(l0rad)
         let sinl0rad = sin(l0rad)
-        let b0 = CAAEarth.EclipticLatitude(JD, bHighPrecision)
+        let b0 = earthCoords.latitude
         let b0rad = SphericalTrigonometry.degreesToRadians(b0)
         let sinb0rad = sin(b0rad)
-        let R = CAAEarth.RadiusVector(JD, bHighPrecision)
+        let R = earthCoords.radiusVector
 
         // Step 4
-        var l = CAAJupiter.EclipticLongitude(JD, bHighPrecision)
+        let jupiterCoords = CAAJupiter.heliocentricCoordinates(JD, bHighPrecision)
+        var l = jupiterCoords.longitude
         var lrad = SphericalTrigonometry.degreesToRadians(l)
         var coslrad = cos(lrad)
         var sinlrad = sin(lrad)
-        let b = CAAJupiter.EclipticLatitude(JD, bHighPrecision)
+        let b = jupiterCoords.latitude
         let brad = SphericalTrigonometry.degreesToRadians(b)
         let cosbrad = cos(brad)
         let sinbrad = sin(brad)
-        let r = CAAJupiter.RadiusVector(JD, bHighPrecision)
+        let r = jupiterCoords.radiusVector
 
         // Step 5
         var x = (r * cosbrad * coslrad) - (R * cosl0rad)
@@ -344,11 +351,15 @@ public enum CAAPhysicalMars: Sendable {
         let sinBeta0rad = sin(Beta0rad)
 
         // Step 2
-        let l0 = CAAEarth.EclipticLongitude(JD, bHighPrecision)
+        let earthCoords = CAAEarth.heliocentricCoordinates(JD, bHighPrecision)
+        let l0 = earthCoords.longitude
         let l0rad = SphericalTrigonometry.degreesToRadians(l0)
-        let b0 = CAAEarth.EclipticLatitude(JD, bHighPrecision)
+        let b0 = earthCoords.latitude
         let b0rad = SphericalTrigonometry.degreesToRadians(b0)
-        let R = CAAEarth.RadiusVector(JD, bHighPrecision)
+        let R = earthCoords.radiusVector
+        let Rcosl0 = R * cos(l0rad)
+        let Rsinl0 = R * sin(l0rad)
+        let Rsinb0 = R * sin(b0rad)
 
         var PreviousLightTravelTime = 0.0
         var LightTravelTime = 0.0
@@ -366,17 +377,18 @@ public enum CAAPhysicalMars: Sendable {
             let JD2 = JD - LightTravelTime
 
             // Step 3
-            l = CAAMars.EclipticLongitude(JD2, bHighPrecision)
+            let marsCoords = CAAMars.heliocentricCoordinates(JD2, bHighPrecision)
+            l = marsCoords.longitude
             lrad = SphericalTrigonometry.degreesToRadians(l)
-            b = CAAMars.EclipticLatitude(JD2, bHighPrecision)
+            b = marsCoords.latitude
             let brad = SphericalTrigonometry.degreesToRadians(b)
             let cosbrad = cos(brad)
-            r = CAAMars.RadiusVector(JD2, bHighPrecision)
+            r = marsCoords.radiusVector
 
             // Step 4
-            x = (r * cosbrad * cos(lrad)) - (R * cos(l0rad))
-            y = (r * cosbrad * sin(lrad)) - (R * sin(l0rad))
-            z = (r * sin(brad)) - (R * sin(b0rad))
+            x = (r * cosbrad * cos(lrad)) - Rcosl0
+            y = (r * cosbrad * sin(lrad)) - Rsinl0
+            z = (r * sin(brad)) - Rsinb0
             DELTA = sqrt((x * x) + (y * y) + (z * z))
             LightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
 
@@ -493,13 +505,17 @@ public enum CAASaturnRings: Sendable {
         let omegarad = SphericalTrigonometry.degreesToRadians(omega)
 
         // Step 2
-        var l0 = CAAEarth.EclipticLongitude(JD, bHighPrecision)
-        var b0 = CAAEarth.EclipticLatitude(JD, bHighPrecision)
+        let earthCoords = CAAEarth.heliocentricCoordinates(JD, bHighPrecision)
+        var l0 = earthCoords.longitude
+        var b0 = earthCoords.latitude
         l0 += CAAFK5.CorrectionInLongitude(l0, b0, JD)
         let l0rad = SphericalTrigonometry.degreesToRadians(l0)
         b0 += CAAFK5.CorrectionInLatitude(l0, JD)
         let b0rad = SphericalTrigonometry.degreesToRadians(b0)
-        let R = CAAEarth.RadiusVector(JD, bHighPrecision)
+        let R = earthCoords.radiusVector
+        let Rcosl0 = R * cos(l0rad)
+        let Rsinl0 = R * sin(l0rad)
+        let Rsinb0 = R * sin(b0rad)
 
         // Step 3
         var DELTA = 9.0
@@ -515,19 +531,20 @@ public enum CAASaturnRings: Sendable {
         var r = 0.0
 
         while bIterate {
-            l = CAASaturn.EclipticLongitude(JD1, bHighPrecision)
-            b = CAASaturn.EclipticLatitude(JD1, bHighPrecision)
+            let saturnCoords = CAASaturn.heliocentricCoordinates(JD1, bHighPrecision)
+            l = saturnCoords.longitude
+            b = saturnCoords.latitude
             l += CAAFK5.CorrectionInLongitude(l, b, JD1)
             b += CAAFK5.CorrectionInLatitude(l, JD1)
 
             let lrad = SphericalTrigonometry.degreesToRadians(l)
             let brad = SphericalTrigonometry.degreesToRadians(b)
             let cosbrad = cos(brad)
-            r = CAASaturn.RadiusVector(JD1, bHighPrecision)
+            r = saturnCoords.radiusVector
 
-            x = (r * cosbrad * cos(lrad)) - (R * cos(l0rad))
-            y = (r * cosbrad * sin(lrad)) - (R * sin(l0rad))
-            z = (r * sin(brad)) - (R * sin(b0rad))
+            x = (r * cosbrad * cos(lrad)) - Rcosl0
+            y = (r * cosbrad * sin(lrad)) - Rsinl0
+            z = (r * sin(brad)) - Rsinb0
             DELTA = sqrt((x * x) + (y * y) + (z * z))
             EarthLightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
 
@@ -689,16 +706,21 @@ public enum CAAGalileanMoons: Sendable {
         var JD1 = JD - LightTravelTime
         var bIterate = true
 
-        while bIterate {
-            let l = CAAJupiter.EclipticLongitude(JD1, bHighPrecision)
-            let lrad = SphericalTrigonometry.degreesToRadians(l)
-            let b = CAAJupiter.EclipticLatitude(JD1, bHighPrecision)
-            let brad = SphericalTrigonometry.degreesToRadians(b)
-            let r = CAAJupiter.RadiusVector(JD1, bHighPrecision)
+        let RcosSun = R * cos(sunlongrad)
+        let RsinSun = R * sin(sunlongrad)
+        let RsinBeta = R * sin(betarad)
 
-            x = (r * cos(brad) * cos(lrad)) + (R * cos(sunlongrad))
-            y = (r * cos(brad) * sin(lrad)) + (R * sin(sunlongrad))
-            z = (r * sin(brad)) + (R * sin(betarad))
+        while bIterate {
+            let jupiterCoords = CAAJupiter.heliocentricCoordinates(JD1, bHighPrecision)
+            let l = jupiterCoords.longitude
+            let lrad = SphericalTrigonometry.degreesToRadians(l)
+            let b = jupiterCoords.latitude
+            let brad = SphericalTrigonometry.degreesToRadians(b)
+            let r = jupiterCoords.radiusVector
+
+            x = (r * cos(brad) * cos(lrad)) + RcosSun
+            y = (r * cos(brad) * sin(lrad)) + RsinSun
+            z = (r * sin(brad)) + RsinBeta
             DELTA = sqrt((x * x) + (y * y) + (z * z))
             LightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
 
@@ -1148,6 +1170,10 @@ public enum CAAGalileanMoons: Sendable {
         let betarad = SphericalTrigonometry.degreesToRadians(beta)
         let R = CAAEarth.RadiusVector(JD, bHighPrecision)
 
+        let RcosSun = R * cos(sunlongrad)
+        let RsinSun = R * sin(sunlongrad)
+        let RsinBeta = R * sin(betarad)
+
         var DELTA = 5.0
         var PreviousEarthLightTravelTime = 0.0
         var EarthLightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
@@ -1158,16 +1184,17 @@ public enum CAAGalileanMoons: Sendable {
         var z = 0.0
 
         while bIterate {
-            let l = CAAJupiter.EclipticLongitude(JD1, bHighPrecision)
+            let jupiterCoords = CAAJupiter.heliocentricCoordinates(JD1, bHighPrecision)
+            let l = jupiterCoords.longitude
             let lrad = SphericalTrigonometry.degreesToRadians(l)
-            let b = CAAJupiter.EclipticLatitude(JD1, bHighPrecision)
+            let b = jupiterCoords.latitude
             let brad = SphericalTrigonometry.degreesToRadians(b)
             let cosbrad = cos(brad)
-            let r = CAAJupiter.RadiusVector(JD1, bHighPrecision)
+            let r = jupiterCoords.radiusVector
 
-            x = (r * cosbrad * cos(lrad)) + (R * cos(sunlongrad))
-            y = (r * cosbrad * sin(lrad)) + (R * sin(sunlongrad))
-            z = (r * sin(brad)) + (R * sin(betarad))
+            x = (r * cosbrad * cos(lrad)) + RcosSun
+            y = (r * cosbrad * sin(lrad)) + RsinSun
+            z = (r * sin(brad)) + RsinBeta
             DELTA = sqrt(x * x + y * y + z * z)
             EarthLightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
 
@@ -1185,11 +1212,12 @@ public enum CAAGalileanMoons: Sendable {
         FillInPhenomenaDetails(&details1.Satellite4)
 
         JD1 = JD - EarthLightTravelTime
-        let l = CAAJupiter.EclipticLongitude(JD1, bHighPrecision)
+        let jupiterCoords = CAAJupiter.heliocentricCoordinates(JD1, bHighPrecision)
+        let l = jupiterCoords.longitude
         let lrad = SphericalTrigonometry.degreesToRadians(l)
-        let b = CAAJupiter.EclipticLatitude(JD1, bHighPrecision)
+        let b = jupiterCoords.latitude
         let brad = SphericalTrigonometry.degreesToRadians(b)
-        let r = CAAJupiter.RadiusVector(JD1, bHighPrecision)
+        let r = jupiterCoords.radiusVector
         let cosbrad = cos(brad)
         x = r * cosbrad * cos(lrad)
         y = r * cosbrad * sin(lrad)
@@ -1308,17 +1336,22 @@ public enum CAASaturnMoons: Sendable {
         var JD1 = JD - LightTravelTime
         var bIterate = true
 
+        let RcosSun = R * cos(sunlongrad)
+        let RsinSun = R * sin(sunlongrad)
+        let RsinBeta = R * sin(betarad)
+
         while bIterate {
-            let l = CAASaturn.EclipticLongitude(JD1, bHighPrecision)
+            let saturnCoords = CAASaturn.heliocentricCoordinates(JD1, bHighPrecision)
+            let l = saturnCoords.longitude
             let lrad = SphericalTrigonometry.degreesToRadians(l)
-            let b = CAASaturn.EclipticLatitude(JD1, bHighPrecision)
+            let b = saturnCoords.latitude
             let brad = SphericalTrigonometry.degreesToRadians(b)
             let cosbrad = cos(brad)
-            let r = CAASaturn.RadiusVector(JD1, bHighPrecision)
+            let r = saturnCoords.radiusVector
 
-            x = (r * cosbrad * cos(lrad)) + (R * cos(sunlongrad))
-            y = (r * cosbrad * sin(lrad)) + (R * sin(sunlongrad))
-            z = (r * sin(brad)) + (R * sin(betarad))
+            x = (r * cosbrad * cos(lrad)) + RcosSun
+            y = (r * cosbrad * sin(lrad)) + RsinSun
+            z = (r * sin(brad)) + RsinBeta
             DELTA = sqrt((x * x) + (y * y) + (z * z))
             LightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
 
@@ -1793,6 +1826,10 @@ public enum CAASaturnMoons: Sendable {
         let betarad = SphericalTrigonometry.degreesToRadians(beta)
         let R = CAAEarth.RadiusVector(JD, bHighPrecision)
 
+        let RcosSun = R * cos(sunlongrad)
+        let RsinSun = R * sin(sunlongrad)
+        let RsinBeta = R * sin(betarad)
+
         var DELTA = 9.0
         var PreviousEarthLightTravelTime = 0.0
         var EarthLightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
@@ -1803,16 +1840,17 @@ public enum CAASaturnMoons: Sendable {
         var z = 0.0
 
         while bIterate {
-            let l = CAASaturn.EclipticLongitude(JD1, bHighPrecision)
+            let saturnCoords = CAASaturn.heliocentricCoordinates(JD1, bHighPrecision)
+            let l = saturnCoords.longitude
             let lrad = SphericalTrigonometry.degreesToRadians(l)
-            let b = CAASaturn.EclipticLatitude(JD1, bHighPrecision)
+            let b = saturnCoords.latitude
             let brad = SphericalTrigonometry.degreesToRadians(b)
             let cosbrad = cos(brad)
-            let r = CAASaturn.RadiusVector(JD1, bHighPrecision)
+            let r = saturnCoords.radiusVector
 
-            x = (r * cosbrad * cos(lrad)) + (R * cos(sunlongrad))
-            y = (r * cosbrad * sin(lrad)) + (R * sin(sunlongrad))
-            z = (r * sin(brad)) + (R * sin(betarad))
+            x = (r * cosbrad * cos(lrad)) + RcosSun
+            y = (r * cosbrad * sin(lrad)) + RsinSun
+            z = (r * sin(brad)) + RsinBeta
             DELTA = sqrt((x * x) + (y * y) + (z * z))
             EarthLightTravelTime = CAAElliptical.DistanceToLightTime(DELTA)
 
@@ -1834,12 +1872,13 @@ public enum CAASaturnMoons: Sendable {
         FillInPhenomenaDetails(&details1.Satellite8)
 
         JD1 = JD - EarthLightTravelTime
-        let l = CAASaturn.EclipticLongitude(JD1, bHighPrecision)
+        let saturnCoords = CAASaturn.heliocentricCoordinates(JD1, bHighPrecision)
+        let l = saturnCoords.longitude
         let lrad = SphericalTrigonometry.degreesToRadians(l)
-        let b = CAASaturn.EclipticLatitude(JD1, bHighPrecision)
+        let b = saturnCoords.latitude
         let brad = SphericalTrigonometry.degreesToRadians(b)
         let cosbrad = cos(brad)
-        let r = CAASaturn.RadiusVector(JD1, bHighPrecision)
+        let r = saturnCoords.radiusVector
         x = r * cosbrad * cos(lrad)
         y = r * cosbrad * sin(lrad)
         z = r * sin(brad)

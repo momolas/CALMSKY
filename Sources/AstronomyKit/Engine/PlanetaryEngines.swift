@@ -277,6 +277,17 @@ public enum CAAEarth: Sendable {
     }
 
     @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.earth.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
+    }
+
+    @inlinable
     public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.earth.coordinatesJ2000(jd: jd)
     }
@@ -318,6 +329,17 @@ public enum CAAMercury: Sendable {
     @inlinable
     public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.mercury.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.mercury.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
     }
 
     @inlinable
@@ -365,6 +387,17 @@ public enum CAAVenus: Sendable {
     }
 
     @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.venus.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
+    }
+
+    @inlinable
     public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.venus.coordinatesJ2000(jd: jd)
     }
@@ -406,6 +439,17 @@ public enum CAAMars: Sendable {
     @inlinable
     public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.mars.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.mars.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
     }
 
     @inlinable
@@ -453,6 +497,17 @@ public enum CAAJupiter: Sendable {
     }
 
     @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.jupiter.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
+    }
+
+    @inlinable
     public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.jupiter.coordinatesJ2000(jd: jd)
     }
@@ -494,6 +549,17 @@ public enum CAASaturn: Sendable {
     @inlinable
     public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.saturn.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.saturn.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
     }
 
     @inlinable
@@ -541,6 +607,17 @@ public enum CAAUranus: Sendable {
     }
 
     @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.uranus.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
+    }
+
+    @inlinable
     public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.uranus.coordinatesJ2000(jd: jd)
     }
@@ -585,6 +662,17 @@ public enum CAANeptune: Sendable {
     }
 
     @inlinable
+    public static func heliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.neptune.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd, bHighPrecision)
+    }
+
+    @inlinable
     public static func coordinatesJ2000(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.neptune.coordinatesJ2000(jd: jd)
     }
@@ -626,6 +714,17 @@ public enum CAAPluto: Sendable {
     @inlinable
     public static func coordinatesDate(jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
         NASAJPLPlanets.pluto.coordinatesDate(jd: jd)
+    }
+
+    @inlinable
+    public static func heliocentricCoordinates(_ jd: Double) -> CAAHeliocentricCoordinates {
+        let coords = NASAJPLPlanets.pluto.coordinatesDate(jd: jd)
+        return CAAHeliocentricCoordinates(coords.longitude, coords.latitude, coords.radius)
+    }
+
+    @inlinable
+    public static func HeliocentricCoordinates(_ jd: Double) -> CAAHeliocentricCoordinates {
+        heliocentricCoordinates(jd)
     }
 
     @inlinable

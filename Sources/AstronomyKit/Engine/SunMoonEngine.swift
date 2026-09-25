@@ -11,6 +11,7 @@ import Foundation
 
 public enum CAASun: Sendable {
 
+    @inlinable
     public static func geometricEclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         return CAACoordinateTransformation.mapTo0To360Range(CAAEarth.eclipticLongitude(jd, bHighPrecision) + 180.0)
     }
@@ -20,6 +21,7 @@ public enum CAASun: Sendable {
         geometricEclipticLongitude(jd, bHighPrecision)
     }
 
+    @inlinable
     public static func geometricEclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         return -CAAEarth.eclipticLatitude(jd, bHighPrecision)
     }
@@ -29,6 +31,7 @@ public enum CAASun: Sendable {
         geometricEclipticLatitude(jd, bHighPrecision)
     }
 
+    @inlinable
     public static func geometricEclipticLongitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         return CAACoordinateTransformation.mapTo0To360Range(CAAEarth.eclipticLongitudeJ2000(jd, bHighPrecision) + 180.0)
     }
@@ -38,6 +41,7 @@ public enum CAASun: Sendable {
         geometricEclipticLongitudeJ2000(jd, bHighPrecision)
     }
 
+    @inlinable
     public static func geometricEclipticLatitudeJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         return -CAAEarth.eclipticLatitudeJ2000(jd, bHighPrecision)
     }
@@ -47,11 +51,23 @@ public enum CAASun: Sendable {
         geometricEclipticLatitudeJ2000(jd, bHighPrecision)
     }
 
+    @inlinable
+    public static func geometricFK5Coordinates(_ jd: Double, _ bHighPrecision: Bool = true) -> (longitude: Double, latitude: Double, radius: Double) {
+        let earth = CAAEarth.heliocentricCoordinates(jd, bHighPrecision)
+        let sunLon = CAACoordinateTransformation.mapTo0To360Range(earth.longitude + 180.0)
+        let sunLat = -earth.latitude
+        let dLon = CAAFK5.correctionInLongitude(longitude: sunLon, latitude: sunLat, jd: jd)
+        let dLat = CAAFK5.correctionInLatitude(longitude: sunLon, jd: jd)
+        return (
+            longitude: CAACoordinateTransformation.mapTo0To360Range(sunLon + dLon),
+            latitude: CAACoordinateTransformation.mapToMinus90To90Range(sunLat + dLat),
+            radius: earth.radiusVector
+        )
+    }
+
+    @inlinable
     public static func geometricFK5EclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
-        var lon = geometricEclipticLongitude(jd, bHighPrecision)
-        let lat = geometricEclipticLatitude(jd, bHighPrecision)
-        lon += CAAFK5.correctionInLongitude(longitude: lon, latitude: lat, jd: jd)
-        return CAACoordinateTransformation.mapTo0To360Range(lon)
+        geometricFK5Coordinates(jd, bHighPrecision).longitude
     }
 
     @inlinable
@@ -59,11 +75,9 @@ public enum CAASun: Sendable {
         geometricFK5EclipticLongitude(jd, bHighPrecision)
     }
 
+    @inlinable
     public static func geometricFK5EclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
-        let lon = geometricEclipticLongitude(jd, bHighPrecision)
-        var lat = geometricEclipticLatitude(jd, bHighPrecision)
-        lat += CAAFK5.correctionInLatitude(longitude: lon, jd: jd)
-        return CAACoordinateTransformation.mapToMinus90To90Range(lat)
+        geometricFK5Coordinates(jd, bHighPrecision).latitude
     }
 
     @inlinable
@@ -72,9 +86,10 @@ public enum CAASun: Sendable {
     }
 
     public static func apparentEclipticLongitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
-        var lon = geometricFK5EclipticLongitude(jd, bHighPrecision)
+        let coords = geometricFK5Coordinates(jd, bHighPrecision)
+        var lon = coords.longitude
         lon += CAACoordinateTransformation.dmsToDegrees(degrees: 0, minutes: 0, seconds: CAANutation.nutationInLongitude(jd: jd))
-        let r = CAAEarth.radiusVector(jd, bHighPrecision)
+        let r = coords.radius
         if bHighPrecision {
             lon -= (0.005775518 * r * CAACoordinateTransformation.dmsToDegrees(degrees: 0, minutes: 0, seconds: variationGeometricEclipticLongitude(jd)))
         } else {
@@ -88,6 +103,7 @@ public enum CAASun: Sendable {
         apparentEclipticLongitude(jd, bHighPrecision)
     }
 
+    @inlinable
     public static func apparentEclipticLatitude(_ jd: Double, _ bHighPrecision: Bool = true) -> Double {
         return geometricFK5EclipticLatitude(jd, bHighPrecision)
     }
@@ -98,9 +114,10 @@ public enum CAASun: Sendable {
     }
 
     public static func equatorialRectangularCoordinatesMeanEquinox(_ jd: Double, _ bHighPrecision: Bool = true) -> CAA3DCoordinate {
-        let lon = CAACoordinateTransformation.degreesToRadians(geometricFK5EclipticLongitude(jd, bHighPrecision))
-        let lat = CAACoordinateTransformation.degreesToRadians(geometricFK5EclipticLatitude(jd, bHighPrecision))
-        let r = CAAEarth.radiusVector(jd, bHighPrecision)
+        let coords = geometricFK5Coordinates(jd, bHighPrecision)
+        let lon = CAACoordinateTransformation.degreesToRadians(coords.longitude)
+        let lat = CAACoordinateTransformation.degreesToRadians(coords.latitude)
+        let r = coords.radius
         let epsilon = CAACoordinateTransformation.degreesToRadians(CAANutation.meanObliquityOfEcliptic(jd: jd))
         let cosEps = cos(epsilon)
         let sinEps = sin(epsilon)
@@ -122,9 +139,10 @@ public enum CAASun: Sendable {
     }
 
     public static func eclipticRectangularCoordinatesJ2000(_ jd: Double, _ bHighPrecision: Bool = true) -> CAA3DCoordinate {
-        let lon = CAACoordinateTransformation.degreesToRadians(geometricEclipticLongitudeJ2000(jd, bHighPrecision))
-        let lat = CAACoordinateTransformation.degreesToRadians(geometricEclipticLatitudeJ2000(jd, bHighPrecision))
-        let r = CAAEarth.radiusVector(jd, bHighPrecision)
+        let earthJ2000 = CAAEarth.coordinatesJ2000(jd: jd)
+        let lon = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(earthJ2000.longitude + 180.0))
+        let lat = CAACoordinateTransformation.degreesToRadians(-earthJ2000.latitude)
+        let r = earthJ2000.radius
         return CAA3DCoordinate(
             x: r * cos(lat) * cos(lon),
             y: r * cos(lat) * sin(lon),

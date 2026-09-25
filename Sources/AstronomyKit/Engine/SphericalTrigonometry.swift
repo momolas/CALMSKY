@@ -104,6 +104,7 @@ public enum SphericalTrigonometry: Sendable {
 
     // MARK: - Celestial Coordinate Conversions
 
+    @inlinable
     public static func equatorialToEcliptic(alpha: Double, delta: Double, epsilon: Double) -> CAA2DCoordinate {
         let a = hoursToRadians(alpha)
         let d = degreesToRadians(delta)
@@ -125,6 +126,7 @@ public enum SphericalTrigonometry: Sendable {
         equatorialToEcliptic(alpha: alpha, delta: delta, epsilon: epsilon)
     }
 
+    @inlinable
     public static func eclipticToEquatorial(lambda: Double, beta: Double, epsilon: Double) -> CAA2DCoordinate {
         let l = degreesToRadians(lambda)
         let b = degreesToRadians(beta)
@@ -146,6 +148,7 @@ public enum SphericalTrigonometry: Sendable {
         eclipticToEquatorial(lambda: lambda, beta: beta, epsilon: epsilon)
     }
 
+    @inlinable
     public static func equatorialToHorizontal(localHourAngle: Double, delta: Double, latitude: Double) -> CAA2DCoordinate {
         let h = hoursToRadians(localHourAngle)
         let d = degreesToRadians(delta)
@@ -162,6 +165,7 @@ public enum SphericalTrigonometry: Sendable {
         return CAA2DCoordinate(azimuth, altitude)
     }
 
+    @inlinable
     public static func horizontalToEquatorial(azimuth: Double, altitude: Double, latitude: Double) -> CAA2DCoordinate {
         let a = degreesToRadians(azimuth)
         let alt = degreesToRadians(altitude)
@@ -177,6 +181,7 @@ public enum SphericalTrigonometry: Sendable {
         return CAA2DCoordinate(localHourAngle, delta)
     }
 
+    @inlinable
     public static func equatorialToGalactic(alpha: Double, delta: Double) -> CAA2DCoordinate {
         let a = 192.25 - hoursToDegrees(alpha)
         let aRad = degreesToRadians(a)
@@ -193,6 +198,7 @@ public enum SphericalTrigonometry: Sendable {
         return CAA2DCoordinate(l, b)
     }
 
+    @inlinable
     public static func galacticToEquatorial(l: Double, b: Double) -> CAA2DCoordinate {
         let lMinus123 = degreesToRadians(l - 123.0)
         let bRad = degreesToRadians(b)

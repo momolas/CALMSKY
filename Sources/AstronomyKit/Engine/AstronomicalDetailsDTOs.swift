@@ -104,6 +104,33 @@ public struct CAA3DCoordinate: Sendable, Codable, Hashable {
     }
 }
 
+public struct CAAHeliocentricCoordinates: Sendable, Codable, Hashable {
+    public var longitude: Double
+    public var latitude: Double
+    public var radiusVector: Double
+
+    @inlinable public var radius: Double {
+        get { radiusVector }
+        set { radiusVector = newValue }
+    }
+
+    @inlinable
+    public init(longitude: Double = 0, latitude: Double = 0, radiusVector: Double = 0) {
+        self.longitude = longitude
+        self.latitude = latitude
+        self.radiusVector = radiusVector
+    }
+
+    @inlinable
+    public init(_ longitude: Double, _ latitude: Double, _ radiusVector: Double) {
+        self.longitude = longitude
+        self.latitude = latitude
+        self.radiusVector = radiusVector
+    }
+}
+
+public typealias PlanetaryHeliocentricCoordinates = CAAHeliocentricCoordinates
+
 // MARK: - Calendar Dates & Easter
 
 public struct CAACalendarDate: Sendable, Codable, Hashable {
