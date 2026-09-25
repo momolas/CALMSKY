@@ -7,9 +7,8 @@
 //
 
 import Foundation
-#if canImport(Accelerate)
 import Accelerate
-#endif
+import simd
 
 // MARK: - DAF / SPK Constants
 
@@ -216,16 +215,28 @@ public struct SPKReader: Sendable {
         let initEpoch = readDouble(at: metaOffset)
         let intlen = readDouble(at: metaOffset + 8)
         let rsize = Int(readDouble(at: metaOffset + 16))
-        // let n = Int(readDouble(at: metaOffset + 24))
+        let n = Int(readDouble(at: metaOffset + 24))
 
-        guard intlen > 0, rsize > 0 else {
-            throw EphemerisError.dataCorrupted("Invalid segment metadata: intlen=\(intlen), rsize=\(rsize)")
+        guard intlen > 0, rsize > 0, n > 0 else {
+            throw EphemerisError.dataCorrupted("Invalid segment metadata: intlen=\(intlen), rsize=\(rsize), n=\(n)")
         }
 
-        // Determine which logical record contains our epoch
-        let recordIndex = Int((epochTDB - initEpoch) / intlen)
+        guard epochTDB.isFinite else {
+            throw EphemerisError.dateOutOfRange(JulianDay(SPKReader.tdbSecondsToJulianDay(epochTDB)))
+        }
+
+        // Determine which logical record contains our epoch, clamped to [0, n - 1]
+        let recordIndex = min(max(0, Int((epochTDB - initEpoch) / intlen)), n - 1)
         let recordStartAddr = Int(segment.startIndex) - 1 + recordIndex * rsize
         let recordOffset = recordStartAddr * 8
+
+        guard recordIndex >= 0,
+              recordStartAddr >= Int(segment.startIndex) - 1,
+              recordStartAddr + rsize <= Int(segment.endIndex) - 4,
+              recordOffset >= 0,
+              recordOffset + rsize * 8 <= data.count else {
+            throw EphemerisError.dateOutOfRange(JulianDay(SPKReader.tdbSecondsToJulianDay(epochTDB)))
+        }
 
         // Each Type 2 record contains:
         //   midpoint (1 double)
@@ -249,35 +260,29 @@ public struct SPKReader: Sendable {
 
         // Normalized time: tau ∈ [-1, 1]
         let tau = (epochTDB - midpoint) / radius
+        let coeffsBaseOffset = recordOffset + 16
 
-        // Read and evaluate Chebyshev polynomials for each component
-        let coeffsBaseOffset = recordOffset + 16 // After midpoint and radius
-
-        let x = evaluateChebyshev(baseOffset: coeffsBaseOffset, nCoeffs: nCoeffs, tau: tau)
-        let y = evaluateChebyshev(baseOffset: coeffsBaseOffset + nCoeffs * 8, nCoeffs: nCoeffs, tau: tau)
-        let z = evaluateChebyshev(baseOffset: coeffsBaseOffset + nCoeffs * 16, nCoeffs: nCoeffs, tau: tau)
-
-        // Compute velocity by differentiating the Chebyshev polynomials
-        let dxdt = evaluateChebyshevDerivative(baseOffset: coeffsBaseOffset, nCoeffs: nCoeffs, tau: tau, radius: radius)
-        let dydt = evaluateChebyshevDerivative(baseOffset: coeffsBaseOffset + nCoeffs * 8, nCoeffs: nCoeffs, tau: tau, radius: radius)
-        let dzdt = evaluateChebyshevDerivative(baseOffset: coeffsBaseOffset + nCoeffs * 16, nCoeffs: nCoeffs, tau: tau, radius: radius)
+        // Vectorized SIMD Clenshaw evaluation for position and exact analytical velocity (X, Y, Z simultaneously in 1 pass)
+        let (pos, vel) = evaluateChebyshevAndDerivative3D(baseOffset: coeffsBaseOffset, nCoeffs: nCoeffs, tau: tau, radius: radius)
 
         return EvaluationResult(
-            position: Vector3D(x: x, y: y, z: z),
-            velocity: Vector3D(x: dxdt, y: dydt, z: dzdt)
+            position: Vector3D(pos),
+            velocity: Vector3D(vel)
         )
     }
 
     /// Evaluates a Type 2 (Chebyshev position) segment at multiple epochs in batch.
     ///
-    /// Accelerated with Apple Accelerate BLAS when available.
+    /// Accelerated with Apple Accelerate SIMD operations.
     ///
     /// - Parameters:
     ///   - segment: The segment descriptor to evaluate.
-    ///   - epochsTDB: Array of epochs in seconds past J2000 TDB.
-    /// - Returns: Array of Position (km) and velocity (km/s) in the segment's reference frame.
-    /// - Throws: ``EphemerisError`` if the segment data is invalid.
-    public func evaluateBatch(segment: SegmentDescriptor, epochsTDB: [Double]) throws -> [EvaluationResult] {
+    ///   - epochsTDB: Array of target epochs in seconds past J2000 TDB.
+    /// - Returns: Array of `EvaluationResult` containing position and velocity vectors.
+    public func evaluateBatch(
+        segment: SegmentDescriptor,
+        epochsTDB: [Double]
+    ) throws -> [EvaluationResult] {
         guard segment.dataType == 2 else {
             throw EphemerisError.dataCorrupted("Only SPK Type 2 is supported, got Type \(segment.dataType)")
         }
@@ -293,8 +298,9 @@ public struct SPKReader: Sendable {
         let initEpoch = readDouble(at: metaOffset)
         let intlen = readDouble(at: metaOffset + 8)
         let rsize = Int(readDouble(at: metaOffset + 16))
-        guard intlen > 0, rsize > 0 else {
-            throw EphemerisError.dataCorrupted("Invalid segment metadata: intlen=\(intlen), rsize=\(rsize)")
+        let n = Int(readDouble(at: metaOffset + 24))
+        guard intlen > 0, rsize > 0, n > 0 else {
+            throw EphemerisError.dataCorrupted("Invalid segment metadata: intlen=\(intlen), rsize=\(rsize), n=\(n)")
         }
 
         let nCoeffs = (rsize - 2) / 3
@@ -306,11 +312,19 @@ public struct SPKReader: Sendable {
         results.reserveCapacity(epochsTDB.count)
 
         for epoch in epochsTDB {
-            let recordIndex = Int((epoch - initEpoch) / intlen)
+            guard epoch.isFinite else {
+                throw EphemerisError.dateOutOfRange(JulianDay(SPKReader.tdbSecondsToJulianDay(epoch)))
+            }
+
+            let recordIndex = min(max(0, Int((epoch - initEpoch) / intlen)), n - 1)
             let recordStartAddr = Int(segment.startIndex) - 1 + recordIndex * rsize
             let recordOffset = recordStartAddr * 8
-            guard recordOffset >= 0, recordOffset + rsize * 8 <= data.count else {
-                throw EphemerisError.dataCorrupted("Record offset out of bounds")
+            guard recordIndex >= 0,
+                  recordStartAddr >= Int(segment.startIndex) - 1,
+                  recordStartAddr + rsize <= Int(segment.endIndex) - 4,
+                  recordOffset >= 0,
+                  recordOffset + rsize * 8 <= data.count else {
+                throw EphemerisError.dateOutOfRange(JulianDay(SPKReader.tdbSecondsToJulianDay(epoch)))
             }
 
             let midpoint = readDouble(at: recordOffset)
@@ -322,17 +336,11 @@ public struct SPKReader: Sendable {
             let tau = (epoch - midpoint) / radius
             let coeffsBaseOffset = recordOffset + 16
 
-            let x = evaluateChebyshev(baseOffset: coeffsBaseOffset, nCoeffs: nCoeffs, tau: tau)
-            let y = evaluateChebyshev(baseOffset: coeffsBaseOffset + nCoeffs * 8, nCoeffs: nCoeffs, tau: tau)
-            let z = evaluateChebyshev(baseOffset: coeffsBaseOffset + nCoeffs * 16, nCoeffs: nCoeffs, tau: tau)
-
-            let dxdt = evaluateChebyshevDerivative(baseOffset: coeffsBaseOffset, nCoeffs: nCoeffs, tau: tau, radius: radius)
-            let dydt = evaluateChebyshevDerivative(baseOffset: coeffsBaseOffset + nCoeffs * 8, nCoeffs: nCoeffs, tau: tau, radius: radius)
-            let dzdt = evaluateChebyshevDerivative(baseOffset: coeffsBaseOffset + nCoeffs * 16, nCoeffs: nCoeffs, tau: tau, radius: radius)
+            let (pos, vel) = evaluateChebyshevAndDerivative3D(baseOffset: coeffsBaseOffset, nCoeffs: nCoeffs, tau: tau, radius: radius)
 
             results.append(EvaluationResult(
-                position: Vector3D(x: x, y: y, z: z),
-                velocity: Vector3D(x: dxdt, y: dydt, z: dzdt)
+                position: Vector3D(pos),
+                velocity: Vector3D(vel)
             ))
         }
 
@@ -353,70 +361,86 @@ public struct SPKReader: Sendable {
 
     // MARK: - Private Helpers
 
-    /// Evaluates a Chebyshev polynomial using the Clenshaw recurrence.
+    /// Evaluates Chebyshev polynomials and their exact analytical derivatives simultaneously for X, Y, and Z
+    /// in a single pass using Apple SIMD hardware registers and zero heap allocation.
     ///
-    /// This is a zero-allocation algorithm that reads coefficients directly from the memory-mapped file.
-    private func evaluateChebyshev(baseOffset: Int, nCoeffs: Int, tau: Double) -> Double {
-        // Clenshaw recurrence: evaluate T_n(tau) with coefficients c[0..n-1]
-        // S_{n+1} = 0, S_n = 0
-        // S_i = 2*tau*S_{i+1} - S_{i+2} + c[i]   for i = n-1 down to 1
-        // result = tau*S_1 - S_2 + c[0]
-        var s1: Double = 0
-        var s2: Double = 0
-
-        for i in stride(from: nCoeffs - 1, through: 1, by: -1) {
-            let coeff = readDouble(at: baseOffset + i * 8)
-            let s0 = 2.0 * tau * s1 - s2 + coeff
-            s2 = s1
-            s1 = s0
+    /// Differentiating the Clenshaw recurrence:
+    /// s_i(x) = 2*x*s_{i+1}(x) - s_{i+2}(x) + c_i
+    /// s'_i(x) = 2*s_{i+1}(x) + 2*x*s'_{i+1}(x) - s'_{i+2}(x)
+    /// P(x) = x*s_1 - s_2 + c_0
+    /// P'(x) = s_1 + x*s'_1 - s'_2
+    /// Velocity = P'(tau) / radius
+    @inline(__always)
+    private func evaluateChebyshevAndDerivative3D(baseOffset: Int, nCoeffs: Int, tau: Double, radius: Double) -> (position: simd_double3, velocity: simd_double3) {
+        guard nCoeffs > 0 else {
+            return (simd_double3(0, 0, 0), simd_double3(0, 0, 0))
         }
 
-        let c0 = readDouble(at: baseOffset)
-        return tau * s1 - s2 + c0
-    }
+        let twoTau = 2.0 * tau
+        let strideY = nCoeffs * 8
+        let strideZ = nCoeffs * 16
 
-    /// Evaluates the derivative of a Chebyshev polynomial using the derivative recurrence.
-    ///
-    /// Returns dP/dt where t is the original (non-normalized) time in seconds.
-    private func evaluateChebyshevDerivative(baseOffset: Int, nCoeffs: Int, tau: Double, radius: Double) -> Double {
-        // Derivative of Chebyshev: T'_0(x) = 0, T'_1(x) = 1, T'_n(x) = 2*T_{n-1}(x) + 2*x*T'_{n-1}(x) - T'_{n-2}(x)
-        // Using the standard approach: compute dP/dtau then divide by radius to get dP/dt
-        guard nCoeffs > 1 else { return 0 }
+        return data.withUnsafeBytes { buffer in
+            guard let basePtr = buffer.baseAddress,
+                  baseOffset >= 0,
+                  baseOffset + 3 * nCoeffs * 8 <= buffer.count else {
+                return (simd_double3(0, 0, 0), simd_double3(0, 0, 0))
+            }
 
-        var w0: Double = 0
-        var w1: Double = 0
+            @inline(__always)
+            func loadCoeff3D(offset: Int) -> simd_double3 {
+                let pX = basePtr.advanced(by: offset)
+                let pY = basePtr.advanced(by: offset + strideY)
+                let pZ = basePtr.advanced(by: offset + strideZ)
 
-        for i in stride(from: nCoeffs - 1, through: 1, by: -1) {
-            let coeff = readDouble(at: baseOffset + i * 8)
-            let tmp = w0
-            w0 = 2.0 * tau * w0 - w1 + coeff
-            w1 = tmp
+                let rawX = pX.loadUnaligned(as: UInt64.self)
+                let rawY = pY.loadUnaligned(as: UInt64.self)
+                let rawZ = pZ.loadUnaligned(as: UInt64.self)
+
+                let valX = isLittleEndian ? UInt64(littleEndian: rawX) : UInt64(bigEndian: rawX)
+                let valY = isLittleEndian ? UInt64(littleEndian: rawY) : UInt64(bigEndian: rawY)
+                let valZ = isLittleEndian ? UInt64(littleEndian: rawZ) : UInt64(bigEndian: rawZ)
+
+                return simd_double3(Double(bitPattern: valX), Double(bitPattern: valY), Double(bitPattern: valZ))
+            }
+
+            if nCoeffs == 1 {
+                let c0 = loadCoeff3D(offset: baseOffset)
+                return (c0, simd_double3(0, 0, 0))
+            }
+
+            var s1 = simd_double3(0, 0, 0)
+            var s2 = simd_double3(0, 0, 0)
+            var d1 = simd_double3(0, 0, 0)
+            var d2 = simd_double3(0, 0, 0)
+
+            for i in stride(from: nCoeffs - 1, through: 1, by: -1) {
+                let offset = baseOffset + i * 8
+                let coeff = loadCoeff3D(offset: offset)
+
+                // Exact analytical derivative of Clenshaw recurrence:
+                let d0 = 2.0 * (s1 + tau * d1) - d2
+                d2 = d1
+                d1 = d0
+
+                // Position Clenshaw recurrence:
+                let s0 = twoTau * s1 - s2 + coeff
+                s2 = s1
+                s1 = s0
+            }
+
+            let c0 = loadCoeff3D(offset: baseOffset)
+            let pos = tau * s1 - s2 + c0
+            let vel = (s1 + tau * d1 - d2) / radius
+            return (pos, vel)
         }
-
-        // dP/dtau = w0 (derivative of Clenshaw result w.r.t. tau)
-        // But we need a proper derivative recurrence. Let's use the direct approach:
-        // dP/dtau via the derivative Clenshaw recurrence on T'_n coefficients
-        var d1: Double = 0
-        var d2: Double = 0
-
-        for i in stride(from: nCoeffs - 1, through: 1, by: -1) {
-            let coeff = readDouble(at: baseOffset + i * 8)
-            let d0 = 2.0 * tau * d1 - d2 + Double(i) * coeff
-            d2 = d1
-            d1 = d0
-        }
-
-        // This gives n * c_n chain, but the proper derivative is:
-        // dP/dtau = sum_{n=1}^{N-1} c_n * T'_n(tau) where T'_n can be computed via:
-        // We use the simpler numerical differentiation: dP/dtau ≈ S_1 = w0
-        // and dP/dt = dP/dtau / radius
-        return w0 / radius
     }
 
     /// Reads a Double from data at the given byte offset with specified endianness (static, for use during init).
     private static func readDouble(from data: Data, at offset: Int, littleEndian: Bool) -> Double {
         data.withUnsafeBytes { buffer in
-            let raw = buffer.load(fromByteOffset: offset, as: UInt64.self)
+            guard offset >= 0, offset + MemoryLayout<UInt64>.size <= buffer.count else { return 0.0 }
+            let raw = buffer.loadUnaligned(fromByteOffset: offset, as: UInt64.self)
             let value = littleEndian ? UInt64(littleEndian: raw) : UInt64(bigEndian: raw)
             return Double(bitPattern: value)
         }
@@ -425,7 +449,8 @@ public struct SPKReader: Sendable {
     /// Reads an Int32 from data at the given byte offset with specified endianness (static, for use during init).
     private static func readInt32(from data: Data, at offset: Int, littleEndian: Bool) -> Int32 {
         data.withUnsafeBytes { buffer in
-            let raw = buffer.load(fromByteOffset: offset, as: UInt32.self)
+            guard offset >= 0, offset + MemoryLayout<UInt32>.size <= buffer.count else { return 0 }
+            let raw = buffer.loadUnaligned(fromByteOffset: offset, as: UInt32.self)
             let value = littleEndian ? UInt32(littleEndian: raw) : UInt32(bigEndian: raw)
             return Int32(bitPattern: value)
         }
@@ -448,14 +473,16 @@ private extension Data {
     /// Reads an Int32 in little-endian byte order (for endianness detection).
     func readInt32(at offset: Int) -> Int32 {
         withUnsafeBytes { buffer in
-            Int32(bitPattern: buffer.load(fromByteOffset: offset, as: UInt32.self))
+            guard offset >= 0, offset + MemoryLayout<UInt32>.size <= buffer.count else { return 0 }
+            return Int32(bitPattern: buffer.loadUnaligned(fromByteOffset: offset, as: UInt32.self))
         }
     }
 
     /// Reads an Int32 assuming little-endian encoding.
     func readInt32LE(at offset: Int) -> Int32 {
         withUnsafeBytes { buffer in
-            let raw = buffer.load(fromByteOffset: offset, as: UInt32.self)
+            guard offset >= 0, offset + MemoryLayout<UInt32>.size <= buffer.count else { return 0 }
+            let raw = buffer.loadUnaligned(fromByteOffset: offset, as: UInt32.self)
             return Int32(bitPattern: UInt32(littleEndian: raw))
         }
     }

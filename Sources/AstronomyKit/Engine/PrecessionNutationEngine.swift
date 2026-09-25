@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Accelerate
 
 // MARK: - Nutation Engine (IAU 1980 Wahr Model)
 
@@ -184,26 +185,16 @@ private let gIAU2000BCoeffs: [IAU2000BCoefficient] = [
 
 public enum CAANutation: Sendable {
     public static func NutationInLongitude(_ JD: Double) -> Double {
-        let t = (JD - 2451545.0) / 36525.0
-        let t2 = t * t
-        let t3 = t2 * t
-
-        let d = SphericalTrigonometry.mapTo0To360Range(297.85036 + 445267.111480 * t - 0.0019142 * t2 + t3 / 189474.0)
-        let m = SphericalTrigonometry.mapTo0To360Range(357.52772 + 35999.050340 * t - 0.0001603 * t2 - t3 / 300000.0)
-        let mPrime = SphericalTrigonometry.mapTo0To360Range(134.96298 + 477198.867398 * t + 0.0086972 * t2 + t3 / 56250.0)
-        let f = SphericalTrigonometry.mapTo0To360Range(93.27191 + 483202.017538 * t - 0.0036825 * t2 + t3 / 327270.0)
-        let omega = SphericalTrigonometry.mapTo0To360Range(125.04452 - 1934.136261 * t + 0.0020708 * t2 + t3 / 450000.0)
-
-        var value = 0.0
-        for coeff in gNutationCoeffs {
-            let argument = Double(coeff.D) * d + Double(coeff.M) * m + Double(coeff.Mprime) * mPrime + Double(coeff.F) * f + Double(coeff.omega) * omega
-            let argRad = SphericalTrigonometry.degreesToRadians(argument)
-            value += (coeff.sincoeff1 + coeff.sincoeff2 * t) * sin(argRad) * 0.0001
-        }
-        return value
+        nutationIAU1980(JD).deltaPsi
     }
 
     public static func NutationInObliquity(_ JD: Double) -> Double {
+        nutationIAU1980(JD).deltaEpsilon
+    }
+
+    /// High-precision IAU 1980 Wahr nutation in longitude and obliquity in arcseconds.
+    /// Accelerated with Apple Accelerate vForce and vDSP.
+    public static func nutationIAU1980(_ JD: Double) -> (deltaPsi: Double, deltaEpsilon: Double) {
         let t = (JD - 2451545.0) / 36525.0
         let t2 = t * t
         let t3 = t2 * t
@@ -214,13 +205,35 @@ public enum CAANutation: Sendable {
         let f = SphericalTrigonometry.mapTo0To360Range(93.27191 + 483202.017538 * t - 0.0036825 * t2 + t3 / 327270.0)
         let omega = SphericalTrigonometry.mapTo0To360Range(125.04452 - 1934.136261 * t + 0.0020708 * t2 + t3 / 450000.0)
 
-        var value = 0.0
-        for coeff in gNutationCoeffs {
-            let argument = Double(coeff.D) * d + Double(coeff.M) * m + Double(coeff.Mprime) * mPrime + Double(coeff.F) * f + Double(coeff.omega) * omega
-            let argRad = SphericalTrigonometry.degreesToRadians(argument)
-            value += (coeff.coscoeff1 + coeff.coscoeff2 * t) * cos(argRad) * 0.0001
+        let nTerms = gNutationCoeffs.count
+        let degToRad = Double.pi / 180.0
+
+        return withUnsafeTemporaryAllocation(of: Double.self, capacity: nTerms * 5) { buffer in
+            guard let base = buffer.baseAddress else { return (deltaPsi: 0, deltaEpsilon: 0) }
+            let argsRad = base
+            let ampPsi = base + nTerms
+            let ampEps = base + 2 * nTerms
+            let sines = base + 3 * nTerms
+            let cosines = base + 4 * nTerms
+
+            for i in 0..<nTerms {
+                let coeff = gNutationCoeffs[i]
+                let argDeg = Double(coeff.D) * d + Double(coeff.M) * m + Double(coeff.Mprime) * mPrime + Double(coeff.F) * f + Double(coeff.omega) * omega
+                argsRad[i] = argDeg * degToRad
+                ampPsi[i] = (coeff.sincoeff1 + coeff.sincoeff2 * t) * 0.0001
+                ampEps[i] = (coeff.coscoeff1 + coeff.coscoeff2 * t) * 0.0001
+            }
+
+            var count32 = Int32(nTerms)
+            vvsincos(sines, cosines, argsRad, &count32)
+
+            var dPsi = 0.0
+            var dEps = 0.0
+            vDSP_dotprD(ampPsi, 1, sines, 1, &dPsi, vDSP_Length(nTerms))
+            vDSP_dotprD(ampEps, 1, cosines, 1, &dEps, vDSP_Length(nTerms))
+
+            return (deltaPsi: dPsi, deltaEpsilon: dEps)
         }
-        return value
     }
 
     public static func MeanObliquityOfEcliptic(_ JD: Double) -> Double {
@@ -276,16 +289,35 @@ public enum CAANutation: Sendable {
         let d = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(297.85019547 + 445267.111477 * t - 0.0019142 * t2 + t3 / 189474.0))
         let omega = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(125.04455501 - 1934.13626197 * t + 0.0020708 * t2 + t3 / 450000.0))
 
-        var dPsiMas = 0.0
-        var dEpsMas = 0.0
+        let nTerms = gIAU2000BCoeffs.count
 
-        for coeff in gIAU2000BCoeffs {
-            let arg = Double(coeff.l) * l + Double(coeff.lprime) * lprime + Double(coeff.f) * f + Double(coeff.d) * d + Double(coeff.om) * omega
-            dPsiMas += (coeff.sPsi + coeff.sPsiT * t) * sin(arg)
-            dEpsMas += (coeff.cEps + coeff.cEpsT * t) * cos(arg)
+        return withUnsafeTemporaryAllocation(of: Double.self, capacity: nTerms * 5) { buffer in
+            guard let base = buffer.baseAddress else { return (deltaPsi: 0, deltaEpsilon: 0) }
+            let args = base
+            let ampPsi = base + nTerms
+            let ampEps = base + 2 * nTerms
+            let sines = base + 3 * nTerms
+            let cosines = base + 4 * nTerms
+
+            for i in 0..<nTerms {
+                let coeff = gIAU2000BCoeffs[i]
+                args[i] = Double(coeff.l) * l + Double(coeff.lprime) * lprime + Double(coeff.f) * f + Double(coeff.d) * d + Double(coeff.om) * omega
+                ampPsi[i] = coeff.sPsi + coeff.sPsiT * t
+                ampEps[i] = coeff.cEps + coeff.cEpsT * t
+            }
+
+            var count32 = Int32(nTerms)
+            // Vectorized simultaneous sin and cos evaluation via Apple Accelerate vForce
+            vvsincos(sines, cosines, args, &count32)
+
+            // Vector dot products via Apple Accelerate vDSP
+            var dPsiMas = 0.0
+            var dEpsMas = 0.0
+            vDSP_dotprD(ampPsi, 1, sines, 1, &dPsiMas, vDSP_Length(nTerms))
+            vDSP_dotprD(ampEps, 1, cosines, 1, &dEpsMas, vDSP_Length(nTerms))
+
+            return (deltaPsi: dPsiMas / 10000.0, deltaEpsilon: dEpsMas / 10000.0)
         }
-
-        return (deltaPsi: dPsiMas / 1000.0, deltaEpsilon: dEpsMas / 1000.0)
     }
 
     public static func NutationInRightAscension(_ Alpha: Double, _ Delta: Double, _ Obliquity: Double, _ NutationInLongitude: Double, _ NutationInObliquity: Double) -> Double {

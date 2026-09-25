@@ -14,11 +14,16 @@ public struct LunarPhaseView: View {
     public let phase: LunarPhase
     public let illumination: Double
     public let size: CGFloat
+    @ScaledMetric(relativeTo: .body) private var scaleFactor: CGFloat = 1.0
 
     public init(phase: LunarPhase, illumination: Double, size: CGFloat = 80) {
         self.phase = phase
         self.illumination = max(0.0, min(1.0, illumination))
         self.size = size
+    }
+
+    private var effectiveSize: CGFloat {
+        size * scaleFactor
     }
 
     public var body: some View {
@@ -27,17 +32,17 @@ public struct LunarPhaseView: View {
                 // Dark lunar disk (Earthshine)
                 Circle()
                     .fill(Color(white: 0.15))
-                    .frame(width: size, height: size)
+                    .frame(width: effectiveSize, height: effectiveSize)
 
                 // Illuminated phase representation
-                phaseGraphic
-                    .frame(width: size, height: size)
-                    .clipShape(Circle())
+                PhaseGraphicCanvas(phase: phase, illumination: illumination)
+                    .frame(width: effectiveSize, height: effectiveSize)
+                    .clipShape(.circle)
 
                 // Limb highlight
                 Circle()
                     .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                    .frame(width: size, height: size)
+                    .frame(width: effectiveSize, height: effectiveSize)
             }
 
             VStack(spacing: 2) {
@@ -53,9 +58,15 @@ public struct LunarPhaseView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(phase.name), \(illumination.formatted(.percent.precision(.fractionLength(0)))) illuminated")
     }
+}
 
-    @ViewBuilder
-    private var phaseGraphic: some View {
+// MARK: - Subview
+
+private struct PhaseGraphicCanvas: View {
+    let phase: LunarPhase
+    let illumination: Double
+
+    var body: some View {
         Canvas { context, canvasSize in
             let rect = CGRect(origin: .zero, size: canvasSize)
             let midX = rect.midX

@@ -22,131 +22,37 @@ public struct CelestialBodyCard: View {
     public var body: some View {
         Button(action: { onSelect?() }) {
             VStack(alignment: .leading, spacing: 12) {
-                headerSection
+                CardHeaderSection(
+                    name: snapshot.body.name,
+                    symbol: snapshot.body.symbol,
+                    bodyType: bodyTypeDescription,
+                    magnitude: snapshot.apparentMagnitude,
+                    tint: colorTint
+                )
                 Divider()
-                coordinatesSection
+                CardCoordinatesSection(
+                    equatorialCoordinates: snapshot.equatorialCoordinates,
+                    radiusVectorAU: snapshot.radiusVector.value
+                )
                 if snapshot.apparentMagnitude != nil || snapshot.illuminatedFraction != nil {
                     Divider()
-                    metricsSection
+                    CardMetricsSection(
+                        illuminatedFraction: snapshot.illuminatedFraction,
+                        radiusVectorAU: snapshot.radiusVector.value
+                    )
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(.ultraThinMaterial)
-            )
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle.rect(cornerRadius: 16)
                     .strokeBorder(colorTint.opacity(0.3), lineWidth: 1)
             )
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .contentShape(.rect(cornerRadius: 16))
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityDescription)
-    }
-
-    private var headerSection: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(colorTint.opacity(0.2))
-                    .frame(width: 44, height: 44)
-                Text(snapshot.body.symbol)
-                    .font(.title2)
-                    .foregroundStyle(colorTint)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(snapshot.body.name)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-
-                Text(bodyTypeDescription)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            if let mag = snapshot.apparentMagnitude {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(mag, format: .number.precision(.fractionLength(1)))
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Text("mag")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule()
-                        .fill(Color.secondary.opacity(0.15))
-                )
-            }
-        }
-    }
-
-    private var coordinatesSection: some View {
-        HStack(spacing: 16) {
-            if let eq = snapshot.equatorialCoordinates {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Right Ascension")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(eq.rightAscension.formatted(.rightAscension))
-                        .font(.callout.monospacedDigit())
-                        .foregroundStyle(.primary)
-                }
-
-                Spacer()
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Declination")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(eq.declination.formatted(.sexagesimal))
-                        .font(.callout.monospacedDigit())
-                        .foregroundStyle(.primary)
-                }
-            } else {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Distance to Sun")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text("\(snapshot.radiusVector.value, format: .number.precision(.fractionLength(3))) AU")
-                        .font(.callout.monospacedDigit())
-                        .foregroundStyle(.primary)
-                }
-            }
-        }
-    }
-
-    private var metricsSection: some View {
-        HStack(spacing: 16) {
-            if let frac = snapshot.illuminatedFraction {
-                HStack(spacing: 6) {
-                    Image(systemName: "moon.fill")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(frac, format: .percent.precision(.fractionLength(0)))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: 4) {
-                Image(systemName: "ruler")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text("\(snapshot.radiusVector.value, format: .number.precision(.fractionLength(2))) AU")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
-        }
     }
 
     private var colorTint: Color {
@@ -178,6 +84,129 @@ public struct CelestialBodyCard: View {
             desc += ", right ascension \(eq.rightAscension.formatted(.rightAscension)), declination \(eq.declination.formatted(.sexagesimal))"
         }
         return desc
+    }
+}
+
+// MARK: - Dedicated Subviews
+
+private struct CardHeaderSection: View {
+    let name: String
+    let symbol: String
+    let bodyType: String
+    let magnitude: Double?
+    let tint: Color
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(tint.opacity(0.2))
+                    .frame(width: 44, height: 44)
+                Text(symbol)
+                    .font(.title2)
+                    .foregroundStyle(tint)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                Text(bodyType)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            if let mag = magnitude {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(mag, format: .number.precision(.fractionLength(1)))
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text("mag")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(Color.secondary.opacity(0.15))
+                )
+            }
+        }
+    }
+}
+
+private struct CardCoordinatesSection: View {
+    let equatorialCoordinates: EquatorialCoordinates?
+    let radiusVectorAU: Double
+
+    var body: some View {
+        HStack(spacing: 16) {
+            if let eq = equatorialCoordinates {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Right Ascension")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(eq.rightAscension.formatted(.rightAscension))
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Declination")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(eq.declination.formatted(.sexagesimal))
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Distance to Sun")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("\(radiusVectorAU, format: .number.precision(.fractionLength(3))) AU")
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(.primary)
+                }
+            }
+        }
+    }
+}
+
+private struct CardMetricsSection: View {
+    let illuminatedFraction: Double?
+    let radiusVectorAU: Double
+
+    var body: some View {
+        HStack(spacing: 16) {
+            if let frac = illuminatedFraction {
+                HStack(spacing: 6) {
+                    Image(systemName: "moon.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(frac, format: .percent.precision(.fractionLength(0)))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            HStack(spacing: 4) {
+                Image(systemName: "ruler")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text("\(radiusVectorAU, format: .number.precision(.fractionLength(2))) AU")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }
 #endif

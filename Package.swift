@@ -26,7 +26,7 @@ let package = Package(
                 .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
-                .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
+                .linkedFramework("Accelerate")
             ]
         ),
         .testTarget(
@@ -37,7 +37,7 @@ let package = Package(
                 .swiftLanguageMode(.v6)
             ],
             linkerSettings: [
-                .linkedFramework("Accelerate", .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS]))
+                .linkedFramework("Accelerate")
             ]
         )
     ]

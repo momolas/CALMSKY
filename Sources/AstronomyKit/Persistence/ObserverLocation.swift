@@ -23,7 +23,7 @@ public final class ObserverLocation {
     public var isDefaultSite: Bool = false
     public var notes: String = ""
 
-    @Relationship(deleteRule: .cascade, inverse: \ObservationSession.location)
+    @Relationship(deleteRule: .nullify, inverse: \ObservationSession.location)
     public var sessions: [ObservationSession] = []
 
     public init(

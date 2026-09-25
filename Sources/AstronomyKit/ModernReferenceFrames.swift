@@ -1,4 +1,6 @@
 import Foundation
+import Accelerate
+import simd
 
 /// Modern astronomical time scales conforming to IAU (International Astronomical Union) and SOFA definitions.
 public enum AstronomicalTimeScale: Sendable, Hashable, CaseIterable {
@@ -78,6 +80,27 @@ public enum ModernReferenceFrames: Sendable {
         return 84381.406 - 46.836769 * t - 0.0001831 * t * t + 0.00200340 * t * t * t - 0.000000576 * t * t * t * t - 0.0000000434 * t * t * t * t * t
     }
 
+    /// Rotation matrix $R_3(\text{ERA})$ from CIRS to TIRS.
+    ///
+    /// Stored in column-major order (3 columns of `simd_double3`, 96 bytes with 32-byte column alignment).
+    /// - Parameter jdUT1: Julian Date in UT1.
+    /// - Returns: Orthogonal rotation matrix in column-major SIMD 3x3 format.
+    public static func rotationMatrixCirsToTirs(jdUT1: Double) -> simd_double3x3 {
+        let era = earthRotationAngle(jdUT1: jdUT1)
+        let cosEra = cos(era)
+        let sinEra = sin(era)
+
+        // Column-major simd_double3x3:
+        // Column 0: [cosERA, -sinERA, 0]
+        // Column 1: [sinERA, cosERA, 0]
+        // Column 2: [0, 0, 1]
+        return simd_double3x3(
+            simd_double3(cosEra, -sinEra, 0),
+            simd_double3(sinEra, cosEra, 0),
+            simd_double3(0, 0, 1)
+        )
+    }
+
     /// Rotate a vector from the Celestial Intermediate Reference System (CIRS)
     /// to the Terrestrial Intermediate Reference System (TIRS) using the Earth Rotation Angle.
     /// - Parameters:
@@ -85,31 +108,25 @@ public enum ModernReferenceFrames: Sendable {
     ///   - jdUT1: Julian Date in UT1.
     /// - Returns: 3D vector in TIRS.
     public static func cirsToTirs(cirsVector: Vector3D, jdUT1: Double) -> Vector3D {
-        let era = earthRotationAngle(jdUT1: jdUT1)
-        let cosEra = cos(era)
-        let sinEra = sin(era)
+        let rot = rotationMatrixCirsToTirs(jdUT1: jdUT1)
+        return Vector3D(rot * cirsVector.rawValue)
+    }
 
-        // Rotation R3(ERA):
-        // [ cosERA   sinERA  0 ]
-        // [-sinERA   cosERA  0 ]
-        // [   0        0     1 ]
-        return Vector3D(
-            x: cosEra * cirsVector.x + sinEra * cirsVector.y,
-            y: -sinEra * cirsVector.x + cosEra * cirsVector.y,
-            z: cirsVector.z
-        )
+    /// Rotate an array of vectors from CIRS to TIRS in batch.
+    public static func cirsToTirs(vectors: [Vector3D], jdUT1: Double) -> [Vector3D] {
+        let rot = rotationMatrixCirsToTirs(jdUT1: jdUT1)
+        return vectors.map { Vector3D(rot * $0.rawValue) }
     }
 
     /// Rotate a vector from TIRS back to CIRS.
     public static func tirsToCirs(tirsVector: Vector3D, jdUT1: Double) -> Vector3D {
-        let era = earthRotationAngle(jdUT1: jdUT1)
-        let cosEra = cos(era)
-        let sinEra = sin(era)
+        let rot = rotationMatrixCirsToTirs(jdUT1: jdUT1).transpose
+        return Vector3D(rot * tirsVector.rawValue)
+    }
 
-        return Vector3D(
-            x: cosEra * tirsVector.x - sinEra * tirsVector.y,
-            y: sinEra * tirsVector.x + cosEra * tirsVector.y,
-            z: tirsVector.z
-        )
+    /// Rotate an array of vectors from TIRS to CIRS in batch.
+    public static func tirsToCirs(vectors: [Vector3D], jdUT1: Double) -> [Vector3D] {
+        let rot = rotationMatrixCirsToTirs(jdUT1: jdUT1).transpose
+        return vectors.map { Vector3D(rot * $0.rawValue) }
     }
 }

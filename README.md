@@ -1,7 +1,7 @@
 # AstronomyKit
 
-![](https://img.shields.io/badge/Swift-6.0%20%7C%206.2-blue.svg?style=flat)
-![](https://img.shields.io/badge/platform-ios%20%7C%20osx%20%7C%20watchos%20%7C%20tvos%20%7C%20visionos%20%7C%20linux-lightgrey.svg)
+![](https://img.shields.io/badge/platform-ios%20%7C%20macos%20%7C%20watchos%20%7C%20tvos%20%7C%20visionos-lightgrey.svg)
+![](https://img.shields.io/badge/accelerate-Apple%20SIMD%20%7C%20vDSP%20%7C%20BLAS-orange.svg)
 ![](https://img.shields.io/badge/licence-MIT-blue.svg)
 
 *The most comprehensive collection of accurate astronomical algorithms in modern Swift.* 

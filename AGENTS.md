@@ -31,6 +31,10 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
 - Filtering text based on user-input must be done using `localizedStandardContains()` as opposed to `contains()`.
 - Avoid force unwraps and force `try` unless it is unrecoverable.
 - Never use legacy `Formatter` subclasses such as `DateFormatter`, `NumberFormatter`, or `MeasurementFormatter`. Always use the modern `FormatStyle` API instead. For example, to format a date, use `myDate.formatted(date: .abbreviated, time: .shortened)`. To parse a date from a string, use `Date(inputString, strategy: .iso8601)`. For numbers, use `myNumber.formatted(.number)` or custom format styles.
+- In binary serialization or buffer parsing (`UnsafeRawBufferPointer`), always use `loadUnaligned(fromByteOffset:as:)` with explicit bounds guards (`offset >= 0 && offset + MemoryLayout<T>.size <= buffer.count`) rather than `load(fromByteOffset:as:)`.
+- In performance-critical numerical inner loops (e.g. nutation series, orbit propagation), use `withUnsafeTemporaryAllocation(of:capacity:)` on the stack for bounded buffers (<= 64 KiB) instead of dynamically allocating heap arrays (`[Double]`).
+- Do not call vector library functions (e.g. `vvsincos`) for single scalar evaluations (N = 1); use native hardware scalar instructions (`sin`, `cos`).
+- For Chebyshev polynomial evaluation with derivatives (positions and velocities), use the exact joint Clenshaw recurrence in a single SIMD pass (`simd_double3`) to compute position and velocity simultaneously.
 
 ## SwiftUI instructions
 

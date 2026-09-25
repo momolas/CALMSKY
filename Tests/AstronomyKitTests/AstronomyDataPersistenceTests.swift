@@ -32,7 +32,7 @@ struct AstronomyDataPersistenceTests {
         context.insert(picDuMidi)
         try context.save()
 
-        let descriptor = FetchDescriptor<ObserverLocation>(predicate: #Predicate { $0.isDefaultSite == true })
+        let descriptor = FetchDescriptor<ObserverLocation>(predicate: #Predicate { $0.isDefaultSite })
         let results = try context.fetch(descriptor)
 
         #expect(results.count == 1)
@@ -45,6 +45,34 @@ struct AstronomyDataPersistenceTests {
         let coords = site.coordinates
         #expect(abs(coords.latitude.value - 42.9369) < 1e-4)
         #expect(abs(coords.longitude.value - (-0.1411)) < 1e-4)
+    }
+
+    @Test("Deleting ObserverLocation nullifies session.location without deleting session or logs")
+    func testLocationDeletionNullifiesSession() throws {
+        let container = try AstronomyDataStore.makeInMemoryContainer()
+        let context = ModelContext(container)
+
+        let observatory = ObserverLocation(name: "Calar Alto", latitude: 37.2236, longitude: -2.5463)
+        context.insert(observatory)
+
+        let session = ObservationSession(date: .now, observerName: "Herschel", location: observatory)
+        context.insert(session)
+
+        let log = ObservationLog(targetName: "Uranus", session: session)
+        context.insert(log)
+        try context.save()
+
+        // Deleting the location preset must nullify session.location and preserve both session and log
+        context.delete(observatory)
+        try context.save()
+
+        let remainingSessions = try context.fetch(FetchDescriptor<ObservationSession>())
+        #expect(remainingSessions.count == 1)
+        #expect(remainingSessions.first?.location == nil)
+
+        let remainingLogs = try context.fetch(FetchDescriptor<ObservationLog>())
+        #expect(remainingLogs.count == 1)
+        #expect(remainingLogs.first?.targetName == "Uranus")
     }
 
     @Test("ObservationSession with cascading ObservationLogs")
@@ -125,5 +153,27 @@ struct AstronomyDataPersistenceTests {
         let marsLogs = try context.fetch(marsDescriptor)
         #expect(marsLogs.count == 1)
         #expect(marsLogs.first?.targetName == "Mars")
+    }
+
+    @Test("AstronomyObservationActor safely inserts models in background actor context")
+    func testAstronomyObservationActorBackgroundOperations() async throws {
+        let container = try AstronomyDataStore.makeInMemoryContainer()
+        let actor = AstronomyObservationActor(modelContainer: container)
+
+        let locID = try await actor.insertLocation(
+            name: "Mauna Kea",
+            latitude: 19.8206,
+            longitude: -155.4681,
+            altitude: 4205
+        )
+        let sessionID = try await actor.insertSession(
+            observerName: "Keck Observer",
+            seeingScale: 1,
+            locationID: locID
+        )
+        let logID = try await actor.insertLog(targetName: "Neptune", sessionID: sessionID)
+
+        #expect(locID != sessionID)
+        #expect(sessionID != logID)
     }
 }

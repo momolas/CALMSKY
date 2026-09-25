@@ -161,7 +161,7 @@ public actor EphemerisDataManager {
         if let dir = cacheDirectory {
             self.cacheDirectory = dir
         } else {
-            self.cacheDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.appendingPathComponent("AstronomyKit")
+            self.cacheDirectory = URL.cachesDirectory.appending(path: "AstronomyKit")
         }
     }
 

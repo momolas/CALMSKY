@@ -8,6 +8,11 @@
 
 #if canImport(SwiftUI)
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// Formatted, copyable sexagesimal coordinates display for equatorial coordinates.
 public struct AstronomicalCoordinatesView: View {
@@ -35,30 +40,64 @@ public struct AstronomicalCoordinatesView: View {
                         .foregroundStyle(.tint)
                         .transition(.opacity)
                 }
+
+                Button("Copy", systemImage: "doc.on.doc") {
+                    copyToPasteboard()
+                }
+                .labelStyle(.iconOnly)
+                .font(.caption)
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Copy coordinates to clipboard")
             }
 
             HStack(spacing: 20) {
-                coordinateItem(
+                CoordinateItemView(
                     title: "α (Right Ascension)",
                     value: coordinates.rightAscension.formatted(.rightAscension)
                 )
 
-                coordinateItem(
+                CoordinateItemView(
                     title: "δ (Declination)",
                     value: coordinates.declination.formatted(.sexagesimal)
                 )
             }
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.ultraThinMaterial)
-        )
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+        .sensoryFeedback(.success, trigger: showingCopiedNotification)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): Right ascension \(coordinates.rightAscension.formatted(.rightAscension)), Declination \(coordinates.declination.formatted(.sexagesimal))")
     }
 
-    private func coordinateItem(title: String, value: String) -> some View {
+    private func copyToPasteboard() {
+        let text = "\(coordinates.rightAscension.formatted(.rightAscension)) \(coordinates.declination.formatted(.sexagesimal))"
+        #if canImport(UIKit)
+        UIPasteboard.general.string = text
+        #elseif canImport(AppKit)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #endif
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            showingCopiedNotification = true
+        }
+
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            withAnimation(.easeOut(duration: 0.2)) {
+                showingCopiedNotification = false
+            }
+        }
+    }
+}
+
+// MARK: - Subview
+
+private struct CoordinateItemView: View {
+    let title: String
+    let value: String
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.caption2)

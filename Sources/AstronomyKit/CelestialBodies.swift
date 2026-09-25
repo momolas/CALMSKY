@@ -228,6 +228,7 @@ public extension CelestialBody {
     }
 
     /// Computes topocentric horizontal coordinates for an observer location (SwiftData model), factoring in diurnal parallax and local weather.
+    @MainActor
     func topocentricHorizontalCoordinates(
         for observer: ObserverLocation,
         pressure: Millibar = 1010,

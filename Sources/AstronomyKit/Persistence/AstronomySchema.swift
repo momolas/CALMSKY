@@ -30,3 +30,67 @@ public enum AstronomyDataStore: Sendable {
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 }
+
+/// Dedicated ModelActor for thread-safe background observation persistence.
+@ModelActor
+public actor AstronomyObservationActor {
+    /// Inserts a new observation session and saves changes, returning the persistent identifier.
+    public func insertSession(
+        date: Date = .now,
+        observerName: String = "",
+        seeingScale: Int = 3,
+        transparency: Int = 3,
+        locationID: PersistentIdentifier? = nil
+    ) throws -> PersistentIdentifier {
+        let location = locationID.flatMap { modelContext.model(for: $0) as? ObserverLocation }
+        let session = ObservationSession(
+            date: date,
+            observerName: observerName,
+            seeingScale: seeingScale,
+            transparency: transparency,
+            location: location
+        )
+        modelContext.insert(session)
+        try modelContext.save()
+        return session.persistentModelID
+    }
+
+    /// Inserts a new observation log entry and saves changes.
+    public func insertLog(
+        targetName: String,
+        timestamp: Date = .now,
+        sessionID: PersistentIdentifier? = nil
+    ) throws -> PersistentIdentifier {
+        let session = sessionID.flatMap { modelContext.model(for: $0) as? ObservationSession }
+        let log = ObservationLog(timestamp: timestamp, targetName: targetName, session: session)
+        modelContext.insert(log)
+        try modelContext.save()
+        return log.persistentModelID
+    }
+
+    /// Inserts a new observer location preset and saves changes.
+    public func insertLocation(
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        altitude: Double = 0.0,
+        bortleScale: Int = 4,
+        timeZoneIdentifier: String = TimeZone.current.identifier,
+        isDefaultSite: Bool = false,
+        notes: String = ""
+    ) throws -> PersistentIdentifier {
+        let location = ObserverLocation(
+            name: name,
+            latitude: latitude,
+            longitude: longitude,
+            altitude: altitude,
+            bortleScale: bortleScale,
+            timeZoneIdentifier: timeZoneIdentifier,
+            isDefaultSite: isDefaultSite,
+            notes: notes
+        )
+        modelContext.insert(location)
+        try modelContext.save()
+        return location.persistentModelID
+    }
+}

@@ -7,9 +7,7 @@
 //
 
 import Foundation
-#if canImport(Accelerate)
 import Accelerate
-#endif
 
 /// Supported criteria for Islamic crescent moon (Hilal) visibility prediction.
 public enum CrescentVisibilityCriterion: String, CaseIterable, Sendable {
@@ -268,7 +266,12 @@ extension Moon {
 ///
 /// Accelerated with Apple Accelerate vector arithmetic when available.
 public enum HilalBatchEvaluator: Sendable {
+    private static let odehCoeffs: [Double] = [-0.0055, 0.1172, -0.0809, 5.2246]
+    private static let yallopCoeffs: [Double] = [-0.1018, 0.7319, -6.3226, 11.8371]
+
     /// Computes Odeh visibility values V = ARCV - (5.2246 - 0.0809 * W + 0.1172 * W^2 - 0.0055 * W^3).
+    ///
+    /// Accelerated with Apple Accelerate vDSP polynomial evaluation.
     ///
     /// - Parameters:
     ///   - arcv: Array of arc of vision values in degrees.
@@ -278,24 +281,20 @@ public enum HilalBatchEvaluator: Sendable {
         let count = min(arcv.count, crescentWidths.count)
         guard count > 0 else { return [] }
 
-#if canImport(Accelerate)
+        var low = 0.0
+        var high = Double.greatestFiniteMagnitude
+        var clampedW = [Double](repeating: 0, count: count)
+        vDSP_vclipD(crescentWidths, 1, &low, &high, &clampedW, 1, vDSP_Length(count))
+
         var results = [Double](repeating: 0, count: count)
-        for i in 0..<count {
-            let w = max(0.0, crescentWidths[i])
-            let arcvLim = 5.2246 - (0.0809 * w) + (0.1172 * w * w) - (0.0055 * w * w * w)
-            results[i] = arcv[i] - arcvLim
-        }
+        vDSP_vpolyD(odehCoeffs, 1, clampedW, 1, &results, 1, vDSP_Length(count), 3)
+        vDSP_vsubD(results, 1, arcv, 1, &results, 1, vDSP_Length(count))
         return results
-#else
-        return (0..<count).map { i in
-            let w = max(0.0, crescentWidths[i])
-            let arcvLim = 5.2246 - (0.0809 * w) + (0.1172 * w * w) - (0.0055 * w * w * w)
-            return arcv[i] - arcvLim
-        }
-#endif
     }
 
     /// Computes Yallop visibility parameters q = (ARCV - (11.8371 - 6.3226 * W + 0.7319 * W^2 - 0.1018 * W^3)) / W.
+    ///
+    /// Accelerated with Apple Accelerate vDSP vector operations.
     ///
     /// - Parameters:
     ///   - arcv: Array of arc of vision values in degrees.
@@ -305,12 +304,15 @@ public enum HilalBatchEvaluator: Sendable {
         let count = min(arcv.count, crescentWidths.count)
         guard count > 0 else { return [] }
 
+        var low = 0.001
+        var high = Double.greatestFiniteMagnitude
+        var clampedW = [Double](repeating: 0, count: count)
+        vDSP_vclipD(crescentWidths, 1, &low, &high, &clampedW, 1, vDSP_Length(count))
+
         var results = [Double](repeating: 0, count: count)
-        for i in 0..<count {
-            let w = max(0.001, crescentWidths[i])
-            let arcv0 = 11.8371 - (6.3226 * w) + (0.7319 * w * w) - (0.1018 * w * w * w)
-            results[i] = (arcv[i] - arcv0) / w
-        }
+        vDSP_vpolyD(yallopCoeffs, 1, clampedW, 1, &results, 1, vDSP_Length(count), 3)
+        vDSP_vsubD(results, 1, arcv, 1, &results, 1, vDSP_Length(count))
+        vDSP_vdivD(clampedW, 1, results, 1, &results, 1, vDSP_Length(count))
         return results
     }
 

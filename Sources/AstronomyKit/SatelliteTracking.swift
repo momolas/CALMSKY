@@ -1,7 +1,5 @@
 import Foundation
-#if canImport(Accelerate)
 import Accelerate
-#endif
 
 /// Two-Line Element Set (TLE) parser and container for Earth artificial satellites.
 /// Complies with NORAD / Space-Track standards.
@@ -152,6 +150,10 @@ public enum SatellitePropagator: Sendable {
 
     /// Propagates satellite position and velocity to a given Julian Day in TEME coordinate frame.
     public static func propagate(tle: TwoLineElements, toJD jd: Double) -> StateVector {
+        guard tle.semiMajorAxisKm > earthRadiusKm, tle.eccentricity >= 0, tle.eccentricity < 1.0 else {
+            return StateVector(position: .zero, velocity: .zero)
+        }
+
         let deltaMinutes = (jd - tle.epochJulianDate) * 1440.0 // minutes since epoch
 
         // Mean motion in radians per minute
@@ -173,10 +175,10 @@ public enum SatellitePropagator: Sendable {
         let raanDot = -j2Factor * cosI // rad / min
         let argPDot = j2Factor * (2.0 - 2.5 * sinI * sinI) // rad / min
 
-        // Updated orbital elements at deltaMinutes
-        let currentRAAN = (raan0 + raanDot * deltaMinutes).truncatingRemainder(dividingBy: 2.0 * .pi)
-        let currentArgP = (argP0 + argPDot * deltaMinutes).truncatingRemainder(dividingBy: 2.0 * .pi)
-        let currentM = (m0 + n0 * deltaMinutes).truncatingRemainder(dividingBy: 2.0 * .pi)
+        // Updated orbital elements at deltaMinutes normalized to [0, 2π)
+        let currentRAAN = normalizeAngle(raan0 + raanDot * deltaMinutes)
+        let currentArgP = normalizeAngle(argP0 + argPDot * deltaMinutes)
+        let currentM = normalizeAngle(m0 + n0 * deltaMinutes)
 
         // Solve Kepler's equation for Eccentric Anomaly E: M = E - e*sin(E)
         var eAnomaly = currentM
@@ -231,13 +233,24 @@ public enum SatellitePropagator: Sendable {
         return propagate(tle: tle, overJDs: jds)
     }
 
+    @inline(__always)
+    private static func normalizeAngle(_ angle: Double) -> Double {
+        let twoPi = 2.0 * .pi
+        let val = angle.truncatingRemainder(dividingBy: twoPi)
+        return val < 0 ? val + twoPi : val
+    }
+
     /// Propagates satellite positions and velocities over an array of Julian Days in TEME coordinate frame.
     ///
     /// Accelerated with Apple Accelerate vector trigonometric functions when available.
     public static func propagate(tle: TwoLineElements, overJDs jds: [Double]) -> [StateVector] {
-        guard !jds.isEmpty else { return [] }
+        guard !jds.isEmpty, tle.semiMajorAxisKm > earthRadiusKm, tle.eccentricity >= 0, tle.eccentricity < 1.0 else { return [] }
 
-#if canImport(Accelerate)
+        // Fast scalar path for singleton evaluation to avoid vector setup and heap allocation overhead
+        if jds.count == 1 {
+            return [propagate(tle: tle, toJD: jds[0])]
+        }
+
         let count = jds.count
         var nInt = Int32(count)
 
@@ -258,7 +271,6 @@ public enum SatellitePropagator: Sendable {
 
         let raanDot = -j2Factor * cosI
         let argPDot = j2Factor * (2.0 - 2.5 * sinI * sinI)
-        let twoPi = 2.0 * .pi
 
         // Preallocate arrays
         var currentRAAN = [Double](repeating: 0, count: count)
@@ -270,9 +282,9 @@ public enum SatellitePropagator: Sendable {
 
         for k in 0..<count {
             let deltaMinutes = (jds[k] - tle.epochJulianDate) * 1440.0
-            currentRAAN[k] = (raan0 + raanDot * deltaMinutes).truncatingRemainder(dividingBy: twoPi)
-            currentArgP[k] = (argP0 + argPDot * deltaMinutes).truncatingRemainder(dividingBy: twoPi)
-            let m = (m0 + n0 * deltaMinutes).truncatingRemainder(dividingBy: twoPi)
+            currentRAAN[k] = normalizeAngle(raan0 + raanDot * deltaMinutes)
+            currentArgP[k] = normalizeAngle(argP0 + argPDot * deltaMinutes)
+            let m = normalizeAngle(m0 + n0 * deltaMinutes)
             currentM[k] = m
             eAnomaly[k] = m
         }
@@ -328,9 +340,6 @@ public enum SatellitePropagator: Sendable {
         }
 
         return results
-#else
-        return jds.map { propagate(tle: tle, toJD: $0) }
-#endif
     }
 
     /// Horizontal coordinates (altitude, azimuth) of a satellite observed from a geographic location.
@@ -347,7 +356,8 @@ public enum SatellitePropagator: Sendable {
         date: Date
     ) -> (altitude: Double, azimuth: Double, distanceKm: Double) {
         let jd = date.timeIntervalSince1970 / 86400.0 + 2440587.5
-        let gmstRad = ModernReferenceFrames.earthRotationAngle(jdUT1: jd)
+        let gmstHours = CAASidereal.MeanGreenwichSiderealTime(jd)
+        let gmstRad = gmstHours * (15.0 * .pi / 180.0)
         let lonRad = observerLongitude * .pi / 180.0
         let latRad = observerLatitude * .pi / 180.0
 
@@ -395,6 +405,7 @@ public enum SatellitePropagator: Sendable {
         dates: [Date]
     ) -> [(altitude: Double, azimuth: Double, distanceKm: Double)] {
         let count = min(states.count, dates.count)
+        guard count > 0 else { return [] }
         var results = [(altitude: Double, azimuth: Double, distanceKm: Double)]()
         results.reserveCapacity(count)
         for i in 0..<count {

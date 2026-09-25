@@ -25,6 +25,9 @@ public actor SPKRangeClient {
 
     /// Memory cache storing fetched byte slices: `[RangeKey: Data]`.
     private var memoryCache: [String: Data] = [:]
+    private var memoryCacheKeys: [String] = []
+    private let maxMemoryEntries: Int = 256
+    private var isCacheDirectoryReady: Bool = false
 
     /// URLSession instance for range requests.
     private let session: URLSession
@@ -75,7 +78,7 @@ public actor SPKRangeClient {
         // 2. Check sparse disk cache
         let diskURL = cacheDirectory.appendingPathComponent("chunk_\(cacheKey).bin")
         if let diskData = try? Data(contentsOf: diskURL), diskData.count == length {
-            memoryCache[cacheKey] = diskData
+            storeInMemoryCache(key: cacheKey, data: diskData)
             return diskData
         }
 
@@ -110,8 +113,11 @@ public actor SPKRangeClient {
         }
 
         // 4. Update memory cache and persist to sparse disk cache
-        memoryCache[cacheKey] = fetchedData
-        try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+        storeInMemoryCache(key: cacheKey, data: fetchedData)
+        if !isCacheDirectoryReady {
+            try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+            isCacheDirectoryReady = true
+        }
         try? fetchedData.write(to: diskURL, options: .atomic)
 
         return fetchedData
@@ -120,8 +126,21 @@ public actor SPKRangeClient {
     /// Clears both memory and on-disk sparse caches for this client.
     public func clearCache() throws {
         memoryCache.removeAll()
+        memoryCacheKeys.removeAll()
+        isCacheDirectoryReady = false
         if FileManager.default.fileExists(atPath: cacheDirectory.path) {
             try FileManager.default.removeItem(at: cacheDirectory)
+        }
+    }
+
+    private func storeInMemoryCache(key: String, data: Data) {
+        if memoryCache[key] == nil {
+            memoryCacheKeys.append(key)
+        }
+        memoryCache[key] = data
+        if memoryCacheKeys.count > maxMemoryEntries {
+            let oldest = memoryCacheKeys.removeFirst()
+            memoryCache.removeValue(forKey: oldest)
         }
     }
 

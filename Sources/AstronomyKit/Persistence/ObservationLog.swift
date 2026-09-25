@@ -57,6 +57,9 @@ public final class ObservationLog {
     }
 
     /// Target Solar System body if applicable.
+    ///
+    /// - Warning: This is a computed property. Do not use in `#Predicate` expressions as SwiftData
+    ///   cannot translate computed getters to database queries. Use `bodyRawValue` or `targetName` instead.
     public var solarSystemBody: SolarSystemBody? {
         get {
             guard let raw = bodyRawValue else { return nil }
@@ -71,6 +74,8 @@ public final class ObservationLog {
     }
 
     /// Corresponding Julian Day for the observation instant.
+    ///
+    /// - Warning: This is a computed property. Do not use in `#Predicate` expressions.
     public var julianDay: JulianDay {
         JulianDay(timestamp)
     }
