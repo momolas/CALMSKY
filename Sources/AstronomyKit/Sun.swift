@@ -55,8 +55,8 @@ public final class Sun: Object, CelestialBody, @unchecked Sendable {
     
     // MARK: - Coordinates
     
-    /// The radius vector (distance between the Earth and the Sun.
-    public var radiusVector: AstronomicalUnit { return Earth(julianDay: self.julianDay, highPrecision: self.highPrecision).radiusVector }
+    /// The radius vector (distance between the Earth and the Sun).
+    public var radiusVector: AstronomicalUnit { return AstronomicalUnit(CAAEarth.radiusVector(self.julianDay.value, self.highPrecision)) }
     
     /// The ecliptic coordinates of the Sun
     public var eclipticCoordinates: EclipticCoordinates {

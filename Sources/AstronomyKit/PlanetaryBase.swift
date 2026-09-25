@@ -111,50 +111,26 @@ func planetAphelion(_ planet: KPCAAPlanetStrict, k: Double) -> Double {
     }
 }
 
-func planetRadiusVector(_ planet: KPCAAPlanet, jd: Double, highPrecision: Bool) -> Double {
-    switch planet {
-    case .KPCAAPlanetMercury: return CAAMercury.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetVenus: return CAAVenus.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetEarth: return CAAEarth.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetMars: return CAAMars.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetJupiter: return CAAJupiter.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetSaturn: return CAASaturn.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetUranus: return CAAUranus.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetNeptune: return CAANeptune.RadiusVector(jd, highPrecision)
-    case .KPCAAPlanetPluto: return CAAPluto.RadiusVector(jd)
-    default: return 0
-    }
+@inlinable
+func planetHeliocentricCoordinates(_ planet: KPCAAPlanet, jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+    NASAJPLPlanets.coordinates(for: planet, jd: jd)
 }
 
-func planetEclipticLongitude(_ planet: KPCAAPlanet, jd: Double, highPrecision: Bool) -> Double {
-    switch planet {
-    case .KPCAAPlanetMercury: return CAAMercury.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetVenus: return CAAVenus.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetEarth: return CAAEarth.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetMars: return CAAMars.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetJupiter: return CAAJupiter.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetSaturn: return CAASaturn.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetUranus: return CAAUranus.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetNeptune: return CAANeptune.EclipticLongitude(jd, highPrecision)
-    case .KPCAAPlanetPluto: return CAAPluto.EclipticLongitude(jd)
-    default: return 0
-    }
+@inlinable
+func planetRadiusVector(_ planet: KPCAAPlanet, jd: Double, highPrecision: Bool = true) -> Double {
+    planetHeliocentricCoordinates(planet, jd: jd).radius
 }
 
-func planetEclipticLatitude(_ planet: KPCAAPlanet, jd: Double, highPrecision: Bool) -> Double {
-    switch planet {
-    case .KPCAAPlanetMercury: return CAAMercury.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetVenus: return CAAVenus.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetEarth: return CAAEarth.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetMars: return CAAMars.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetJupiter: return CAAJupiter.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetSaturn: return CAASaturn.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetUranus: return CAAUranus.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetNeptune: return CAANeptune.EclipticLatitude(jd, highPrecision)
-    case .KPCAAPlanetPluto: return CAAPluto.EclipticLatitude(jd)
-    default: return 0
-    }
+@inlinable
+func planetEclipticLongitude(_ planet: KPCAAPlanet, jd: Double, highPrecision: Bool = true) -> Double {
+    planetHeliocentricCoordinates(planet, jd: jd).longitude
 }
+
+@inlinable
+func planetEclipticLatitude(_ planet: KPCAAPlanet, jd: Double, highPrecision: Bool = true) -> Double {
+    planetHeliocentricCoordinates(planet, jd: jd).latitude
+}
+
 
 public extension PlanetaryBase {
     

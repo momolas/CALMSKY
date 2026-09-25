@@ -30,12 +30,10 @@ extension _NumericType {
         self.init(Double(integerLiteral))
     }
     
-    #if swift(>=3.2)
     public init?<T>(exactly source: T) where T : BinaryInteger {
         guard let value = Double(exactly: source) else { return nil }
         self.init(value)
     }
-    #endif
     
     public func rounded(toIncrement increment: Self, rule: FloatingPointRoundingRule = .toNearestOrAwayFromZero) -> Self {
         let roundedValue = self.value.rounded(toIncrement: increment.value, rule: rule)
@@ -72,12 +70,7 @@ extension _NumericType {
     
     public var magnitude: Self { return Self(abs(value)) }
 
-    // This is compatible with Xcode 9 equivalent of `#if compiler(>=4.2)` (see https://github.com/apple/swift-evolution/blob/master/proposals/0212-compiler-version-directive.md)
-    #if swift(>=4.1.50) || (swift(>=3.4) && !swift(>=4.0))
     public func hash(into hasher: inout Hasher) { hasher.combine(value) }
-    #else
-    public var hashValue: Int { return value.hashValue }
-    #endif
     
 }
 

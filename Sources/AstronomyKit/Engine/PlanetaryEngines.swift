@@ -209,6 +209,41 @@ public enum NASAJPLPlanets: Sendable {
         varpi0: 224.06676, varpiDot: -0.040629,
         omega0: 110.30347, omegaDot: -0.011834
     )
+
+    /// Joint evaluation of heliocentric ecliptic coordinates (longitude in degrees [0, 360), latitude in degrees [-90, 90], radius in AU)
+    /// for equinox of date. Evaluates Kepler's equation and frame rotations in a single pass.
+    @inlinable
+    public static func coordinates(for planet: KPCAAPlanet, jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        switch planet {
+        case .KPCAAPlanetMercury: return mercury.coordinatesDate(jd: jd)
+        case .KPCAAPlanetVenus: return venus.coordinatesDate(jd: jd)
+        case .KPCAAPlanetEarth: return earth.coordinatesDate(jd: jd)
+        case .KPCAAPlanetMars: return mars.coordinatesDate(jd: jd)
+        case .KPCAAPlanetJupiter: return jupiter.coordinatesDate(jd: jd)
+        case .KPCAAPlanetSaturn: return saturn.coordinatesDate(jd: jd)
+        case .KPCAAPlanetUranus: return uranus.coordinatesDate(jd: jd)
+        case .KPCAAPlanetNeptune: return neptune.coordinatesDate(jd: jd)
+        case .KPCAAPlanetPluto: return pluto.coordinatesDate(jd: jd)
+        case .KPCAAPlanetUndefined: return (0.0, 0.0, 0.0)
+        }
+    }
+
+    /// Joint evaluation of heliocentric ecliptic coordinates for J2000 equinox.
+    @inlinable
+    public static func coordinatesJ2000(for planet: KPCAAPlanet, jd: Double) -> (longitude: Double, latitude: Double, radius: Double) {
+        switch planet {
+        case .KPCAAPlanetMercury: return mercury.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetVenus: return venus.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetEarth: return earth.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetMars: return mars.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetJupiter: return jupiter.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetSaturn: return saturn.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetUranus: return uranus.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetNeptune: return neptune.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetPluto: return pluto.coordinatesJ2000(jd: jd)
+        case .KPCAAPlanetUndefined: return (0.0, 0.0, 0.0)
+        }
+    }
 }
 
 // MARK: - CAAEarth

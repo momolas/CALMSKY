@@ -41,16 +41,18 @@ public class Planet: Object, CelestialBody, PlanetaryDetails, PlanetaryPhenomena
     /// It accounts for 1) the effect of light-time and 2) the effect of the Earth motion. See AA p224.
     public var heliocentricEclipticCoordinates: EclipticCoordinates {
         get {
-            let longitude = planetEclipticLongitude(self.planet, jd: self.julianDay.value, highPrecision: self.highPrecision)
-            let latitude = planetEclipticLatitude(self.planet, jd: self.julianDay.value, highPrecision: self.highPrecision)
+            let coords = planetHeliocentricCoordinates(self.planet, jd: self.julianDay.value)
             // Using standard epoch, thus standard value for the equinox, thus the mean obliquity.
-            return EclipticCoordinates(lambda: Degree(longitude), beta: Degree(latitude))
+            return EclipticCoordinates(lambda: Degree(coords.longitude), beta: Degree(coords.latitude))
         }
     }
     
     /// The radius vector of the planet (that is, its distance to the Sun).
     public var radiusVector: AstronomicalUnit {
-        get { return AstronomicalUnit(planetRadiusVector(self.planet, jd: self.julianDay.value, highPrecision: self.highPrecision)) }
+        get {
+            let coords = planetHeliocentricCoordinates(self.planet, jd: self.julianDay.value)
+            return AstronomicalUnit(coords.radius)
+        }
     }
         
     /// the standard altitude of the planet, that is, the geometric altitude of the center of the body at the time
