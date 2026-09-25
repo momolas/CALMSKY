@@ -7,7 +7,7 @@ Learn how to compute rising, meridian transit, setting times, and twilights for 
 Every celestial body conforming to `CelestialBody` (Sun, Moon, Planets) can calculate its rise, transit, and set times for a given location on Earth:
 
 ```swift
-import SwiftAA
+import AstronomyKit
 
 let paris = GeographicCoordinates(
     positivelyWestwardLongitude: Degree(-2.3522),

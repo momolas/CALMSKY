@@ -5,8 +5,8 @@
 > **Modèle Haute Précision (En Ligne Streaming)** : **Tétrade Numérique Internationale (DE442s US + INPOP21a FR + EPM2021 RU + PMOE CN)** via requêtes HTTP Byte-Range partielles (`StreamingTetradProvider` / `StreamingTriadProvider`)  
 > **Exclusivité Numérique Stricte** : **Zéro théorie analytique, zéro repli dégradé**. Retrait définitif de Standish (1992), de Jean Meeus, de VSOP87D et d'ELP2000-82B  
 > **Vérité Terrain de Référence** : **NASA JPL Horizons DE441 / DE440** (Intégration Numérique Relativiste Barycentrique)  
-> **Dernière évaluation** : 2026-09-21 (Époque de test : `2026-Sep-20 00:00:00 UTC` / `JD 2461303.5`)  
-> **Temps d'exécution de la suite** : **Sub-seconde (~0.03 s pour le benchmark, ~0.75 s suite complète)** (289 tests, 54 suites, 100% de succès)
+> **Dernière évaluation** : 2026-09-25 (Époque de test : `2026-Sep-20 00:00:00 UTC` / `JD 2461303.5`)  
+> **Temps d'exécution de la suite** : **Sub-seconde (~0.03 s pour le benchmark, ~0.80 s suite complète)** (321 tests, 57 suites, 100% de succès)
 
 Ce document constitue le **registre officiel et vivant** consignant l'évolution métrologique du moteur de calcul d'AstronomyKit face aux éphémérides fondamentales de référence de la NASA (JPL Horizons). **Il doit être mis à jour à chaque optimisation, recalibrage ou enrichissement de modèle.**
 

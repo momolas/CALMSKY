@@ -1,10 +1,10 @@
 # Coordinates and Coordinate Systems
 
-Understand how to represent, convert, and correct celestial coordinates in SwiftAA.
+Understand how to represent, convert, and correct celestial coordinates in AstronomyKit.
 
 ## Coordinate Systems
 
-SwiftAA provides strongly-typed structs for all major celestial coordinate frames:
+AstronomyKit provides strongly-typed structs for all major celestial coordinate frames:
 
 - ``EquatorialCoordinates``: Right Ascension ($\alpha$) and Declination ($\delta$), referenced to the Earth's equator and equinox.
 - ``HorizontalCoordinates``: Azimuth ($A$) and Altitude ($h$), referenced to the local horizon of the observer.

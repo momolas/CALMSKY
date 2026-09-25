@@ -30,7 +30,7 @@ AstronomyKit is built on a **100% Pure Swift 6** architecture, offering professi
 - **Strict Concurrency**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and providers.
 - **Physical Uncertainty Analysis**: Multi-model consensus with empirical $1\sigma$ physical dispersion in km and geocentric arcseconds.
 - **Strong Unit Safety**: Type-safe dimensional structures for `Degree`, `ArcSecond`, `Hour`, `JulianDay`, `AstronomicalUnit`, `Kilometer`, etc.
-- **High Test Coverage**: 289 unit tests in 54 suites executing in **sub-second time** via modern `Swift-Testing` (`@Test`, `@Suite`).
+- **High Test Coverage**: 321 unit tests in 57 suites executing in **sub-second time** (~0.8 s) via modern `Swift-Testing` (`@Test`, `@Suite`).
 
 ---
 

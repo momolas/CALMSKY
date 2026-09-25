@@ -1,13 +1,13 @@
 # Planets and Moons
 
-Access high-precision planetary ephemerides, physical details, satellite positions, and ring systems in SwiftAA.
+Access high-precision planetary ephemerides, physical details, satellite positions, and ring systems in AstronomyKit.
 
 ## Planetary Positions
 
 To retrieve geocentric and heliocentric positions for any major planet:
 
 ```swift
-import SwiftAA
+import AstronomyKit
 
 let jupiter = Jupiter(julianDay: JulianDay(year: 2024, month: 11, day: 15))
 
@@ -26,7 +26,7 @@ let phase = jupiter.illuminatedFraction
 
 ## Galilean Moons of Jupiter
 
-SwiftAA provides precise rectangular coordinates and eclipse details for Io, Europa, Ganymede, and Callisto:
+AstronomyKit provides precise rectangular coordinates and eclipse details for Io, Europa, Ganymede, and Callisto:
 
 ```swift
 let details = jupiter.galileanMoonsDetails()

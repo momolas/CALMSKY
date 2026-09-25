@@ -6,14 +6,14 @@ Learn how to compute Islamic crescent moon visibility parameters and evaluate st
 
 The first sighting of the thin lunar crescent (Hilal) after sunset marks the beginning of new months in the Islamic lunar calendar (such as Ramadan, Shawwal, and Dhul Hijjah).
 
-SwiftAA provides a dedicated Hilal visibility module built on top of high-precision topocentric ephemerides.
+AstronomyKit provides a dedicated Hilal visibility module built on top of high-precision topocentric ephemerides.
 
 ## Evaluating Crescent Visibility
 
 To evaluate the visibility of the crescent moon for a given observer location and date:
 
 ```swift
-import SwiftAA
+import AstronomyKit
 
 // 1. Define observer location (e.g., Mecca: 21.4225° N, 39.8262° E, 277 m)
 let mecca = GeographicCoordinates(
