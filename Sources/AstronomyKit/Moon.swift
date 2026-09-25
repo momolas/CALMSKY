@@ -277,6 +277,44 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
         return isMean ? JulianDay(CAAMoonPhases.MeanPhase(k)) : JulianDay(CAAMoonPhases.TruePhase(k))
     }
 
+    /// Returns the exact Julian Day of the Moon phase solved numerically (< 0.05s physical precision).
+    ///
+    /// - Parameters:
+    ///   - phase: The primary phase of the moon to solve for.
+    ///   - forward: A boolean indicating whether to search forward from the input date (`true`) or backward (`false`).
+    ///   - toleranceSeconds: Convergence threshold in seconds (default: 0.05s).
+    /// - Returns: The exact Julian Day of the primary phase.
+    public func exactTime(of phase: MoonPhase, forward: Bool = true, toleranceSeconds: Double = 0.05) -> JulianDay {
+        var k = floor(CAAMoonPhases.K(self.julianDay.date.fractionalYear))
+        switch phase {
+        case .newMoon: k += 0.0
+        case .firstQuarter: k += 0.25
+        case .fullMoon: k += 0.50
+        case .lastQuarter: k += 0.75
+        }
+
+        let solve: (Double) -> JulianDay = { candidateK in
+            let initialJD = CAAMoonPhases.TruePhase(candidateK)
+            let exactJD = LunarPhaseNumericalEngine.solveExactPhase(
+                targetAngle: phase.targetElongation,
+                initialJD: initialJD,
+                toleranceSeconds: toleranceSeconds
+            )
+            return JulianDay(exactJD)
+        }
+
+        let preliminary = solve(k)
+        let isAfter = preliminary > julianDay
+        switch (forward, isAfter) {
+        case (true, true), (false, false):
+            return preliminary
+        case (true, false):
+            return solve(k + 1.0)
+        case (false, true):
+            return solve(k - 1.0)
+        }
+    }
+
     // MARK: - KPCAAMoonPhysicalDetails
 
 

@@ -768,6 +768,30 @@ public enum CAAMoonPhases: Sendable {
     public static func TruePhase(_ k: Double) -> Double {
         truePhase(k)
     }
+
+    /// Evaluates the primary lunar phase with sub-second numerical root finding (Newton-Raphson).
+    /// - Parameters:
+    ///   - k: Lunation index (0.0 = New Moon, 0.25 = First Quarter, 0.50 = Full Moon, 0.75 = Last Quarter).
+    ///   - toleranceSeconds: Convergence threshold in seconds (default: 0.05s).
+    /// - Returns: Julian Day of the exact phase event.
+    public static func exactPhase(_ k: Double, toleranceSeconds: Double = 0.05) -> Double {
+        let initialJD = truePhase(k)
+        var intPart = 0.0
+        let frac = modf(k, &intPart)
+        var phaseIndex = Int(round(frac * 4.0))
+        if phaseIndex < 0 { phaseIndex += 4 }
+        let target = Double(phaseIndex % 4) * 90.0
+        return LunarPhaseNumericalEngine.solveExactPhase(
+            targetAngle: target,
+            initialJD: initialJD,
+            toleranceSeconds: toleranceSeconds
+        )
+    }
+
+    @inlinable
+    public static func ExactPhase(_ k: Double, toleranceSeconds: Double = 0.05) -> Double {
+        exactPhase(k, toleranceSeconds: toleranceSeconds)
+    }
 }
 
 // MARK: - CAAMoonNodes
