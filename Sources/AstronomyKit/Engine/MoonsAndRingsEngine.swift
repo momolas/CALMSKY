@@ -50,71 +50,114 @@ public enum CAAIlluminatedFraction: Sendable {
         return (((r + Delta) * (r + Delta) - (R * R)) / (4.0 * r * Delta))
     }
 
+    @inlinable
+    public static func magnitudeAA(for object: KPCPlanetaryObject, r: Double, delta: Double, i: Double) -> Double {
+        switch object {
+        case .KPCPlanetaryObjectMERCURY: return MercuryMagnitudeAA(r, delta, i)
+        case .KPCPlanetaryObjectVENUS: return VenusMagnitudeAA(r, delta, i)
+        case .KPCPlanetaryObjectMARS: return MarsMagnitudeAA(r, delta, i)
+        case .KPCPlanetaryObjectJUPITER: return JupiterMagnitudeAA(r, delta, i)
+        case .KPCPlanetaryObjectSATURN: return SaturnMagnitudeAA(r, delta, 0, 0)
+        case .KPCPlanetaryObjectURANUS: return UranusMagnitudeAA(r, delta)
+        case .KPCPlanetaryObjectNEPTUNE: return NeptuneMagnitudeAA(r, delta)
+        default: return 0.0
+        }
+    }
+
+    @inlinable
+    public static func magnitudeMuller(for object: KPCPlanetaryObject, r: Double, delta: Double, i: Double) -> Double {
+        switch object {
+        case .KPCPlanetaryObjectMERCURY: return MercuryMagnitudeMuller(r, delta, i)
+        case .KPCPlanetaryObjectVENUS: return VenusMagnitudeMuller(r, delta, i)
+        case .KPCPlanetaryObjectMARS: return MarsMagnitudeMuller(r, delta, i)
+        case .KPCPlanetaryObjectJUPITER: return JupiterMagnitudeMuller(r, delta)
+        case .KPCPlanetaryObjectSATURN: return SaturnMagnitudeMuller(r, delta, 0, 0)
+        case .KPCPlanetaryObjectURANUS: return UranusMagnitudeMuller(r, delta)
+        case .KPCPlanetaryObjectNEPTUNE: return NeptuneMagnitudeMuller(r, delta)
+        default: return 0.0
+        }
+    }
+
+    @inlinable
     public static func MercuryMagnitudeMuller(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         let I_50 = i - 50.0
         return 1.16 + (5.0 * log10(r * Delta)) + (0.02838 * I_50) + (0.0001023 * I_50 * I_50)
     }
 
+    @inlinable
     public static func VenusMagnitudeMuller(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         return -4.00 + (5.0 * log10(r * Delta)) + (0.01322 * i) + (0.0000004247 * i * i * i)
     }
 
+    @inlinable
     public static func MarsMagnitudeMuller(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         return -1.3 + (5.0 * log10(r * Delta)) + (0.01486 * i)
     }
 
+    @inlinable
     public static func JupiterMagnitudeMuller(_ r: Double, _ Delta: Double) -> Double {
         return -8.93 + (5.0 * log10(r * Delta))
     }
 
+    @inlinable
     public static func SaturnMagnitudeMuller(_ r: Double, _ Delta: Double, _ DeltaU: Double, _ B: Double) -> Double {
         let Brad = SphericalTrigonometry.degreesToRadians(B)
         let sinB = sin(Brad)
         return -8.68 + (5.0 * log10(r * Delta)) + (0.044 * abs(DeltaU)) - (2.60 * sin(abs(Brad))) + (1.25 * sinB * sinB)
     }
 
+    @inlinable
     public static func UranusMagnitudeMuller(_ r: Double, _ Delta: Double) -> Double {
         return -6.85 + (5.0 * log10(r * Delta))
     }
 
+    @inlinable
     public static func NeptuneMagnitudeMuller(_ r: Double, _ Delta: Double) -> Double {
         return -7.05 + (5.0 * log10(r * Delta))
     }
 
+    @inlinable
     public static func MercuryMagnitudeAA(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         let i2 = i * i
         let i3 = i2 * i
         return -0.42 + (5.0 * log10(r * Delta)) + (0.0380 * i) - (0.000273 * i2) + (0.000002 * i3)
     }
 
+    @inlinable
     public static func VenusMagnitudeAA(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         let i2 = i * i
         let i3 = i2 * i
         return -4.40 + (5.0 * log10(r * Delta)) + (0.0009 * i) + (0.000239 * i2) - (0.00000065 * i3)
     }
 
+    @inlinable
     public static func MarsMagnitudeAA(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         return -1.52 + (5.0 * log10(r * Delta)) + (0.016 * i)
     }
 
+    @inlinable
     public static func JupiterMagnitudeAA(_ r: Double, _ Delta: Double, _ i: Double) -> Double {
         return -9.40 + (5.0 * log10(r * Delta)) + (0.005 * i)
     }
 
+    @inlinable
     public static func SaturnMagnitudeAA(_ r: Double, _ Delta: Double, _ DeltaU: Double, _ B: Double) -> Double {
         let Brad = SphericalTrigonometry.degreesToRadians(B)
         let sinB = sin(Brad)
         return -8.88 + (5.0 * log10(r * Delta)) + (0.044 * abs(DeltaU)) - (2.60 * sin(abs(Brad))) + (1.25 * sinB * sinB)
     }
 
+    @inlinable
     public static func UranusMagnitudeAA(_ r: Double, _ Delta: Double) -> Double {
         return -7.19 + (5.0 * log10(r * Delta))
     }
 
+    @inlinable
     public static func NeptuneMagnitudeAA(_ r: Double, _ Delta: Double) -> Double {
         return -6.87 + (5.0 * log10(r * Delta))
     }
 
+    @inlinable
     public static func PlutoMagnitudeAA(_ r: Double, _ Delta: Double) -> Double {
         return -1.00 + (5.0 * log10(r * Delta)) + (0.041 * (PhaseAngle(r, 1.0, Delta) - 1.0))
     }

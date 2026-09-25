@@ -113,8 +113,12 @@ private struct VSOP2013EphemeridesFile: Sendable {
         guard let data = mappedData, index >= 0, index < Self.chebyshevTables else { return nil }
         let headerOffset = 125
         let recordByteOffset = headerOffset + (index * Self.recordFloats * MemoryLayout<Double>.size)
-        return data.withUnsafeBytes { rawBuffer in
-            let base = rawBuffer.baseAddress!.advanced(by: recordByteOffset).assumingMemoryBound(to: Double.self)
+        return data.withUnsafeBytes { rawBuffer -> UnsafeBufferPointer<Double>? in
+            guard let baseAddress = rawBuffer.baseAddress,
+                  recordByteOffset + Self.recordFloats * MemoryLayout<Double>.size <= rawBuffer.count else {
+                return nil
+            }
+            let base = baseAddress.advanced(by: recordByteOffset).assumingMemoryBound(to: Double.self)
             return UnsafeBufferPointer(start: base, count: Self.recordFloats)
         }
     }

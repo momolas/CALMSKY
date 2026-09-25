@@ -1522,6 +1522,68 @@ public enum CAADiameters: Sendable {
     @inlinable public static func PlutoSemidiameterB(_ delta: Double) -> Double { 2.07 / delta }
 
     @inlinable
+    public static func equatorialSemidiameterA(for planet: KPCAAPlanetStrict, delta: Double) -> Double {
+        switch planet {
+        case .KPCAAPlanetStrictMercury: return MercurySemidiameterA(delta)
+        case .KPCAAPlanetStrictVenus: return VenusSemidiameterA(delta)
+        case .KPCAAPlanetStrictEarth: return 0.0
+        case .KPCAAPlanetStrictMars: return MarsSemidiameterA(delta)
+        case .KPCAAPlanetStrictJupiter: return JupiterEquatorialSemidiameterA(delta)
+        case .KPCAAPlanetStrictSaturn: return SaturnEquatorialSemidiameterA(delta)
+        case .KPCAAPlanetStrictUranus: return UranusSemidiameterA(delta)
+        case .KPCAAPlanetStrictNeptune: return NeptuneSemidiameterA(delta)
+        case .KPCAAPlanetStrictUndefined: return 0.0
+        }
+    }
+
+    @inlinable
+    public static func equatorialSemidiameterB(for planet: KPCAAPlanet, delta: Double) -> Double {
+        switch planet {
+        case .KPCAAPlanetMercury: return MercurySemidiameterB(delta)
+        case .KPCAAPlanetVenus: return VenusSemidiameterB(delta)
+        case .KPCAAPlanetEarth: return 0.0
+        case .KPCAAPlanetMars: return MarsSemidiameterB(delta)
+        case .KPCAAPlanetJupiter: return JupiterEquatorialSemidiameterB(delta)
+        case .KPCAAPlanetSaturn: return SaturnEquatorialSemidiameterB(delta)
+        case .KPCAAPlanetUranus: return UranusSemidiameterB(delta)
+        case .KPCAAPlanetNeptune: return NeptuneSemidiameterB(delta)
+        case .KPCAAPlanetPluto: return PlutoSemidiameterB(delta)
+        case .KPCAAPlanetUndefined: return 0.0
+        }
+    }
+
+    @inlinable
+    public static func polarSemidiameterA(for planet: KPCAAPlanetStrict, delta: Double) -> Double {
+        switch planet {
+        case .KPCAAPlanetStrictMercury: return MercurySemidiameterA(delta)
+        case .KPCAAPlanetStrictVenus: return VenusSemidiameterA(delta)
+        case .KPCAAPlanetStrictEarth: return 0.0
+        case .KPCAAPlanetStrictMars: return MarsSemidiameterA(delta)
+        case .KPCAAPlanetStrictJupiter: return JupiterPolarSemidiameterA(delta)
+        case .KPCAAPlanetStrictSaturn: return SaturnPolarSemidiameterA(delta)
+        case .KPCAAPlanetStrictUranus: return UranusSemidiameterA(delta)
+        case .KPCAAPlanetStrictNeptune: return NeptuneSemidiameterA(delta)
+        case .KPCAAPlanetStrictUndefined: return 0.0
+        }
+    }
+
+    @inlinable
+    public static func polarSemidiameterB(for planet: KPCAAPlanet, delta: Double) -> Double {
+        switch planet {
+        case .KPCAAPlanetMercury: return MercurySemidiameterB(delta)
+        case .KPCAAPlanetVenus: return VenusSemidiameterB(delta)
+        case .KPCAAPlanetEarth: return 0.0
+        case .KPCAAPlanetMars: return MarsSemidiameterB(delta)
+        case .KPCAAPlanetJupiter: return JupiterPolarSemidiameterB(delta)
+        case .KPCAAPlanetSaturn: return SaturnPolarSemidiameterB(delta)
+        case .KPCAAPlanetUranus: return UranusSemidiameterB(delta)
+        case .KPCAAPlanetNeptune: return NeptuneSemidiameterB(delta)
+        case .KPCAAPlanetPluto: return PlutoSemidiameterB(delta)
+        case .KPCAAPlanetUndefined: return 0.0
+        }
+    }
+
+    @inlinable
     public static func ApparentAsteroidDiameter(_ delta: Double, _ d: Double) -> Double {
         (0.0013788 * d) / delta
     }

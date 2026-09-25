@@ -63,24 +63,29 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
 
     /// The remote URL of the official source (canonical GitHub Releases Assets for Triad models).
     public var remoteURL: URL {
+        let urlString: String
         switch self {
         case .vsop2013Modern:
-            return URL(string: "https://ftp.imcce.fr/pub/ephem/planets/vsop2013/solution/VSOP2013.P2000.bin")!
+            urlString = "https://ftp.imcce.fr/pub/ephem/planets/vsop2013/solution/VSOP2013.P2000.bin"
         case .vsop2013Full:
-            return URL(string: "https://ftp.imcce.fr/pub/ephem/planets/vsop2013/solution/VSOP2013.P4000.bin")!
+            urlString = "https://ftp.imcce.fr/pub/ephem/planets/vsop2013/solution/VSOP2013.P4000.bin"
         case .lunarDE440:
-            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp")!
+            urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp"
         case .lunarDE440s:
-            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp")!
+            urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp"
         case .de442s:
-            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp")!
+            urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp"
         case .inpop21a:
-            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/inpop21a.bsp")!
+            urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/inpop21a.bsp"
         case .epm2021:
-            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/epm2021.bsp")!
+            urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/epm2021.bsp"
         case .pmoe:
-            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/pmoe.bsp")!
+            urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/pmoe.bsp"
         }
+        guard let url = URL(string: urlString) else {
+            preconditionFailure("Invalid remote URL: \(urlString)")
+        }
+        return url
     }
 
     /// Upstream official repository URL (fallback if GitHub Releases is unreachable).

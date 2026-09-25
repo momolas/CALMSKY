@@ -70,7 +70,7 @@ public extension Date {
         components.hour = 0
         components.minute = 0
         components.second = 0
-        return Calendar.gregorianGMT.date(from: components)!
+        return Calendar.gregorianGMT.date(from: components) ?? Date(timeIntervalSince1970: 0)
     }
     
     
@@ -100,7 +100,7 @@ extension Calendar {
     /// Convenience constructor of the Gregorian calendar, in the GMT/UT time zone.
     static let gregorianGMT: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
         return calendar
     }()
     
@@ -116,7 +116,7 @@ extension Calendar {
         let m = ((abs(hour.value) - h) * 60.0).rounded(.towardZero)
         let s = (((abs(hour.value) - h) * 60.0 - m) * 60.0).rounded(.towardZero)
         let nano = hour.value - h - m*60 - s*3600
-        let newDate = self.date(bySettingHour: Int(h), minute: Int(m), second: Int(s), of: date)!
+        let newDate = self.date(bySettingHour: Int(h), minute: Int(m), second: Int(s), of: date) ?? date
         return newDate.addingTimeInterval(nano/1e9)
     }
 }

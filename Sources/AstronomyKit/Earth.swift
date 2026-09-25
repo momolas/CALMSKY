@@ -142,14 +142,15 @@ public final class Earth: Object, PlanetaryBase, PlanetaryOrbits, @unchecked Sen
     ///   - coordinates: The geographic coordinates for which to compute the twilights.
     /// - Returns: The rise, transit and set times, in Julian Day, and an error, if relevant.
     public func riseTransitSetTimes(for planetaryObject: KPCPlanetaryObject, geographicCoordinates: GeographicCoordinates) -> RiseTransitSetTimes {
-        guard planetaryObject != .KPCPlanetaryObjectUNDEFINED else {
+        guard planetaryObject != .KPCPlanetaryObjectUNDEFINED,
+              let objectType = planetaryObject.objectType else {
             return RiseTransitSetTimes(geographicCoordinates: geographicCoordinates, transitError: CelestialBodyTransitError.undefinedPlanetaryObject)
         }
         
-        let planetaryObject = planetaryObject.objectType!.init(julianDay: self.julianDay)
-        let altitude = (type(of: planetaryObject)).apparentRiseSetAltitude
+        let initializedObject = objectType.init(julianDay: self.julianDay)
+        let altitude = (type(of: initializedObject)).apparentRiseSetAltitude
                 
-        return RiseTransitSetTimes(celestialBody: planetaryObject as CelestialBody, geographicCoordinates: geographicCoordinates, riseSetAltitude: altitude)
+        return RiseTransitSetTimes(celestialBody: initializedObject as CelestialBody, geographicCoordinates: geographicCoordinates, riseSetAltitude: altitude)
     }
     
     

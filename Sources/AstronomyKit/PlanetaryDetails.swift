@@ -12,84 +12,34 @@ enum InvalidParameterError: Error {
     case invalidPlanet(KPCAAPlanet)
 }
 
+@inlinable
 func planetEquatorialSemiDiameterA(_ planet: KPCAAPlanetStrict, delta: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAADiameters.MercurySemidiameterA(delta)
-    case .KPCAAPlanetStrictVenus: return CAADiameters.VenusSemidiameterA(delta)
-    case .KPCAAPlanetStrictMars: return CAADiameters.MarsSemidiameterA(delta)
-    case .KPCAAPlanetStrictJupiter: return CAADiameters.JupiterEquatorialSemidiameterA(delta)
-    case .KPCAAPlanetStrictSaturn: return CAADiameters.SaturnEquatorialSemidiameterA(delta)
-    case .KPCAAPlanetStrictUranus: return CAADiameters.UranusSemidiameterA(delta)
-    case .KPCAAPlanetStrictNeptune: return CAADiameters.NeptuneSemidiameterA(delta)
-    default: return 0
-    }
+    CAADiameters.equatorialSemidiameterA(for: planet, delta: delta)
 }
 
+@inlinable
 func planetEquatorialSemiDiameterB(_ planet: KPCAAPlanet, delta: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetMercury: return CAADiameters.MercurySemidiameterB(delta)
-    case .KPCAAPlanetVenus: return CAADiameters.VenusSemidiameterB(delta)
-    case .KPCAAPlanetMars: return CAADiameters.MarsSemidiameterB(delta)
-    case .KPCAAPlanetJupiter: return CAADiameters.JupiterEquatorialSemidiameterB(delta)
-    case .KPCAAPlanetSaturn: return CAADiameters.SaturnEquatorialSemidiameterB(delta)
-    case .KPCAAPlanetUranus: return CAADiameters.UranusSemidiameterB(delta)
-    case .KPCAAPlanetNeptune: return CAADiameters.NeptuneSemidiameterB(delta)
-    case .KPCAAPlanetPluto: return CAADiameters.PlutoSemidiameterB(delta)
-    default: return 0
-    }
+    CAADiameters.equatorialSemidiameterB(for: planet, delta: delta)
 }
 
+@inlinable
 func planetPolarSemiDiameterA(_ planet: KPCAAPlanetStrict, delta: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAADiameters.MercurySemidiameterA(delta)
-    case .KPCAAPlanetStrictVenus: return CAADiameters.VenusSemidiameterA(delta)
-    case .KPCAAPlanetStrictMars: return CAADiameters.MarsSemidiameterA(delta)
-    case .KPCAAPlanetStrictJupiter: return CAADiameters.JupiterPolarSemidiameterA(delta)
-    case .KPCAAPlanetStrictSaturn: return CAADiameters.SaturnPolarSemidiameterA(delta)
-    case .KPCAAPlanetStrictUranus: return CAADiameters.UranusSemidiameterA(delta)
-    case .KPCAAPlanetStrictNeptune: return CAADiameters.NeptuneSemidiameterA(delta)
-    default: return 0
-    }
+    CAADiameters.polarSemidiameterA(for: planet, delta: delta)
 }
 
+@inlinable
 func planetPolarSemiDiameterB(_ planet: KPCAAPlanet, delta: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetMercury: return CAADiameters.MercurySemidiameterB(delta)
-    case .KPCAAPlanetVenus: return CAADiameters.VenusSemidiameterB(delta)
-    case .KPCAAPlanetMars: return CAADiameters.MarsSemidiameterB(delta)
-    case .KPCAAPlanetJupiter: return CAADiameters.JupiterPolarSemidiameterB(delta)
-    case .KPCAAPlanetSaturn: return CAADiameters.SaturnPolarSemidiameterB(delta)
-    case .KPCAAPlanetUranus: return CAADiameters.UranusSemidiameterB(delta)
-    case .KPCAAPlanetNeptune: return CAADiameters.NeptuneSemidiameterB(delta)
-    case .KPCAAPlanetPluto: return CAADiameters.PlutoSemidiameterB(delta)
-    default: return 0
-    }
+    CAADiameters.polarSemidiameterB(for: planet, delta: delta)
 }
 
+@inlinable
 func planetMagnitudeAA(_ object: KPCPlanetaryObject, r: Double, delta: Double, i: Double) -> Double {
-    switch object {
-    case .KPCPlanetaryObjectMERCURY: return CAAIlluminatedFraction.MercuryMagnitudeAA(r, delta, i)
-    case .KPCPlanetaryObjectVENUS: return CAAIlluminatedFraction.VenusMagnitudeAA(r, delta, i)
-    case .KPCPlanetaryObjectMARS: return CAAIlluminatedFraction.MarsMagnitudeAA(r, delta, i)
-    case .KPCPlanetaryObjectJUPITER: return CAAIlluminatedFraction.JupiterMagnitudeAA(r, delta, i)
-    case .KPCPlanetaryObjectSATURN: return CAAIlluminatedFraction.SaturnMagnitudeAA(r, delta, 0, 0)
-    case .KPCPlanetaryObjectURANUS: return CAAIlluminatedFraction.UranusMagnitudeAA(r, delta)
-    case .KPCPlanetaryObjectNEPTUNE: return CAAIlluminatedFraction.NeptuneMagnitudeAA(r, delta)
-    default: return 0
-    }
+    CAAIlluminatedFraction.magnitudeAA(for: object, r: r, delta: delta, i: i)
 }
 
+@inlinable
 func planetMagnitudeMuller(_ object: KPCPlanetaryObject, r: Double, delta: Double, i: Double) -> Double {
-    switch object {
-    case .KPCPlanetaryObjectMERCURY: return CAAIlluminatedFraction.MercuryMagnitudeMuller(r, delta, i)
-    case .KPCPlanetaryObjectVENUS: return CAAIlluminatedFraction.VenusMagnitudeMuller(r, delta, i)
-    case .KPCPlanetaryObjectMARS: return CAAIlluminatedFraction.MarsMagnitudeMuller(r, delta, i)
-    case .KPCPlanetaryObjectJUPITER: return CAAIlluminatedFraction.JupiterMagnitudeMuller(r, delta)
-    case .KPCPlanetaryObjectSATURN: return CAAIlluminatedFraction.SaturnMagnitudeMuller(r, delta, 0, 0)
-    case .KPCPlanetaryObjectURANUS: return CAAIlluminatedFraction.UranusMagnitudeMuller(r, delta)
-    case .KPCPlanetaryObjectNEPTUNE: return CAAIlluminatedFraction.NeptuneMagnitudeMuller(r, delta)
-    default: return 0
-    }
+    CAAIlluminatedFraction.magnitudeMuller(for: object, r: r, delta: delta, i: i)
 }
 
 /// The EllipticalPlanetaryDetails encompasses various elliptical details of solar-system planets.

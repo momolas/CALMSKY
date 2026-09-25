@@ -218,8 +218,8 @@ public struct RiseTransitSetTimes: Sendable {
 
         }
 
-        if (!self.details!.isRiseValid && !self.details!.isSetValid) {
-            self.transitError = (self.details!.isTransitAboveHorizon) ? .alwaysAboveAltitude : .alwaysBelowAltitude
+        if let details = self.details, !details.isRiseValid, !details.isSetValid {
+            self.transitError = details.isTransitAboveHorizon ? .alwaysAboveAltitude : .alwaysBelowAltitude
         }
     }
         
@@ -238,17 +238,20 @@ public struct RiseTransitSetTimes: Sendable {
     
     /// The rise time of the celestial body, in Julian Day.
     public var riseTime: JulianDay? {
-        get { return (self.details != nil && self.details!.isRiseValid) ? self.details!.riseTime : nil }
+        guard let details = self.details, details.isRiseValid else { return nil }
+        return details.riseTime
     }
     
     /// The transit time of the celestial body, in Julian Day.
     public var transitTime: JulianDay? {
-        get { return (self.details != nil && self.details!.isTransitValid) ? self.details!.transitTime : nil }
+        guard let details = self.details, details.isTransitValid else { return nil }
+        return details.transitTime
     }
     
     /// The set time of the celestial body, in Julian Day.
     public var setTime: JulianDay? {
-        get { return (self.details != nil && self.details!.isSetValid) ? self.details!.setTime : nil }
+        guard let details = self.details, details.isSetValid else { return nil }
+        return details.setTime
     }
 }
 

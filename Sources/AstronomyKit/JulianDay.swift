@@ -44,8 +44,15 @@ public struct JulianDay: NumericType, CustomStringConvertible {
     /// - Parameter date: The date object.
     public init(_ date: Date) {
         let components = Calendar.gregorianGMT.dateComponents([.year, .month, .day, .hour, .minute, .second, .nanosecond], from: date)
-        let decimalSeconds = Double(components.second!) + Double(components.nanosecond!)/1e9
-        self.init(year: components.year!, month: components.month!, day: components.day!, hour: components.hour!, minute: components.minute!, second: decimalSeconds)
+        let decimalSeconds = Double(components.second ?? 0) + Double(components.nanosecond ?? 0) / 1e9
+        self.init(
+            year: components.year ?? 2000,
+            month: components.month ?? 1,
+            day: components.day ?? 1,
+            hour: components.hour ?? 0,
+            minute: components.minute ?? 0,
+            second: decimalSeconds
+        )
     }
     
     /// Returns a Julian Day struct initialized from a Modified Julian Day (MJD) value.
@@ -74,7 +81,7 @@ public extension JulianDay {
                                         second: Int(roundedSeconds),
                                         nanosecond: Int(nanoseconds))
         
-        let date = Calendar.gregorianGMT.date(from: components)!
+        let date = Calendar.gregorianGMT.date(from: components) ?? Date(timeIntervalSince1970: (value - 2440587.5) * 86400.0)
         return date
     }
     
