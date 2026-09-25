@@ -35,6 +35,8 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
 - In performance-critical numerical inner loops (e.g. nutation series, orbit propagation), use `withUnsafeTemporaryAllocation(of:capacity:)` on the stack for bounded buffers (<= 64 KiB) instead of dynamically allocating heap arrays (`[Double]`).
 - Do not call vector library functions (e.g. `vvsincos`) for single scalar evaluations (N = 1); use native hardware scalar instructions (`sin`, `cos`).
 - For Chebyshev polynomial evaluation with derivatives (positions and velocities), use the exact joint Clenshaw recurrence in a single SIMD pass (`simd_double3`) to compute position and velocity simultaneously.
+- In asynchronous actors fetching remote or streaming resources, never rely on naive `if let cached = ...` checks before an `await` suspension point without memoizing the in-flight task; concurrent callers arriving before the fetch completes will trigger an actor request stampede, executing duplicate network requests and overwriting shared actor state. Use task coalescence by holding a shared in-flight `Task<T, Error>?` that concurrent callers await.
+- Never cast floating-point numbers to integers (`Int((val - base) / step)`) without an explicit `guard val.isFinite else { throw ... }` check; converting `Double.nan` or `Double.infinity` to `Int` triggers a fatal uncatchable runtime crash in Swift 6 that bypasses error handling.
 
 ## SwiftUI instructions
 
@@ -60,6 +62,7 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
 - Avoid `AnyView` unless it is absolutely required.
 - Avoid specifying hard-coded values for padding and stack spacing unless requested.
 - Avoid using UIKit colors in SwiftUI code.
+- Never execute heavy scientific, physical, mathematical, or orbital ephemeris calculations synchronously in `body` or `ForEach` closures. Always offload heavy computations from the `@MainActor` render loop via `.task(id:)` with `Task.detached(priority: .userInitiated)` and assign back to immutable `@State` snapshots.
 
 
 ## Architecture guidelines
@@ -98,6 +101,8 @@ If SwiftData is configured to use CloudKit:
 - Never use `@Attribute(.unique)`.
 - Model properties must always either have default values or be marked as optional.
 - All relationships must be marked optional.
+- Never use `deleteRule: .cascade` on preset, catalog, or reference entities (e.g. `ObserverLocation`, `PresetCategory`) that point to historical user records, sessions, or logs (`ObservationSession`, `ObservationLog`). Deleting a preset site or category must never wipe out the user's scientific or transaction history; always use `deleteRule: .nullify` with an optional inverse reference for such reference-to-log relationships.
+- Encapsulate background persistence operations (model insertion, batch imports) in dedicated `@ModelActor` actors (e.g. `AstronomyObservationActor`) to ensure strict thread confinement and data safety under Swift 6.
 
 
 ## Project structure
