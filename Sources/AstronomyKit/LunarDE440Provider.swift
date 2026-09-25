@@ -8,9 +8,9 @@
 
 import Foundation
 
-/// Provides centimeter-precision geocentric lunar positions from JPL DE440 ephemeris data.
+/// Provides centimeter-precision geocentric lunar positions from JPL DE440 / DE442 ephemeris data.
 ///
-/// This provider reads a subset of the JPL DE440 SPK/BSP file containing only the
+/// This provider reads a subset of the JPL DE440/DE442 SPK/BSP file containing only the
 /// Moon's geocentric position relative to the Earth-Moon Barycenter (NAIF target 301,
 /// center 3) or the Earth (NAIF target 301, center 399).
 ///
@@ -18,13 +18,18 @@ import Foundation
 /// is evaluated using the ``SPKReader`` pure-Swift parser.
 ///
 /// ## Precision
-/// - Position accuracy: ≈1–3 cm over 1550–2650 CE (DE440) or 1900–2050 CE (DE440s).
+/// - Position accuracy: ≈1–3 cm over 1550–2650 CE (DE440), 1849–2150 CE (DE442s), or 1900–2050 CE (DE440s).
 /// - Velocity accuracy: ≈0.01 mm/s.
 ///
 /// ## Data Files
-/// Use ``EphemerisDataManager`` to download the required SPK file from NASA NAIF:
+/// Use ``EphemerisDataManager`` to download the required SPK file:
+/// - `de442s.bsp` (≈31 MB, 1849–2150 CE, recommended official baseline)
 /// - `de440.bsp` (≈115 MB, 1550–2650 CE)
-/// - `de440s.bsp` (≈32 MB, 1900–2050 CE, recommended for most applications)
+/// /// Typealias allowing callers to use ``LunarDE442sProvider`` or generic ``LunarSPKProvider`` interchangeably.
+public typealias LunarDE442sProvider = LunarDE440Provider
+public typealias LunarDE442Provider = LunarDE440Provider
+public typealias LunarSPKProvider = LunarDE440Provider
+
 public final class LunarDE440Provider: Sendable {
 
     // MARK: - Constants

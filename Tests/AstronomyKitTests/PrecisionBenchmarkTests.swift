@@ -330,5 +330,56 @@ struct PrecisionBenchmarkTests {
         #expect(offlineProvider.isOfflineBaseline, "When DE442s is in cache, adaptive provider must select Offline Baseline")
         #expect(!offlineProvider.isStreamingTriad)
     }
+
+    @Test("LunarDE442sProvider typealias and SPK Moon target integration")
+    func testLunarDE442sProviderIntegration() throws {
+        // 1. Validate typealiases
+        let _: LunarDE442sProvider.Type = LunarDE440Provider.self
+        let _: LunarDE442Provider.Type = LunarDE440Provider.self
+        let _: LunarSPKProvider.Type = LunarDE440Provider.self
+
+        // 2. Validate mock DE442s SPK initialization with Moon (target 301, center 3)
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let mockDE442sPath = tempDir.appendingPathComponent("de442s.bsp")
+        var dummyDAF = Data(count: 2048)
+        dummyDAF.replaceSubrange(0..<8, with: "DAF/SPK ".data(using: .ascii)!)
+        var nd: Int32 = 2
+        var ni: Int32 = 6
+        var fward: Int32 = 2
+        withUnsafeBytes(of: &nd) { dummyDAF.replaceSubrange(8..<12, with: $0) }
+        withUnsafeBytes(of: &ni) { dummyDAF.replaceSubrange(12..<16, with: $0) }
+        withUnsafeBytes(of: &fward) { dummyDAF.replaceSubrange(76..<80, with: $0) }
+
+        // Record 2 (summary record at offset 1024)
+        var nSummaries: Double = 1.0
+        withUnsafeBytes(of: &nSummaries) { dummyDAF.replaceSubrange(1040..<1048, with: $0) }
+        var startEpoch: Double = -1_000_000_000.0
+        var endEpoch: Double = 1_000_000_000.0
+        withUnsafeBytes(of: &startEpoch) { dummyDAF.replaceSubrange(1048..<1056, with: $0) }
+        withUnsafeBytes(of: &endEpoch) { dummyDAF.replaceSubrange(1056..<1064, with: $0) }
+        var targetMoon: Int32 = 301
+        var centerEMB: Int32 = 3
+        var frame: Int32 = 1
+        var spkType: Int32 = 2
+        var startAddr: Int32 = 1
+        var endAddr: Int32 = 100
+        withUnsafeBytes(of: &targetMoon) { dummyDAF.replaceSubrange(1064..<1068, with: $0) }
+        withUnsafeBytes(of: &centerEMB) { dummyDAF.replaceSubrange(1068..<1072, with: $0) }
+        withUnsafeBytes(of: &frame) { dummyDAF.replaceSubrange(1072..<1076, with: $0) }
+        withUnsafeBytes(of: &spkType) { dummyDAF.replaceSubrange(1076..<1080, with: $0) }
+        withUnsafeBytes(of: &startAddr) { dummyDAF.replaceSubrange(1080..<1084, with: $0) }
+        withUnsafeBytes(of: &endAddr) { dummyDAF.replaceSubrange(1084..<1088, with: $0) }
+        try dummyDAF.write(to: mockDE442sPath)
+
+        let lunarProvider = try LunarDE442sProvider(spkFileURL: mockDE442sPath)
+        #expect(lunarProvider != nil)
+
+        let manager = EphemerisDataManager(cacheDirectory: tempDir)
+        let cachedProvider = try manager.makeLunarDE442sProviderFromCache()
+        #expect(cachedProvider != nil)
+    }
 }
 

@@ -469,6 +469,33 @@ public actor EphemerisDataManager {
         return try SPKEphemerisProvider(spkFileURL: fileURL)
     }
 
+    /// Instantiates a dedicated high-precision lunar provider using the official NASA JPL DE442s baseline.
+    ///
+    /// - Parameter progress: Optional closure called with `(bytesReceived, totalBytes)`.
+    /// - Returns: A ``LunarDE442sProvider`` initialized with NASA JPL DE442s.
+    public func makeLunarDE442sProvider(
+        progress: (@Sendable (Int64, Int64) -> Void)? = nil
+    ) async throws -> LunarDE442sProvider {
+        let fileURL = try await download(.de442s) { received, total in
+            progress?(received, total)
+        }
+        return try LunarDE442sProvider(spkFileURL: fileURL)
+    }
+
+    /// Instantiates a dedicated high-precision lunar provider using cached NASA JPL DE442s for offline use.
+    ///
+    /// - Returns: A ``LunarDE442sProvider`` initialized with cached NASA JPL DE442s.
+    /// - Throws: ``EphemerisError/dataFileNotFound(_:)`` if DE442s is not in local cache.
+    public nonisolated func makeLunarDE442sProviderFromCache() throws -> LunarDE442sProvider {
+        let fileURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            throw EphemerisError.dataFileNotFound(
+                "Offline baseline numerical kernel (DE442s) not found in cache at: \(fileURL.path)."
+            )
+        }
+        return try LunarDE442sProvider(spkFileURL: fileURL)
+    }
+
     /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of the NASA JPL DE442s baseline.
     public func makeStreamingBaselineProvider() -> StreamingSPKEphemerisProvider {
         makeStreamingProvider(for: .de442s)
