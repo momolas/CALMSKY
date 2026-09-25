@@ -306,6 +306,27 @@ public struct CAABinaryStarDetails: Sendable, Codable, Hashable {
 
 // MARK: - Precession & Nutation Details
 
+public struct CAANutationDetails: Sendable, Codable, Hashable {
+    public var deltaPsi: Double // nutation in longitude (arcseconds)
+    public var deltaEpsilon: Double // nutation in obliquity (arcseconds)
+    public var meanObliquity: Double // mean obliquity of the ecliptic (degrees)
+    public var trueObliquity: Double // true obliquity of the ecliptic (degrees)
+
+    @inlinable
+    public init(
+        deltaPsi: Double = 0,
+        deltaEpsilon: Double = 0,
+        meanObliquity: Double = 0,
+        trueObliquity: Double = 0
+    ) {
+        self.deltaPsi = deltaPsi
+        self.deltaEpsilon = deltaEpsilon
+        self.meanObliquity = meanObliquity
+        self.trueObliquity = trueObliquity
+    }
+}
+public typealias NutationDetails = CAANutationDetails
+
 public struct PhysicalMarsDetails: Sendable, Codable, Hashable {
     public var DE: Double
     public var DS: Double

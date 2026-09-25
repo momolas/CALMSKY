@@ -41,6 +41,19 @@ struct NutationTests {
         let earth = Earth(julianDay: jd)
         AssertEqual(earth.nutationInObliquity, ArcSecond(9.44252), accuracy: ArcSecond(0.0001))
     }
+
+    @Test("Joint Nutation Details & Obliquity Factorization")
+    func testJointNutationDetails() {
+        let jd = 2446895.5 // 1987 April 10.0
+        let details = CAANutation.nutationDetails(jd)
+        let (dPsi, dEps) = CAANutation.nutation(jd)
+
+        #expect(abs(details.deltaPsi - dPsi) < 1e-14)
+        #expect(abs(details.deltaEpsilon - dEps) < 1e-14)
+        #expect(abs(details.meanObliquity - CAANutation.MeanObliquityOfEcliptic(jd)) < 1e-14)
+        #expect(abs(details.trueObliquity - CAANutation.TrueObliquityOfEcliptic(jd)) < 1e-14)
+        #expect(abs(details.trueObliquity - (details.meanObliquity + details.deltaEpsilon / 3600.0)) < 1e-14)
+    }
 }
 
 

@@ -300,8 +300,7 @@ public enum CAAPhysicalJupiter: Sendable {
         }
 
         // Step 15
-        let NutationInLongitude = CAANutation.NutationInLongitude(JD)
-        let NutationInObliquity = CAANutation.NutationInObliquity(JD)
+        let (NutationInLongitude, NutationInObliquity) = CAANutation.nutation(JD)
         e0 += NutationInObliquity / 3600.0
         e0rad = SphericalTrigonometry.degreesToRadians(e0)
         cose0rad = cos(e0rad)
@@ -445,8 +444,7 @@ public enum CAAPhysicalMars: Sendable {
         details.w = SphericalTrigonometry.mapTo0To360Range(W - SphericalTrigonometry.radiansToDegrees(xi))
 
         // Step 13
-        let NutationInLongitude = CAANutation.NutationInLongitude(JD)
-        let NutationInObliquity = CAANutation.NutationInObliquity(JD)
+        let (NutationInLongitude, NutationInObliquity) = CAANutation.nutation(JD)
 
         // Step 14
         let l0radminuslambdarad = l0rad - lambdarad
@@ -591,8 +589,9 @@ public enum CAASaturnRings: Sendable {
         }
 
         // Step 10
-        let Obliquity = CAANutation.TrueObliquityOfEcliptic(JD)
-        let NutationInLongitude = CAANutation.NutationInLongitude(JD)
+        let nutation = CAANutation.nutationDetails(JD)
+        let Obliquity = nutation.trueObliquity
+        let NutationInLongitude = nutation.deltaPsi
 
         // Step 11
         var lambda0 = omega - 90.0

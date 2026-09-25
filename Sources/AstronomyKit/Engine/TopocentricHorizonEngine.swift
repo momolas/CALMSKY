@@ -177,24 +177,48 @@ public enum TopocentricHorizonEngine: Sendable {
         return bVal
     }
 
+    /// Observer configuration for fast repeated altitude evaluation of fixed equatorial coordinates (e.g. Star, DSO).
+    /// Precomputes latitude and declination trigonometric invariants outside sampling loops.
+    public struct FixedEquatorialObserver: Sendable {
+        public let alphaHours: Double
+        public let deltaDeg: Double
+        public let longitudeDeg: Double
+        public let sinLatSinDec: Double
+        public let cosLatCosDec: Double
+
+        @inlinable
+        public init(alphaHours: Double, deltaDeg: Double, geoCoords: GeographicCoordinates) {
+            self.alphaHours = alphaHours
+            self.deltaDeg = deltaDeg
+            self.longitudeDeg = geoCoords.longitude.value
+            let latRad = SphericalTrigonometry.degreesToRadians(geoCoords.latitude.value)
+            let decRad = SphericalTrigonometry.degreesToRadians(deltaDeg)
+            self.sinLatSinDec = sin(latRad) * sin(decRad)
+            self.cosLatCosDec = cos(latRad) * cos(decRad)
+        }
+
+        @inlinable
+        public func altitude(at jd: Double) -> Double {
+            let theta0Deg = CAASidereal.apparentGreenwichSiderealTime(jd) * 15.0
+            let localSiderealDeg = theta0Deg - longitudeDeg
+            let hDeg = localSiderealDeg - (alphaHours * 15.0)
+            let hRad = SphericalTrigonometry.degreesToRadians(hDeg)
+
+            let sinAlt = sinLatSinDec + cosLatCosDec * cos(hRad)
+            let clampedSinAlt = max(-1.0, min(1.0, sinAlt))
+            return SphericalTrigonometry.radiansToDegrees(asin(clampedSinAlt))
+        }
+    }
+
     /// Evaluates the topocentric geometric altitude in degrees for an object with fixed equatorial coordinates (e.g. Star).
+    @inlinable
     public static func altitudeForFixedEquatorial(
         alphaHours: Double,
         deltaDeg: Double,
         jd: Double,
         geoCoords: GeographicCoordinates
     ) -> Double {
-        let theta0Deg = CAASidereal.apparentGreenwichSiderealTime(jd) * 15.0
-        let localSiderealDeg = theta0Deg - geoCoords.longitude.value
-        let hDeg = localSiderealDeg - (alphaHours * 15.0)
-
-        let hRad = SphericalTrigonometry.degreesToRadians(hDeg)
-        let latRad = SphericalTrigonometry.degreesToRadians(geoCoords.latitude.value)
-        let decRad = SphericalTrigonometry.degreesToRadians(deltaDeg)
-
-        let sinAlt = sin(latRad) * sin(decRad) + cos(latRad) * cos(decRad) * cos(hRad)
-        let clampedSinAlt = max(-1.0, min(1.0, sinAlt))
-        return SphericalTrigonometry.radiansToDegrees(asin(clampedSinAlt))
+        FixedEquatorialObserver(alphaHours: alphaHours, deltaDeg: deltaDeg, geoCoords: geoCoords).altitude(at: jd)
     }
 
     /// Solves for topocentric Rise, Transit, and Set across a nominal 24-hour day using continuous vector altitude

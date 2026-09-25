@@ -161,4 +161,50 @@ struct TopocentricHorizonTests {
             #expect(abs(altSet - targetAlt) < 0.005)
         }
     }
+
+    @Test("FixedEquatorialObserver matches altitudeForFixedEquatorial bit-exactly")
+    func testFixedEquatorialObserverBitExact() {
+        let paranal = GeographicCoordinates(
+            positivelyWestwardLongitude: Degree(-70.4042),
+            latitude: Degree(-24.6272),
+            altitude: Meter(2635.43)
+        )
+        let alpha = 6.75257 // Sirius alpha hours
+        let delta = -16.7161 // Sirius delta deg
+
+        let observer = TopocentricHorizonEngine.FixedEquatorialObserver(
+            alphaHours: alpha,
+            deltaDeg: delta,
+            geoCoords: paranal
+        )
+
+        for hourStep in 0...24 {
+            let jd = 2460690.5 + Double(hourStep) / 24.0
+            let altDirect = TopocentricHorizonEngine.altitudeForFixedEquatorial(
+                alphaHours: alpha,
+                deltaDeg: delta,
+                jd: jd,
+                geoCoords: paranal
+            )
+            let altObserver = observer.altitude(at: jd)
+            #expect(abs(altDirect - altObserver) < 1e-14)
+        }
+    }
+
+    @Test("GlobeEngine.rhoCoordinates matches scalar rhoSinThetaPrime and rhoCosThetaPrime")
+    func testGlobeEngineRhoCoordinates() {
+        let latitudes = [-90.0, -45.0, -24.6272, 0.0, 48.8566, 90.0]
+        let altitudes = [0.0, 100.0, 2635.43, 8848.0]
+
+        for lat in latitudes {
+            for alt in altitudes {
+                let (rhoSin, rhoCos) = GlobeEngine.rhoCoordinates(latitude: lat, height: alt)
+                let directSin = GlobeEngine.rhoSinThetaPrime(latitude: lat, height: alt)
+                let directCos = GlobeEngine.rhoCosThetaPrime(latitude: lat, height: alt)
+
+                #expect(abs(rhoSin - directSin) < 1e-14)
+                #expect(abs(rhoCos - directCos) < 1e-14)
+            }
+        }
+    }
 }

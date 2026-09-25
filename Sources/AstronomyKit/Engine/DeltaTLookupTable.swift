@@ -13,19 +13,24 @@ public enum DeltaTLookupTable: Sendable {
 
     private static let entries: [(jd: Double, dt: Double)] = {
         guard let data = Data(base64Encoded: payloadBase64) else { return [] }
+        let elementSize = MemoryLayout<Double>.stride * 2
+        let count = data.count / elementSize
         var result = [(jd: Double, dt: Double)]()
-        result.reserveCapacity(data.count / 16)
+        result.reserveCapacity(count)
         data.withUnsafeBytes { rawBuffer in
-            let ptr = rawBuffer.bindMemory(to: Double.self)
-            for i in stride(from: 0, to: ptr.count, by: 2) {
-                result.append((jd: ptr[i], dt: ptr[i + 1]))
+            for i in 0..<count {
+                let offset = i * elementSize
+                guard offset >= 0 && offset + elementSize <= rawBuffer.count else { break }
+                let jd = rawBuffer.loadUnaligned(fromByteOffset: offset, as: Double.self)
+                let dt = rawBuffer.loadUnaligned(fromByteOffset: offset + MemoryLayout<Double>.stride, as: Double.self)
+                result.append((jd: jd, dt: dt))
             }
         }
         return result
     }()
 
     public static func lookup(jd: Double) -> Double? {
-        guard !entries.isEmpty else { return nil }
+        guard jd.isFinite && !entries.isEmpty else { return nil }
         guard jd >= entries[0].jd && jd < entries[entries.count - 1].jd else { return nil }
 
         var low = 0
@@ -41,6 +46,8 @@ public enum DeltaTLookupTable: Sendable {
         let foundIndex = low
         let prev = entries[foundIndex - 1]
         let curr = entries[foundIndex]
-        return (jd - prev.jd) / (curr.jd - prev.jd) * (curr.dt - prev.dt) + prev.dt
+        let interval = curr.jd - prev.jd
+        guard interval > 0 else { return prev.dt }
+        return (jd - prev.jd) / interval * (curr.dt - prev.dt) + prev.dt
     }
 }

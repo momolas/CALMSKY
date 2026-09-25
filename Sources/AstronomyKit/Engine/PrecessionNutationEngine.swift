@@ -184,12 +184,39 @@ private let gIAU2000BCoeffs: [IAU2000BCoefficient] = [
 ]
 
 public enum CAANutation: Sendable {
+    @inlinable
     public static func NutationInLongitude(_ JD: Double) -> Double {
         nutationIAU1980(JD).deltaPsi
     }
 
+    @inlinable
     public static func NutationInObliquity(_ JD: Double) -> Double {
         nutationIAU1980(JD).deltaEpsilon
+    }
+
+    /// Fast unified nutation in longitude and obliquity in arcseconds.
+    @inlinable
+    public static func nutation(_ JD: Double) -> (deltaPsi: Double, deltaEpsilon: Double) {
+        nutationIAU1980(JD)
+    }
+
+    /// Complete nutation details including both longitude/obliquity nutation and mean/true ecliptic obliquity.
+    @inlinable
+    public static func nutationDetails(_ JD: Double) -> CAANutationDetails {
+        let meanEps = MeanObliquityOfEcliptic(JD)
+        let (dPsi, dEps) = nutationIAU1980(JD)
+        let trueEps = meanEps + (dEps / 3600.0)
+        return CAANutationDetails(
+            deltaPsi: dPsi,
+            deltaEpsilon: dEps,
+            meanObliquity: meanEps,
+            trueObliquity: trueEps
+        )
+    }
+
+    @inlinable
+    public static func NutationDetails(_ JD: Double) -> CAANutationDetails {
+        nutationDetails(JD)
     }
 
     /// High-precision IAU 1980 Wahr nutation in longitude and obliquity in arcseconds.
@@ -261,8 +288,9 @@ public enum CAANutation: Sendable {
             + (SphericalTrigonometry.dmsToDegrees(0, 0, 2.45) * u10)
     }
 
+    @inlinable
     public static func TrueObliquityOfEcliptic(_ JD: Double) -> Double {
-        MeanObliquityOfEcliptic(JD) + SphericalTrigonometry.dmsToDegrees(0, 0, NutationInObliquity(JD))
+        MeanObliquityOfEcliptic(JD) + (nutationIAU1980(JD).deltaEpsilon / 3600.0)
     }
 
     @inlinable public static func nutationInLongitude(jd: Double) -> Double { NutationInLongitude(jd) }
@@ -273,6 +301,8 @@ public enum CAANutation: Sendable {
     @inlinable public static func meanObliquityOfEcliptic(_ JD: Double) -> Double { MeanObliquityOfEcliptic(JD) }
     @inlinable public static func trueObliquityOfEcliptic(jd: Double) -> Double { TrueObliquityOfEcliptic(jd) }
     @inlinable public static func trueObliquityOfEcliptic(_ JD: Double) -> Double { TrueObliquityOfEcliptic(JD) }
+    @inlinable public static func nutation(jd: Double) -> (deltaPsi: Double, deltaEpsilon: Double) { nutation(jd) }
+    @inlinable public static func nutationDetails(jd: Double) -> CAANutationDetails { nutationDetails(jd) }
 
     /// High-precision IAU 2000B nutation in longitude (deltaPsi) and obliquity (deltaEpsilon) in arcseconds.
     /// Conforms to McCarthy & Luzum (2002) with 77 periodic luni-solar terms, accurate to 1 milliarcsecond.

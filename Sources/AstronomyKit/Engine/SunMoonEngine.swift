@@ -1859,11 +1859,12 @@ public enum CAAPhysicalMoon: Sendable {
         I = CAACoordinateTransformation.degreesToRadians(1.54242)
         let cosI = cos(I)
         let sinI = sin(I)
-        deltaU = CAACoordinateTransformation.degreesToRadians(CAANutation.nutationInLongitude(jd: jd) / 3600.0)
+        let nutation = CAANutation.nutationDetails(jd)
+        deltaU = CAACoordinateTransformation.degreesToRadians(nutation.deltaPsi / 3600.0)
         let f = CAACoordinateTransformation.degreesToRadians(CAAMoon.argumentOfLatitude(jd))
         let twoF = 2.0 * f
         omega = CAACoordinateTransformation.degreesToRadians(CAAMoon.meanLongitudeAscendingNode(jd))
-        epsilon = CAANutation.meanObliquityOfEcliptic(jd: jd) + (CAANutation.nutationInObliquity(jd: jd) / 3600.0)
+        epsilon = nutation.trueObliquity
 
         let w = lambdaRad - deltaU - omega
         let sinW = sin(w)

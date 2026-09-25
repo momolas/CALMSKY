@@ -129,35 +129,39 @@ public struct RiseTransitSetTimes: Sendable {
 
             let altitudeAt: (Double) -> Double
             if let obj = celestialBody as? AstronomicalObject {
-                let alpha = obj.equatorialCoordinates.alpha.value
-                let delta = obj.equatorialCoordinates.delta.value
+                let observer = TopocentricHorizonEngine.FixedEquatorialObserver(
+                    alphaHours: obj.equatorialCoordinates.alpha.value,
+                    deltaDeg: obj.equatorialCoordinates.delta.value,
+                    geoCoords: geographicCoordinates
+                )
                 altitudeAt = { t in
-                    TopocentricHorizonEngine.altitudeForFixedEquatorial(
-                        alphaHours: alpha,
-                        deltaDeg: delta,
-                        jd: t,
-                        geoCoords: geographicCoordinates
-                    )
+                    observer.altitude(at: t)
                 }
             } else {
+                let rho = GlobeEngine.rhoCoordinates(
+                    latitude: geographicCoordinates.latitude.value,
+                    height: geographicCoordinates.altitude.value
+                )
+                let lon = geographicCoordinates.longitude.value
+                let lat = geographicCoordinates.latitude.value
                 altitudeAt = { t in
                     let inst = bodyType.init(julianDay: JulianDay(t), highPrecision: hp)
                     let topoEqu = inst.equatorialCoordinates
-                    let coords = CAAParallax.Equatorial2Topocentric(
-                        topoEqu.alpha.value,
-                        topoEqu.delta.value,
-                        inst.radiusVector.value,
-                        geographicCoordinates.longitude.value,
-                        geographicCoordinates.latitude.value,
-                        geographicCoordinates.altitude.value,
-                        t
+                    let coords = CAAParallax.equatorialToTopocentric(
+                        alphaHours: topoEqu.alpha.value,
+                        deltaDeg: topoEqu.delta.value,
+                        distanceAU: inst.radiusVector.value,
+                        longitudeDeg: lon,
+                        rhoSin: rho.rhoSin,
+                        rhoCos: rho.rhoCos,
+                        jd: t
                     )
-                    let siderealDeg = CAASidereal.apparentGreenwichSiderealTime(t) * 15.0 - geographicCoordinates.longitude.value
+                    let siderealDeg = CAASidereal.apparentGreenwichSiderealTime(t) * 15.0 - lon
                     let hourAngleHours = (siderealDeg - coords.X * 15.0) / 15.0
                     let horiz = CAACoordinateTransformation.equatorial2Horizontal(
                         alpha: hourAngleHours,
                         delta: coords.Y,
-                        latitude: geographicCoordinates.latitude.value
+                        latitude: lat
                     )
                     return horiz.y
                 }

@@ -422,12 +422,10 @@ public enum SiderealTimeEngine: Sendable {
         return SphericalTrigonometry.mapTo0To24Range(value)
     }
 
+    @inlinable
     public static func apparentGreenwichSiderealTime(jd: Double) -> Double {
-        let meanObliquity = CAANutation.MeanObliquityOfEcliptic(jd)
-        let trueObliquity = meanObliquity + (CAANutation.NutationInObliquity(jd) / 3600.0)
-        let nutationInLongitude = CAANutation.NutationInLongitude(jd)
-
-        let value = meanGreenwichSiderealTime(jd: jd) + (nutationInLongitude * cos(SphericalTrigonometry.degreesToRadians(trueObliquity)) / 54000.0)
+        let nutation = CAANutation.nutationDetails(jd)
+        let value = meanGreenwichSiderealTime(jd: jd) + (nutation.deltaPsi * cos(SphericalTrigonometry.degreesToRadians(nutation.trueObliquity)) / 54000.0)
         return SphericalTrigonometry.mapTo0To24Range(value)
     }
 }
@@ -461,11 +459,12 @@ public enum CAAEquationOfTime: Sendable {
 
         let sunLong = CAASun.ApparentEclipticLongitude(JD, bHighPrecision)
         let sunLat = CAASun.ApparentEclipticLatitude(JD, bHighPrecision)
-        var epsilon = CAANutation.TrueObliquityOfEcliptic(JD)
+        let nutation = CAANutation.nutationDetails(JD)
+        let epsilon = nutation.trueObliquity
         let equatorial = SphericalTrigonometry.eclipticToEquatorial(sunLong, sunLat, epsilon)
 
-        epsilon = SphericalTrigonometry.degreesToRadians(epsilon)
-        var e = l0 - 0.0057183 - (equatorial.X * 15.0) + SphericalTrigonometry.dmsToDegrees(0, 0, CAANutation.NutationInLongitude(JD)) * cos(epsilon)
+        let epsRad = SphericalTrigonometry.degreesToRadians(epsilon)
+        var e = l0 - 0.0057183 - (equatorial.X * 15.0) + (nutation.deltaPsi / 3600.0) * cos(epsRad)
         if e > 180.0 {
             e = -(360.0 - e)
         }

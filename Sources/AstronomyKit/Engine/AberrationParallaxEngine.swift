@@ -14,17 +14,27 @@ import simd
 
 public enum GlobeEngine: Sendable {
     @inlinable
-    public static func rhoSinThetaPrime(latitude: Double, height: Double) -> Double {
+    public static func rhoCoordinates(latitude: Double, height: Double) -> (rhoSin: Double, rhoCos: Double) {
         let phi = SphericalTrigonometry.degreesToRadians(latitude)
         let u = atan(0.99664719 * tan(phi))
-        return (0.99664719 * sin(u)) + ((height / 6378140.0) * sin(phi))
+        let sinPhi = sin(phi)
+        let cosPhi = cos(phi)
+        let sinU = sin(u)
+        let cosU = cos(u)
+        let heightRatio = height / 6378140.0
+        let rhoSin = (0.99664719 * sinU) + (heightRatio * sinPhi)
+        let rhoCos = cosU + (heightRatio * cosPhi)
+        return (rhoSin: rhoSin, rhoCos: rhoCos)
+    }
+
+    @inlinable
+    public static func rhoSinThetaPrime(latitude: Double, height: Double) -> Double {
+        rhoCoordinates(latitude: latitude, height: height).rhoSin
     }
 
     @inlinable
     public static func rhoCosThetaPrime(latitude: Double, height: Double) -> Double {
-        let phi = SphericalTrigonometry.degreesToRadians(latitude)
-        let u = atan(0.99664719 * tan(phi))
-        return cos(u) + ((height / 6378140.0) * cos(phi))
+        rhoCoordinates(latitude: latitude, height: height).rhoCos
     }
 
     @inlinable
@@ -73,6 +83,12 @@ public enum GlobeEngine: Sendable {
 }
 
 public enum CAAGlobe: Sendable {
+    @inlinable public static func rhoCoordinates(latitude: Double, height: Double) -> (rhoSin: Double, rhoCos: Double) {
+        GlobeEngine.rhoCoordinates(latitude: latitude, height: height)
+    }
+    @inlinable public static func RhoCoordinates(_ GeographicalLatitude: Double, _ Height: Double) -> (rhoSin: Double, rhoCos: Double) {
+        GlobeEngine.rhoCoordinates(latitude: GeographicalLatitude, height: Height)
+    }
     @inlinable public static func rhoSinThetaPrime(latitude: Double, height: Double) -> Double {
         GlobeEngine.rhoSinThetaPrime(latitude: latitude, height: height)
     }
@@ -164,22 +180,42 @@ public enum CAAParallax: Sendable {
 
     @inlinable
     public static func Equatorial2Topocentric(_ Alpha: Double, _ Delta: Double, _ Distance: Double, _ Longitude: Double, _ Latitude: Double, _ Height: Double, _ JD: Double) -> CAA2DCoordinate {
-        let rhoSin = GlobeEngine.rhoSinThetaPrime(latitude: Latitude, height: Height)
-        let rhoCos = GlobeEngine.rhoCosThetaPrime(latitude: Latitude, height: Height)
-        let theta = SiderealTimeEngine.apparentGreenwichSiderealTime(jd: JD)
+        let (rhoSin, rhoCos) = GlobeEngine.rhoCoordinates(latitude: Latitude, height: Height)
+        return equatorialToTopocentric(
+            alphaHours: Alpha,
+            deltaDeg: Delta,
+            distanceAU: Distance,
+            longitudeDeg: Longitude,
+            rhoSin: rhoSin,
+            rhoCos: rhoCos,
+            jd: JD
+        )
+    }
 
-        let d = SphericalTrigonometry.degreesToRadians(Delta)
+    @inlinable
+    public static func equatorialToTopocentric(
+        alphaHours: Double,
+        deltaDeg: Double,
+        distanceAU: Double,
+        longitudeDeg: Double,
+        rhoSin: Double,
+        rhoCos: Double,
+        jd: Double
+    ) -> CAA2DCoordinate {
+        let theta = SiderealTimeEngine.apparentGreenwichSiderealTime(jd: jd)
+
+        let d = SphericalTrigonometry.degreesToRadians(deltaDeg)
         let cosDelta = cos(d)
-        let pi = asin(c1 / Distance)
-        let sinPi = sin(pi)
+        let sinPi = c1 / distanceAU
 
-        let h = SphericalTrigonometry.hoursToRadians(theta - (Longitude / 15.0) - Alpha)
+        let h = SphericalTrigonometry.hoursToRadians(theta - (longitudeDeg / 15.0) - alphaHours)
         let cosH = cos(h)
         let sinH = sin(h)
 
-        let deltaAlpha = atan2(-rhoCos * sinPi * sinH, cosDelta - (rhoCos * sinPi * cosH))
-        let topAlpha = SphericalTrigonometry.mapTo0To24Range(Alpha + SphericalTrigonometry.radiansToHours(deltaAlpha))
-        let topDelta = SphericalTrigonometry.radiansToDegrees(atan2((sin(d) - (rhoSin * sinPi)) * cos(deltaAlpha), cosDelta - (rhoCos * sinPi * cosH)))
+        let denom = cosDelta - (rhoCos * sinPi * cosH)
+        let deltaAlpha = atan2(-rhoCos * sinPi * sinH, denom)
+        let topAlpha = SphericalTrigonometry.mapTo0To24Range(alphaHours + SphericalTrigonometry.radiansToHours(deltaAlpha))
+        let topDelta = SphericalTrigonometry.radiansToDegrees(atan2((sin(d) - (rhoSin * sinPi)) * cos(deltaAlpha), denom))
 
         return CAA2DCoordinate(topAlpha, topDelta)
     }

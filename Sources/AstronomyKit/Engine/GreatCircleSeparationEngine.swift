@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import simd
 
 public enum GreatCircleSeparationEngine: Sendable {
 
@@ -17,11 +18,21 @@ public enum GreatCircleSeparationEngine: Sendable {
         let a1 = SphericalTrigonometry.hoursToRadians(alpha1)
         let a2 = SphericalTrigonometry.hoursToRadians(alpha2)
 
-        let x = (cos(d1) * sin(d2)) - (sin(d1) * cos(d2) * cos(a2 - a1))
-        let y = cos(d2) * sin(a2 - a1)
-        let z = (sin(d1) * sin(d2)) + (cos(d1) * cos(d2) * cos(a2 - a1))
+        let sinD1 = sin(d1)
+        let cosD1 = cos(d1)
+        let sinD2 = sin(d2)
+        let cosD2 = cos(d2)
+        let deltaA = a2 - a1
+        let sinDeltaA = sin(deltaA)
+        let cosDeltaA = cos(deltaA)
 
-        var value = SphericalTrigonometry.radiansToDegrees(atan2(sqrt((x * x) + (y * y)), z))
+        let cosD2CosDeltaA = cosD2 * cosDeltaA
+        let x = (cosD1 * sinD2) - (sinD1 * cosD2CosDeltaA)
+        let y = cosD2 * sinDeltaA
+        let z = (sinD1 * sinD2) + (cosD1 * cosD2CosDeltaA)
+
+        let normXY = sqrt((x * x) + (y * y))
+        var value = SphericalTrigonometry.radiansToDegrees(atan2(normXY, z))
         if value < 0 {
             value += 180.0
         }
@@ -36,7 +47,12 @@ public enum GreatCircleSeparationEngine: Sendable {
         let a2 = SphericalTrigonometry.hoursToRadians(alpha2)
 
         let deltaAlpha = a1 - a2
-        var value = SphericalTrigonometry.radiansToDegrees(atan2(sin(deltaAlpha), (cos(d2) * tan(d1)) - (sin(d2) * cos(deltaAlpha))))
+        let sinDeltaAlpha = sin(deltaAlpha)
+        let cosDeltaAlpha = cos(deltaAlpha)
+        let y = sinDeltaAlpha
+        let x = (cos(d2) * tan(d1)) - (sin(d2) * cosDeltaAlpha)
+
+        var value = SphericalTrigonometry.radiansToDegrees(atan2(y, x))
         if value < 0 {
             value += 180.0
         }
@@ -44,7 +60,11 @@ public enum GreatCircleSeparationEngine: Sendable {
     }
 
     @inlinable
-    public static func distanceFromGreatArc(alpha1: Double, delta1: Double, alpha2: Double, delta2: Double, alpha3: Double, delta3: Double) -> Double {
+    public static func distanceFromGreatArc(
+        alpha1: Double, delta1: Double,
+        alpha2: Double, delta2: Double,
+        alpha3: Double, delta3: Double
+    ) -> Double {
         let d1 = SphericalTrigonometry.degreesToRadians(delta1)
         let d2 = SphericalTrigonometry.degreesToRadians(delta2)
         let d3 = SphericalTrigonometry.degreesToRadians(delta3)
@@ -52,25 +72,21 @@ public enum GreatCircleSeparationEngine: Sendable {
         let a2 = SphericalTrigonometry.hoursToRadians(alpha2)
         let a3 = SphericalTrigonometry.hoursToRadians(alpha3)
 
-        let x1 = cos(d1) * cos(a1)
-        let x2 = cos(d2) * cos(a2)
-        let y1 = cos(d1) * sin(a1)
-        let y2 = cos(d2) * sin(a2)
-        let z1 = sin(d1)
-        let z2 = sin(d2)
+        let cosD1 = cos(d1)
+        let cosD2 = cos(d2)
+        let cosD3 = cos(d3)
 
-        let a = (y1 * z2) - (z1 * y2)
-        let b = (z1 * x2) - (x1 * z2)
-        let c = (x1 * y2) - (y1 * x2)
+        let v1 = simd_double3(cosD1 * cos(a1), cosD1 * sin(a1), sin(d1))
+        let v2 = simd_double3(cosD2 * cos(a2), cosD2 * sin(a2), sin(d2))
+        let v3 = simd_double3(cosD3 * cos(a3), cosD3 * sin(a3), sin(d3))
 
-        let m = tan(a3)
-        let n = tan(d3) / cos(a3)
+        let cross = simd_cross(v1, v2)
+        let crossLen = simd_length(cross)
+        guard crossLen > 0 else { return 0.0 }
 
-        var value = SphericalTrigonometry.radiansToDegrees(asin((a + (b * m) + (c * n)) / (sqrt((a * a) + (b * b) + (c * c)) * sqrt(1.0 + (m * m) + (n * n)))))
-        if value < 0 {
-            value = abs(value)
-        }
-        return value
+        let sinDist = simd_dot(cross, v3) / crossLen
+        let clampedSin = max(-1.0, min(1.0, sinDist))
+        return abs(SphericalTrigonometry.radiansToDegrees(asin(clampedSin)))
     }
 }
 
