@@ -88,6 +88,13 @@ public final class LunarDE440Provider: Sendable {
         }
     }
 
+    /// Scale factor converting Moon/EMB vector to Moon/Earth (geocentric) vector.
+    /// If segment center is already Earth (399), factor is 1.0.
+    /// If segment center is EMB (3), r_Moon/Earth = r_Moon/EMB * (1 + 1 / 81.30056907).
+    private var lunarScaleFactor: Double {
+        isMoonRelativeToEarth ? 1.0 : (1.0 + 1.0 / 81.30056907)
+    }
+
     // MARK: - Public API
 
     /// Geocentric position of the Moon in AU (ICRS/J2000, TDB).
@@ -97,8 +104,8 @@ public final class LunarDE440Provider: Sendable {
     /// - Throws: ``EphemerisError/dateOutOfRange(_:)`` if the epoch is outside the kernel coverage.
     public func geocentricPosition(at jd: JulianDay) throws -> Vector3D {
         let result = try evaluate(at: jd)
-        // Convert from km to AU
-        return result.position / Self.kmPerAU
+        // Convert from km to AU, scaling to Earth center if stored relative to EMB
+        return (result.position * lunarScaleFactor) / Self.kmPerAU
     }
 
     /// Geocentric state vector of the Moon (position in AU, velocity in AU/day).
@@ -108,9 +115,11 @@ public final class LunarDE440Provider: Sendable {
     /// - Throws: ``EphemerisError/dateOutOfRange(_:)`` if the epoch is outside the kernel coverage.
     public func geocentricStateVector(at jd: JulianDay) throws -> StateVector {
         let result = try evaluate(at: jd)
+        let scaledPos = result.position * lunarScaleFactor
+        let scaledVel = result.velocity * lunarScaleFactor
         return StateVector(
-            position: result.position / Self.kmPerAU,
-            velocity: result.velocity * (Self.secondsPerDay / Self.kmPerAU)
+            position: scaledPos / Self.kmPerAU,
+            velocity: scaledVel * (Self.secondsPerDay / Self.kmPerAU)
         )
     }
 
@@ -123,7 +132,8 @@ public final class LunarDE440Provider: Sendable {
             }
         }
         let batch = try spkReader.evaluateBatch(segment: moonSegment, epochsTDB: epochs)
-        return batch.map { $0.position / Self.kmPerAU }
+        let factor = lunarScaleFactor
+        return batch.map { ($0.position * factor) / Self.kmPerAU }
     }
 
     /// Geocentric state vectors of the Moon over an array of epochs (ICRS/J2000, TDB).
@@ -135,10 +145,11 @@ public final class LunarDE440Provider: Sendable {
             }
         }
         let batch = try spkReader.evaluateBatch(segment: moonSegment, epochsTDB: epochs)
+        let factor = lunarScaleFactor
         return batch.map {
             StateVector(
-                position: $0.position / Self.kmPerAU,
-                velocity: $0.velocity * (Self.secondsPerDay / Self.kmPerAU)
+                position: ($0.position * factor) / Self.kmPerAU,
+                velocity: ($0.velocity * factor) * (Self.secondsPerDay / Self.kmPerAU)
             )
         }
     }

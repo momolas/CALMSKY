@@ -8,24 +8,28 @@
 
 import Foundation
 
-/// High-precision ephemeris provider combining VSOP2013 (planets) with JPL DE440 (Moon).
+/// High-precision ephemeris provider combining VSOP2013 (planets) with JPL DE440 / DE442s (Moon).
 ///
 /// This hybrid architecture achieves the best precision-to-size ratio:
 /// - **Planets** (Mercury → Pluto): ≈1–10 meter accuracy via VSOP2013 (IMCCE).
-/// - **Moon**: ≈1–3 centimeter accuracy via JPL DE440 Lunar Laser Ranging.
+/// - **Moon**: ≈1–3 centimeter accuracy via JPL DE440 / DE442s Lunar Laser Ranging.
 /// - **Total data footprint**: ≈18 MB (vs ≈115 MB for the full DE440 kernel).
+///
+/// For full numerical exclusivity without analytical hybrid stitching, consider **Mode C**:
+/// the unified NASA JPL DE442s baseline (``SPKEphemerisProvider`` / ``StreamingSPKEphemerisProvider``)
+/// which models all planets and the Moon with sub-meter / sub-centimeter physical accuracy.
 ///
 /// ## How It Works
 ///
 /// VSOP2013 computes the position of the **Earth-Moon Barycenter (EMB)** relative to the Sun.
-/// The Moon's position relative to the EMB comes from DE440. These are combined as:
+/// The Moon's position relative to the EMB comes from DE440 / DE442s. These are combined as:
 ///
 /// ```
-/// Moon (heliocentric) = EMB (VSOP2013) + Moon_offset (DE440) × mass_ratio
-/// Earth (heliocentric) = EMB (VSOP2013) − Moon_offset (DE440) × (1 − mass_ratio)
+/// Moon (heliocentric) = EMB (VSOP2013) + Moon_geocentric (DE440) × (1 − μ)
+/// Earth (heliocentric) = EMB (VSOP2013) − Moon_geocentric (DE440) × μ
 /// ```
 ///
-/// Both VSOP2013 and DE440 use the same reference frame (ICRS/J2000) and time scale (TDB),
+/// Both VSOP2013 and DE440 / DE442s use the same reference frame (ICRS/J2000) and time scale (TDB),
 /// making this combination scientifically rigorous.
 ///
 /// ## Usage
@@ -33,13 +37,13 @@ import Foundation
 /// ```swift
 /// let provider = try HybridEphemerisProvider(
 ///     vsop2013DataURL: vsopDir,
-///     lunarSPKURL: de440URL
+///     lunarSPKURL: de442sURL
 /// )
 /// let moonPos = try provider.position(for: .moon, at: jd) // Centimeter precision!
 /// let marsPos = try provider.position(for: .mars, at: jd)  // Meter precision
 /// ```
 ///
-/// Use ``EphemerisDataManager/makeHybridProvider(progress:)`` for automatic download and setup.
+/// Use ``EphemerisDataManager/makeHybridProvider(progress:)`` or ``EphemerisDataManager/makeHybridDE442sProvider(progress:)`` for automatic download and setup.
 public final class HybridEphemerisProvider: Sendable {
 
     // MARK: - Constants

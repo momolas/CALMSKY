@@ -74,6 +74,23 @@ public final class StreamingSPKEphemerisProvider: Sendable {
         return StateVector(position: posAU, velocity: velAUPerDay)
     }
 
+    /// Geocentric position of the Moon in AU (ICRS/J2000, TDB) via dynamic HTTP streaming.
+    public func lunarGeocentricPosition(at jd: JulianDay) async throws -> Vector3D {
+        let moonHelio = try await position(for: .moon, at: jd)
+        let earthHelio = try await position(for: .earth, at: jd)
+        return moonHelio - earthHelio
+    }
+
+    /// Geocentric 6D state vector of the Moon (position in AU, velocity in AU/day) via dynamic HTTP streaming.
+    public func lunarGeocentricStateVector(at jd: JulianDay) async throws -> StateVector {
+        let moonState = try await stateVector(for: .moon, at: jd)
+        let earthState = try await stateVector(for: .earth, at: jd)
+        return StateVector(
+            position: moonState.position - earthState.position,
+            velocity: moonState.velocity - earthState.velocity
+        )
+    }
+
     // MARK: - Target Resolution
 
     private func candidateNAIFTargetIDs(for body: SolarSystemBody) -> [Int32] {
@@ -134,8 +151,9 @@ public final class StreamingSPKEphemerisProvider: Sendable {
                     $0.targetID == 301 && ($0.centerID == 3 || $0.centerID == 399) && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
                 }) {
                     let moonResult = try await reader.evaluate(segment: moonSeg, epochTDB: epochTDB)
-                    let offsetPos = moonResult.position * (-Self.moonMassRatio)
-                    let offsetVel = moonResult.velocity * (-Self.moonMassRatio)
+                    let ratio = (moonSeg.centerID == 3) ? (1.0 / 81.30056907) : Self.moonMassRatio
+                    let offsetPos = moonResult.position * (-ratio)
+                    let offsetVel = moonResult.velocity * (-ratio)
                     return SPKReader.EvaluationResult(
                         position: embSSB.position + offsetPos,
                         velocity: embSSB.velocity + offsetVel

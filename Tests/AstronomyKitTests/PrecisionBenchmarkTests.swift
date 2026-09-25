@@ -381,5 +381,93 @@ struct PrecisionBenchmarkTests {
         let cachedProvider = try manager.makeLunarDE442sProviderFromCache()
         #expect(cachedProvider != nil)
     }
+
+    // MARK: - Mode C: Unified DE442s Baseline Lunar Ephemeris Validation
+
+    @Test("Mode C: Unified NASA JPL DE442s Baseline Moon Integration & Precision")
+    func testModeCUnifiedDE442sMoonIntegration() throws {
+        let jdUTC = JulianDay(2461303.5) // 2026-Sep-20 00:00:00 UTC
+        let jd = jdUTC.UTCtoTT()
+
+        // 1. Mock DE442s Provider supplying exact JPL Horizons ground truth for Earth and Moon
+        // JPL Truth for 2026-Sep-20:
+        // Moon: RA = 280.58758333°, Dec = -27.10958333°, Distance = 0.00269901 AU (384,390 km)
+        let moonTruth = jplData.first(where: { $0.name == "Moon" })!
+        let moonAlphaRad = moonTruth.raDeg * .pi / 180.0
+        let moonDeltaRad = moonTruth.decDeg * .pi / 180.0
+        let moonDistAU = moonTruth.distanceAU
+
+        let geoMoonVector = Vector3D(
+            x: moonDistAU * cos(moonDeltaRad) * cos(moonAlphaRad),
+            y: moonDistAU * cos(moonDeltaRad) * sin(moonAlphaRad),
+            z: moonDistAU * sin(moonDeltaRad)
+        )
+
+        // Earth heliocentric position at epoch (example realistic vector ~1 AU)
+        let earthHelio = Vector3D(x: 0.998, y: -0.057, z: 0.0)
+        let moonHelio = earthHelio + geoMoonVector
+
+        struct MockDE442sBaseline: EphemerisProvider, Sendable {
+            let earth: Vector3D
+            let moon: Vector3D
+
+            func position(for body: SolarSystemBody, at jd: JulianDay) throws -> Vector3D {
+                switch body {
+                case .earth: return earth
+                case .moon: return moon
+                case .sun: return .zero
+                default: throw EphemerisError.bodyNotSupported(body)
+                }
+            }
+
+            func stateVector(for body: SolarSystemBody, at jd: JulianDay) throws -> StateVector {
+                let pos = try position(for: body, at: jd)
+                return StateVector(position: pos, velocity: .zero)
+            }
+        }
+
+        let baseline = MockDE442sBaseline(earth: earthHelio, moon: moonHelio)
+
+        // 2. Validate EphemerisProvider geocentric calculation
+        let computedGeoMoon = try baseline.lunarGeocentricPosition(at: jd)
+        let distDiffKm = abs(computedGeoMoon.length - moonDistAU) * 149_597_870.700
+        #expect(distDiffKm < 0.001, "DE442s geocentric vector must match ground truth to sub-meter: \(distDiffKm) km")
+
+        let computedState = try baseline.lunarGeocentricStateVector(at: jd)
+        #expect(computedState.position.length > 0)
+
+        // 3. Validate EquatorialCoordinates from Vector3D
+        let equCoords = EquatorialCoordinates(cartesianVector: computedGeoMoon)
+        let raDeg = equCoords.alpha.value * 15.0
+        let decDeg = equCoords.delta.value
+        let angularErrorArcsec = angularSeparationArcsec(ra1: raDeg, dec1: decDeg, ra2: moonTruth.raDeg, dec2: moonTruth.decDeg)
+        #expect(angularErrorArcsec < 0.001, "Vector to equatorial coordinates must match to sub-milliarcsecond: \(angularErrorArcsec)\"")
+
+        // 4. Validate Moon high-level class wired to Mode C provider
+        let moon = Moon(julianDay: jd, highPrecision: true, ephemerisProvider: baseline)
+        #expect(moon.ephemerisProvider != nil)
+
+        // Distance in km
+        let moonDistKm = moon.distance.value
+        let expectedKm = moonDistAU * 149_597_870.700
+        #expect(abs(moonDistKm - expectedKm) < 0.001, "Moon distance must match DE442s baseline to sub-meter: \(abs(moonDistKm - expectedKm)) km")
+
+        // Radius vector in AU
+        #expect(abs(moon.radiusVector.value - moonDistAU) < 1e-9)
+
+        // Equatorial coordinates
+        let moonRA = moon.apparentEquatorialCoordinates.alpha.value * 15.0
+        let moonDec = moon.apparentEquatorialCoordinates.delta.value
+        let moonAngularError = angularSeparationArcsec(ra1: moonRA, dec1: moonDec, ra2: moonTruth.raDeg, dec2: moonTruth.decDeg)
+        #expect(moonAngularError < 0.001, "Moon equatorial coordinates must match DE442s baseline to sub-milliarcsecond: \(moonAngularError)\"")
+
+        // 5. Validate AdaptiveEphemerisProvider method signatures
+        let _: (AdaptiveEphemerisProvider) -> (JulianDay) async throws -> Vector3D = AdaptiveEphemerisProvider.lunarGeocentricPosition
+        let _: (AdaptiveEphemerisProvider) -> (JulianDay) async throws -> StateVector = AdaptiveEphemerisProvider.lunarGeocentricStateVector
+
+        // 6. Validate Moon.exactTime solves with ephemerisProvider
+        let fullMoon = moon.exactTime(of: .fullMoon)
+        #expect(fullMoon.value > 0.0)
+    }
 }
 

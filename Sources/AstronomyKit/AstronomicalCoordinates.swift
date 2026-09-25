@@ -62,6 +62,25 @@ public struct EquatorialCoordinates: CustomStringConvertible, Sendable, Codable,
     public init(alpha: Hour, delta: Degree, epoch: Epoch = .J2000, equinox: Equinox = .standardJ2000) {
         self.init(rightAscension: alpha, declination: delta, epoch: epoch, equinox: equinox)
     }
+
+    /// Creates EquatorialCoordinates from a 3D Cartesian position vector (ICRS/J2000).
+    ///
+    /// - Parameters:
+    ///   - cartesianVector: 3D vector in Cartesian coordinates (e.g. astronomical units or kilometers).
+    ///   - epoch: Epoch of the coordinates (default: J2000.0).
+    ///   - equinox: Reference equinox (default: standard J2000.0).
+    public init(cartesianVector: Vector3D, epoch: Epoch = .J2000, equinox: Equinox = .standardJ2000) {
+        let r = cartesianVector.length
+        var alphaRad = atan2(cartesianVector.y, cartesianVector.x)
+        if alphaRad < 0.0 { alphaRad += 2.0 * .pi }
+        let deltaRad = r > 0.0 ? asin(max(-1.0, min(1.0, cartesianVector.z / r))) : 0.0
+        self.init(
+            rightAscension: Hour(alphaRad * 12.0 / .pi),
+            declination: Degree(deltaRad * 180.0 / .pi),
+            epoch: epoch,
+            equinox: equinox
+        )
+    }
     
     /// Transform the coordinates to the ecliptic (celestial) system, at same epoch and for the same equinox.
     ///

@@ -173,4 +173,33 @@ public enum LunarPhaseNumericalEngine: Sendable {
 
         return currentJD
     }
+
+    /// Solves for the exact Julian Day of a primary phase using an ``EphemerisProvider`` (e.g. NASA JPL DE442s Baseline).
+    public static func solveExactPhase(
+        targetAngle: Double,
+        initialJD: Double,
+        provider: any EphemerisProvider,
+        toleranceSeconds: Double = 0.05,
+        maxIterations: Int = 10
+    ) -> Double {
+        solveExactPhaseCustom(
+            targetAngle: targetAngle,
+            initialJD: initialJD,
+            toleranceSeconds: toleranceSeconds,
+            maxIterations: maxIterations
+        ) { jd in
+            let jDay = JulianDay(jd)
+            guard let moonGeo = try? provider.lunarGeocentricPosition(at: jDay),
+                  let sunPos = try? provider.position(for: .sun, at: jDay),
+                  let earthPos = try? provider.position(for: .earth, at: jDay) else {
+                return apparentElongation(jd: jd)
+            }
+            let sunGeo = sunPos - earthPos
+            let moonLon = vectorToEclipticLongitude(vector: moonGeo, jd: jd)
+            let sunLon = vectorToEclipticLongitude(vector: sunGeo, jd: jd)
+            var diff = (moonLon - sunLon).truncatingRemainder(dividingBy: 360.0)
+            if diff < 0.0 { diff += 360.0 }
+            return diff
+        }
+    }
 }

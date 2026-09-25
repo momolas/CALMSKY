@@ -115,4 +115,25 @@ extension EphemerisProvider {
         }
         return results
     }
+
+    /// Geocentric position of the Moon in AU (ICRS/J2000, TDB).
+    ///
+    /// Evaluates the difference $\vec{r}_{\text{Moon}} - \vec{r}_{\text{Earth}}$ directly from this ephemeris provider.
+    public func lunarGeocentricPosition(at jd: JulianDay) throws -> Vector3D {
+        let moonHelio = try position(for: .moon, at: jd)
+        let earthHelio = try position(for: .earth, at: jd)
+        return moonHelio - earthHelio
+    }
+
+    /// Geocentric 6D state vector of the Moon (position in AU, velocity in AU/day) (ICRS/J2000, TDB).
+    ///
+    /// Evaluates the state vector difference $\mathbf{S}_{\text{Moon}} - \mathbf{S}_{\text{Earth}}$ directly from this provider.
+    public func lunarGeocentricStateVector(at jd: JulianDay) throws -> StateVector {
+        let moonState = try stateVector(for: .moon, at: jd)
+        let earthState = try stateVector(for: .earth, at: jd)
+        return StateVector(
+            position: moonState.position - earthState.position,
+            velocity: moonState.velocity - earthState.velocity
+        )
+    }
 }

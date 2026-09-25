@@ -62,13 +62,24 @@ public struct SelenographicCoordinates: Sendable, Codable, Hashable {
 
 /// The Earth's Moon.
 public final class Moon : Object, CelestialBody, @unchecked Sendable {
-    
+
+    /// High-precision numerical ephemeris provider (e.g. NASA JPL DE442s Baseline or custom provider).
+    public let ephemerisProvider: (any EphemerisProvider)?
+
     /// Creates a Moon instance.
     ///
     /// - Parameters:
     ///   - julianDay: The Julian Day for calculation.
     ///   - highPrecision: Flag for precision mode (analytical/numerical).
+    ///   - ephemerisProvider: Optional modern numerical ephemeris provider (e.g. NASA JPL DE442s Baseline).
+    public init(julianDay: JulianDay, highPrecision: Bool = true, ephemerisProvider: (any EphemerisProvider)? = nil) {
+        self.ephemerisProvider = ephemerisProvider
+        super.init(julianDay: julianDay, highPrecision: highPrecision)
+    }
+
+    /// Creates a Moon instance conforming to `ObjectBase`.
     public required init(julianDay: JulianDay, highPrecision: Bool = true) {
+        self.ephemerisProvider = nil
         super.init(julianDay: julianDay, highPrecision: highPrecision)
     }
     
@@ -99,15 +110,25 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     // MARK: - CelestialBody
     
     /// Radius vector of the Moon, that is, its distance from Earth (not Sun).
-    /// AA+ uses the Eq. for Delta written in p.342 of AA book.
-    /// According to that Eq., the result is in Kilometers. For consistency with others, we return AU.
+    /// Uses the numerical ephemeris provider if present, otherwise AA+ analytical equations.
     public var radiusVector: AstronomicalUnit {
-        get { return Meter(self.distance.value*1000.0).inAstronomicalUnits }
+        get {
+            if let provider = self.ephemerisProvider,
+               let geoPos = try? provider.lunarGeocentricPosition(at: self.julianDay) {
+                return AstronomicalUnit(geoPos.length)
+            }
+            return Meter(self.distance.value * 1000.0).inAstronomicalUnits
+        }
     }
 
     /// Convenience accessor of the Moon distance, that is, its distance from Earth (not Sun), in kilometers.
+    /// Evaluates using the numerical ephemeris provider if configured, otherwise AA+ analytical equations.
     public var distance: Kilometer {
         get {
+            if let provider = self.ephemerisProvider,
+               let geoPos = try? provider.lunarGeocentricPosition(at: self.julianDay) {
+                return Kilometer(geoPos.length * 149_597_870.700)
+            }
             let dist = CAAMoon.RadiusVector(self.julianDay.value)
             return Kilometer(dist)
         }
@@ -120,14 +141,19 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
 
     // MARK: Coordinates
     
-    
-    /// The apparent ecliptic coordinates of the Moon. In AA p.342, Example 47.a, they are called geocentric longitude
-    /// and latitude. But apparent right ascension and declination are derived directly from them using standard
-    /// coordinates transformations.
-    /// These coordinates are 'apparent' coordinates because they include the effect of nutation in longitude.
-    /// It is important to provide the current julian day as epoch to get the right coordinates.
+    /// The apparent ecliptic coordinates of the Moon.
+    /// Evaluates using the numerical ephemeris provider if configured, otherwise AA+ analytical equations.
     public var apparentEclipticCoordinates: EclipticCoordinates {
         get {
+            if let provider = self.ephemerisProvider,
+               let geoPos = try? provider.lunarGeocentricPosition(at: self.julianDay) {
+                let equ = EquatorialCoordinates(
+                    cartesianVector: geoPos,
+                    epoch: .epochOfTheDate(self.julianDay),
+                    equinox: .meanEquinoxOfTheDate(self.julianDay)
+                )
+                return equ.makeEclipticCoordinates()
+            }
             let latitude = CAAMoon.EclipticLatitude(julianDay.value)
             let longitude = CAAMoon.EclipticLongitude(julianDay.value)
             return EclipticCoordinates(lambda: Degree(longitude),
@@ -137,19 +163,27 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
         }
     }
     
-    /// The apparent equatorial coordinates of the Moon, obtained from the `apparentEclipticCoordinates`.
+    /// The apparent equatorial coordinates of the Moon, obtained from the `ephemerisProvider` or `apparentEclipticCoordinates`.
     public var apparentEquatorialCoordinates: EquatorialCoordinates {
-        get { return self.apparentEclipticCoordinates.makeApparentEquatorialCoordinates() }
+        get {
+            if let provider = self.ephemerisProvider,
+               let geoPos = try? provider.lunarGeocentricPosition(at: self.julianDay) {
+                return EquatorialCoordinates(
+                    cartesianVector: geoPos,
+                    epoch: .epochOfTheDate(self.julianDay),
+                    equinox: .meanEquinoxOfTheDate(self.julianDay)
+                )
+            }
+            return self.apparentEclipticCoordinates.makeApparentEquatorialCoordinates()
+        }
     }
 
-    /// The ecliptic coordinates of the Moon. [WARN]: For now, return the apparent ones.
-    /// TODO: Is there any other coordinates one could find? Is it meaningful?
+    /// The ecliptic coordinates of the Moon.
     public var eclipticCoordinates: EclipticCoordinates {
         get { return self.apparentEclipticCoordinates }
     }
 
-    /// The equatorial coordinates of the Moon. [WARN]: For now, return the apparent ones.
-    /// TODO: Is there any other coordinates one could find? Is it meaningful?
+    /// The equatorial coordinates of the Moon.
     public var equatorialCoordinates: EquatorialCoordinates {
         get { return self.apparentEquatorialCoordinates }
     }
@@ -293,13 +327,23 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
         case .lastQuarter: k += 0.75
         }
 
-        let solve: (Double) -> JulianDay = { candidateK in
+        let solve: (Double) -> JulianDay = { [ephemerisProvider] candidateK in
             let initialJD = CAAMoonPhases.TruePhase(candidateK)
-            let exactJD = LunarPhaseNumericalEngine.solveExactPhase(
-                targetAngle: phase.targetElongation,
-                initialJD: initialJD,
-                toleranceSeconds: toleranceSeconds
-            )
+            let exactJD: Double
+            if let provider = ephemerisProvider {
+                exactJD = LunarPhaseNumericalEngine.solveExactPhase(
+                    targetAngle: phase.targetElongation,
+                    initialJD: initialJD,
+                    provider: provider,
+                    toleranceSeconds: toleranceSeconds
+                )
+            } else {
+                exactJD = LunarPhaseNumericalEngine.solveExactPhase(
+                    targetAngle: phase.targetElongation,
+                    initialJD: initialJD,
+                    toleranceSeconds: toleranceSeconds
+                )
+            }
             return JulianDay(exactJD)
         }
 
@@ -577,7 +621,36 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
         return JulianDay(CAAMoonNodes.PassageThroNode(k))
     }
 
-    
+    // MARK: - Mode C: Official NASA JPL DE442s Baseline Moon
+
+    /// Creates a Moon instance configured with the official NASA JPL DE442s baseline ephemeris provider from local cache.
+    ///
+    /// - Parameters:
+    ///   - julianDay: Julian Day epoch.
+    ///   - dataManager: Ephemeris data manager managing cached kernels.
+    /// - Throws: ``EphemerisError`` if the DE442s kernel is not found in cache.
+    public static func makeBaselineMoon(
+        julianDay: JulianDay,
+        dataManager: EphemerisDataManager = EphemerisDataManager()
+    ) throws -> Moon {
+        let provider = try dataManager.makeBaselineProviderFromCache()
+        return Moon(julianDay: julianDay, highPrecision: true, ephemerisProvider: provider)
+    }
+
+    /// Creates a Moon instance configured with the official NASA JPL DE442s baseline provider, downloading if necessary.
+    ///
+    /// - Parameters:
+    ///   - julianDay: Julian Day epoch.
+    ///   - dataManager: Ephemeris data manager managing cached kernels.
+    ///   - progress: Optional download progress closure.
+    public static func makeBaselineMoon(
+        julianDay: JulianDay,
+        dataManager: EphemerisDataManager = EphemerisDataManager(),
+        progress: (@Sendable (Int64, Int64) -> Void)? = nil
+    ) async throws -> Moon {
+        let provider = try await dataManager.makeBaselineProvider(progress: progress)
+        return Moon(julianDay: julianDay, highPrecision: true, ephemerisProvider: provider)
+    }
 }
 
 

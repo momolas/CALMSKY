@@ -167,13 +167,16 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
                     return SPKReader.EvaluationResult(position: c.position + embResult.position, velocity: c.velocity + embResult.velocity)
                 }()
 
-                // Offset Earth from EMB using Moon if available: r_Earth = r_EMB - r_Moon_rel_Earth * μ
+                // Offset Earth from EMB using Moon:
+                // If segment center is EMB (3): r_Earth/EMB = - (M_Moon / M_Earth) * r_Moon/EMB = - (1 / 81.30056907) * r_Moon/EMB
+                // If segment center is Earth (399): r_Earth/EMB = - μ * r_Moon/Earth
                 if let moonSeg = spkReader.segments.last(where: {
                     $0.targetID == 301 && ($0.centerID == 3 || $0.centerID == 399) && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
                 }) {
                     let moonResult = try spkReader.evaluate(segment: moonSeg, epochTDB: epochTDB)
-                    let offsetPos = moonResult.position * (-Self.moonMassRatio)
-                    let offsetVel = moonResult.velocity * (-Self.moonMassRatio)
+                    let ratio = (moonSeg.centerID == 3) ? (1.0 / 81.30056907) : Self.moonMassRatio
+                    let offsetPos = moonResult.position * (-ratio)
+                    let offsetVel = moonResult.velocity * (-ratio)
                     return SPKReader.EvaluationResult(
                         position: embSSB.position + offsetPos,
                         velocity: embSSB.velocity + offsetVel

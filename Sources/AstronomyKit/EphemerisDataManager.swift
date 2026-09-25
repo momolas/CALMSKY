@@ -298,6 +298,27 @@ public actor EphemerisDataManager {
         )
     }
 
+    /// Creates a ``HybridEphemerisProvider`` using VSOP2013 for planets and the official NASA JPL DE442s baseline for the Moon.
+    ///
+    /// - Parameter progress: Optional closure called with `(dataset, bytesReceived, totalBytes)`.
+    /// - Returns: A configured ``HybridEphemerisProvider`` combining VSOP2013 with DE442s.
+    public func makeHybridDE442sProvider(
+        progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
+    ) async throws -> HybridEphemerisProvider {
+        let vsopURL = try await download(.vsop2013Modern) { received, total in
+            progress?(.vsop2013Modern, received, total)
+        }
+
+        let lunarURL = try await download(.de442s) { received, total in
+            progress?(.de442s, received, total)
+        }
+
+        return try HybridEphemerisProvider(
+            vsop2013DataURL: vsopURL.deletingLastPathComponent(),
+            lunarSPKURL: lunarURL
+        )
+    }
+
     /// Creates a ``TriadEphemerisProvider`` combining US (DE442s), FR (INPOP21a), and RU (EPM2021) numerical ephemerides.
     ///
     /// Downloads missing kernels from the canonical GitHub Releases CDN (with upstream fallback)
@@ -561,6 +582,23 @@ public final class AdaptiveEphemerisProvider: Sendable {
             let details = try await triad.consensusDetails(for: body, at: jd)
             return StateVector(position: details.consensusPosition, velocity: details.consensusVelocity)
         }
+    }
+
+    /// Geocentric position of the Moon in AU (ICRS/J2000, TDB) via the adaptive engine.
+    public func lunarGeocentricPosition(at jd: JulianDay) async throws -> Vector3D {
+        let moonHelio = try await position(for: .moon, at: jd)
+        let earthHelio = try await position(for: .earth, at: jd)
+        return moonHelio - earthHelio
+    }
+
+    /// Geocentric 6D state vector of the Moon (position in AU, velocity in AU/day) via the adaptive engine.
+    public func lunarGeocentricStateVector(at jd: JulianDay) async throws -> StateVector {
+        let moonState = try await stateVector(for: .moon, at: jd)
+        let earthState = try await stateVector(for: .earth, at: jd)
+        return StateVector(
+            position: moonState.position - earthState.position,
+            velocity: moonState.velocity - earthState.velocity
+        )
     }
 }
 
