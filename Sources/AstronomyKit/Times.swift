@@ -24,13 +24,13 @@ public struct Day: NumericType, CustomStringConvertible {
     }
     
     /// Transform the current Day value into Hours.
-    public var inHours: Hour { return Hour(value * 24.0) }
+    @inlinable public var inHours: Hour { return Hour(value * 24.0) }
     /// Transform the current Day value into Minutes.
-    public var inMinutes: Minute { return Minute(value * 24.0 * 60.0) }
+    @inlinable public var inMinutes: Minute { return Minute(value * 24.0 * 60.0) }
     /// Transform the current Day value into Seconds.
-    public var inSeconds: Second { return Second(value * 24.0 * 3600.0) }
+    @inlinable public var inSeconds: Second { return Second(value * 24.0 * 3600.0) }
     /// Transform the current Day value into Julian Days (convenient for easily making operations with Julian Day fractions).
-    public var inJulianDays: JulianDay { return JulianDay(value) }
+    @inlinable public var inJulianDays: JulianDay { return JulianDay(value) }
     
     /// The standard description of the Day
     public var description: String { return "\(value.formatted(.number.precision(.fractionLength(2)))) d" }
@@ -64,17 +64,17 @@ public struct Hour: NumericType, CustomStringConvertible {
     }
     
     /// Transform the current Hour value into Days.
-    public var inDays: Day { return Day(value / 24.0) }
+    @inlinable public var inDays: Day { return Day(value / 24.0) }
     /// Transform the current Hour value into Minutes.
-    public var inMinutes: Minute { return Minute(value * 60.0) }
+    @inlinable public var inMinutes: Minute { return Minute(value * 60.0) }
     /// Transform the current Hour value into Seconds.
-    public var inSeconds: Second { return Second(value * 3600.0) }
+    @inlinable public var inSeconds: Second { return Second(value * 3600.0) }
     /// Transform the current Hour value into Degrees.
-    public var inDegrees: Degree { return Degree(value * 15.0) }
+    @inlinable public var inDegrees: Degree { return Degree(value * 15.0) }
     /// Transform the current Hour value into Radians.
-    public var inRadians: Radian { return Radian(value * hour2rad) }
+    @inlinable public var inRadians: Radian { return Radian(value * hour2rad) }
     /// Transform the current Hour value into Julian Days (convenient for easily making operations with Julian Day fractions).
-    public var inJulianDays: JulianDay { return JulianDay(value / 24.0) }
+    @inlinable public var inJulianDays: JulianDay { return JulianDay(value / 24.0) }
     
     /// Returns a sexagesimal representation of the hour.
     public var sexagesimal: SexagesimalNotation {
@@ -87,10 +87,10 @@ public struct Hour: NumericType, CustomStringConvertible {
     }
 
     /// Returns a Hour whose value is reduced to the 0..<24 range.
-    public var reduced: Hour { return Hour(value.positiveTruncatingRemainder(dividingBy: 24.0)) }
+    @inlinable public var reduced: Hour { return Hour(value.positiveTruncatingRemainder(dividingBy: 24.0)) }
     
     /// Returns a Hour whose value is reduced to the -12..<12 range (that is, around 0, hence the name).
-    public var reduced0: Hour { return Hour(value.zeroCenteredTruncatingRemainder(dividingBy: 24.0)) }
+    @inlinable public var reduced0: Hour { return Hour(value.zeroCenteredTruncatingRemainder(dividingBy: 24.0)) }
 
     /// A standard sexagesimal description of the Hour value.
     public var description: String {
@@ -115,16 +115,16 @@ public struct Minute: NumericType, CustomStringConvertible {
     }
     
     /// Transform the current Minute value into Days.
-    public var inDays: Day { return Day(value / (24.0 * 60.0)) }
+    @inlinable public var inDays: Day { return Day(value / (24.0 * 60.0)) }
     /// Transform the current Minute value into Hours.
-    public var inHours: Hour { return Hour(value / 60.0) }
+    @inlinable public var inHours: Hour { return Hour(value / 60.0) }
     /// Transform the current Minute value into Seconds.
-    public var inSeconds: Second { return Second(value * 60.0) }
+    @inlinable public var inSeconds: Second { return Second(value * 60.0) }
     /// Transform the current Minute value into Julian Days (convenient for easily making operations with Julian Day fractions).
-    public var inJulianDays: JulianDay { return JulianDay(value / 1440.0) }
+    @inlinable public var inJulianDays: JulianDay { return JulianDay(value / 1440.0) }
     
     /// Returns a Minute whose value is reduced to the 0..<60 range.
-    public var reduced: Minute { return Minute(value.positiveTruncatingRemainder(dividingBy: 60.0)) }
+    @inlinable public var reduced: Minute { return Minute(value.positiveTruncatingRemainder(dividingBy: 60.0)) }
     
     /// The standard description of the Hour
     public var description: String { return "\(value.formatted(.number.precision(.fractionLength(2)))) min" }
@@ -146,16 +146,16 @@ public struct Second: NumericType, CustomStringConvertible {
     }
     
     /// Transform the current Second value into Days.
-    public var inDays: Day { return Day(value / (24.0 * 3600.0)) }
+    @inlinable public var inDays: Day { return Day(value / (24.0 * 3600.0)) }
     /// Transform the current Second value into Hour.
-    public var inHours: Hour { return Hour(value / 3600.0) }
+    @inlinable public var inHours: Hour { return Hour(value / 3600.0) }
     /// Transform the current Second value into Minute.
-    public var inMinutes: Minute { return Minute(value / 60.0) }
+    @inlinable public var inMinutes: Minute { return Minute(value / 60.0) }
     /// Transform the current Second value into Julian Days (convenient for easily making operations with Julian Day fractions).
-    public var inJulianDays: JulianDay { return JulianDay(value / 86400.0) }
+    @inlinable public var inJulianDays: JulianDay { return JulianDay(value / 86400.0) }
     
     /// Returns a Second whose value is reduced to the 0..<60 range.
-    public var reduced: Second { return Second(value.positiveTruncatingRemainder(dividingBy: 60.0)) }
+    @inlinable public var reduced: Second { return Second(value.positiveTruncatingRemainder(dividingBy: 60.0)) }
     
     /// The standard description of the Second
     public var description: String { return "\(value.formatted(.number.precision(.fractionLength(2)))) sec" }

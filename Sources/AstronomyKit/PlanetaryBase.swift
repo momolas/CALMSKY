@@ -8,11 +8,6 @@
 
 import Foundation
 
-enum PlanetError: Error {
-    case invalidSubtype
-    case invalidCase
-}
-
 // MARK: -
 
 /// The PlanetaryBase extends the simple ObjectBase protocol to provide specific accesors for solar-system planets.
@@ -42,6 +37,7 @@ public protocol PlanetaryBase: ObjectBase {
 
 // MARK: -
 
+@inlinable
 func toEllipticalObject(_ object: KPCAAEllipticalObject) -> CAAElliptical.Object {
     switch object {
     case .KPCAAEllipticalObjectSUN: return .SUN
@@ -56,6 +52,7 @@ func toEllipticalObject(_ object: KPCAAEllipticalObject) -> CAAElliptical.Object
     }
 }
 
+@inlinable
 func toPhenomenaPlanet(_ object: KPCPlanetaryObject) -> CAAPlanetaryPhenomena.Planet {
     switch object {
     case .KPCPlanetaryObjectMERCURY: return .MERCURY
@@ -69,46 +66,19 @@ func toPhenomenaPlanet(_ object: KPCPlanetaryObject) -> CAAPlanetaryPhenomena.Pl
     }
 }
 
+@inlinable
 func planetPerihelionK(_ planet: KPCAAPlanetStrict, year: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAPlanetPerihelionAphelion.MercuryK(year)
-    case .KPCAAPlanetStrictVenus: return CAAPlanetPerihelionAphelion.VenusK(year)
-    case .KPCAAPlanetStrictEarth: return CAAPlanetPerihelionAphelion.EarthK(year)
-    case .KPCAAPlanetStrictMars: return CAAPlanetPerihelionAphelion.MarsK(year)
-    case .KPCAAPlanetStrictJupiter: return CAAPlanetPerihelionAphelion.JupiterK(year)
-    case .KPCAAPlanetStrictSaturn: return CAAPlanetPerihelionAphelion.SaturnK(year)
-    case .KPCAAPlanetStrictUranus: return CAAPlanetPerihelionAphelion.UranusK(year)
-    case .KPCAAPlanetStrictNeptune: return CAAPlanetPerihelionAphelion.NeptuneK(year)
-    default: return 0
-    }
+    CAAPlanetPerihelionAphelion.k(for: planet, year: year)
 }
 
+@inlinable
 func planetPerihelion(_ planet: KPCAAPlanetStrict, k: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAPlanetPerihelionAphelion.Mercury(k)
-    case .KPCAAPlanetStrictVenus: return CAAPlanetPerihelionAphelion.Venus(k)
-    case .KPCAAPlanetStrictEarth: return CAAPlanetPerihelionAphelion.EarthPerihelion(k, false)
-    case .KPCAAPlanetStrictMars: return CAAPlanetPerihelionAphelion.Mars(k)
-    case .KPCAAPlanetStrictJupiter: return CAAPlanetPerihelionAphelion.Jupiter(k)
-    case .KPCAAPlanetStrictSaturn: return CAAPlanetPerihelionAphelion.Saturn(k)
-    case .KPCAAPlanetStrictUranus: return CAAPlanetPerihelionAphelion.Uranus(k)
-    case .KPCAAPlanetStrictNeptune: return CAAPlanetPerihelionAphelion.Neptune(k)
-    default: return 0
-    }
+    CAAPlanetPerihelionAphelion.perihelion(for: planet, k: k)
 }
 
+@inlinable
 func planetAphelion(_ planet: KPCAAPlanetStrict, k: Double) -> Double {
-    switch planet {
-    case .KPCAAPlanetStrictMercury: return CAAPlanetPerihelionAphelion.Mercury(k)
-    case .KPCAAPlanetStrictVenus: return CAAPlanetPerihelionAphelion.Venus(k)
-    case .KPCAAPlanetStrictEarth: return CAAPlanetPerihelionAphelion.EarthAphelion(k, false)
-    case .KPCAAPlanetStrictMars: return CAAPlanetPerihelionAphelion.Mars(k)
-    case .KPCAAPlanetStrictJupiter: return CAAPlanetPerihelionAphelion.Jupiter(k)
-    case .KPCAAPlanetStrictSaturn: return CAAPlanetPerihelionAphelion.Saturn(k)
-    case .KPCAAPlanetStrictUranus: return CAAPlanetPerihelionAphelion.Uranus(k)
-    case .KPCAAPlanetStrictNeptune: return CAAPlanetPerihelionAphelion.Neptune(k)
-    default: return 0
-    }
+    CAAPlanetPerihelionAphelion.aphelion(for: planet, k: k)
 }
 
 @inlinable
@@ -156,20 +126,16 @@ public extension PlanetaryBase {
     
     /// The julian day of the perihelion of the planet the after the given julian day of the object.
     var perihelion: JulianDay {
-        get {
-            let fractionalYear = CAADate(self.julianDay.value, true).FractionalYear()
-            let k = planetPerihelionK(self.planetStrict, year: fractionalYear).rounded()
-            return JulianDay(planetPerihelion(self.planetStrict, k: k))
-        }
+        let fractionalYear = CAADate(self.julianDay.value, true).FractionalYear()
+        let k = CAAPlanetPerihelionAphelion.k(for: self.planetStrict, year: fractionalYear).rounded()
+        return JulianDay(CAAPlanetPerihelionAphelion.perihelion(for: self.planetStrict, k: k))
     }
     
     /// The julian day of the aphelion of the planet the after the given julian day of the object.
     var aphelion: JulianDay {
-        get {
-            let fractionalYear = CAADate(self.julianDay.value, true).FractionalYear()
-            let k = planetPerihelionK(self.planetStrict, year: fractionalYear).rounded() + 0.5
-            return JulianDay(planetAphelion(self.planetStrict, k: k))
-        }
+        let fractionalYear = CAADate(self.julianDay.value, true).FractionalYear()
+        let k = CAAPlanetPerihelionAphelion.k(for: self.planetStrict, year: fractionalYear).rounded() + 0.5
+        return JulianDay(CAAPlanetPerihelionAphelion.aphelion(for: self.planetStrict, k: k))
     }
     
     /// The distance to the Sun.

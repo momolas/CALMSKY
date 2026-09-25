@@ -40,12 +40,12 @@ extension _NumericType {
         return type(of: self).init(roundedValue)
     }
     
-    public static func == (lhs: Self, rhs: Self) -> Bool { return lhs.value == rhs.value }
-    public static func < (lhs: Self, rhs: Self) -> Bool { return lhs.value < rhs.value }
+    @inlinable public static func == (lhs: Self, rhs: Self) -> Bool { return lhs.value == rhs.value }
+    @inlinable public static func < (lhs: Self, rhs: Self) -> Bool { return lhs.value < rhs.value }
     
-    public static func + (lhs: Self, rhs: Self) -> Self { return Self(lhs.value + rhs.value) }
-    public static func - (lhs: Self, rhs: Self) -> Self { return Self(lhs.value - rhs.value) }
-    public static func * (lhs: Self, rhs: Self) -> Self { return Self(lhs.value * rhs.value) }
+    @inlinable public static func + (lhs: Self, rhs: Self) -> Self { return Self(lhs.value + rhs.value) }
+    @inlinable public static func - (lhs: Self, rhs: Self) -> Self { return Self(lhs.value - rhs.value) }
+    @inlinable public static func * (lhs: Self, rhs: Self) -> Self { return Self(lhs.value * rhs.value) }
 }
 
 extension _NumericType where Self: Codable {
@@ -62,19 +62,20 @@ extension _NumericType where Self: Codable {
 }
 
 extension _NumericType {
-    public static func / (lhs: Self, rhs: Self) -> Self { return Self(lhs.value / rhs.value) }
+    @inlinable public static func / (lhs: Self, rhs: Self) -> Self { return Self(lhs.value / rhs.value) }
     
-    public static func += (lhs: inout Self, rhs: Self) { lhs = Self(lhs.value + rhs.value) }
-    public static func -= (lhs: inout Self, rhs: Self) { lhs = Self(lhs.value - rhs.value) }
-    public static func *= (lhs: inout Self, rhs: Self) { lhs = Self(lhs.value * rhs.value) }
+    @inlinable public static func += (lhs: inout Self, rhs: Self) { lhs = Self(lhs.value + rhs.value) }
+    @inlinable public static func -= (lhs: inout Self, rhs: Self) { lhs = Self(lhs.value - rhs.value) }
+    @inlinable public static func *= (lhs: inout Self, rhs: Self) { lhs = Self(lhs.value * rhs.value) }
     
-    public var magnitude: Self { return Self(abs(value)) }
+    @inlinable public var magnitude: Self { return Self(abs(value)) }
 
-    public func hash(into hasher: inout Hasher) { hasher.combine(value) }
+    @inlinable public func hash(into hasher: inout Hasher) { hasher.combine(value) }
     
 }
 
 public extension FloatingPoint {
+    @inlinable
     func positiveTruncatingRemainder(dividingBy other: Self) -> Self {
         let truncated = truncatingRemainder(dividingBy: other)
         let positive = truncated.sign == .minus ? truncated + other : truncated
@@ -82,13 +83,15 @@ public extension FloatingPoint {
     }
     
     /// Returns self reduced to range -other/2 <.. +other/2
+    @inlinable
     func zeroCenteredTruncatingRemainder(dividingBy other: Self) -> Self {
-        guard other > Self(0) else { fatalError("Divisor must be positive") }
+        precondition(other > Self(0), "Divisor must be positive")
         let positive = positiveTruncatingRemainder(dividingBy: other)
         let centered = positive > other / Self(2) ? positive - other : positive
         return centered
     }
     
+    @inlinable
     func rounded(toIncrement increment: Self, rule: FloatingPointRoundingRule = .toNearestOrAwayFromZero) -> Self {
         return (self / increment).rounded(rule) * increment
     }
@@ -100,38 +103,47 @@ public extension Double {
         else { self.init(-1.0) }
     }
     
+    @inlinable
     var degrees: Degree {
         return Degree(self)
     }
     
+    @inlinable
     var arcminutes: ArcMinute {
         return ArcMinute(self)
     }
 
+    @inlinable
     var arcseconds: ArcSecond {
         return ArcSecond(self)
     }
 
+    @inlinable
     var radians: Radian {
         return Radian(self)
     }
     
+    @inlinable
     var julianDays: JulianDay {
         return JulianDay(self)
     }
 
+    @inlinable
     var days: Day {
         return Day(self)
     }
 
+    @inlinable
     var hours: Hour {
         return Hour(self)
     }
     
+    @inlinable
     var minutes: Minute {
         return Minute(self)
     }
     
+    @inlinable
     var seconds: Second {
         return Second(self)
     }

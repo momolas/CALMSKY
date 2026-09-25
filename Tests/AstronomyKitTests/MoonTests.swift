@@ -246,13 +246,13 @@ struct MoonTests {
     func testTimeOfFullMoon() {
         for index in 12...19 {
             let moon = Moon(julianDay: JulianDay(year: 2019, month: 2, day: index))
-            XCTAssertEqual(moon.time(of: .fullMoon, forward: true, mean: false).date.month, 2)
-            XCTAssertEqual(moon.time(of: .fullMoon, forward: true, mean: false).date.day, 19)
+            #expect(moon.time(of: .fullMoon, forward: true, mean: false).date.month == 2)
+            #expect(moon.time(of: .fullMoon, forward: true, mean: false).date.day == 19)
         }
         for index in 20...30 {
             let moon = Moon(julianDay: JulianDay(year: 2019, month: 2, day: index))
-            XCTAssertEqual(moon.time(of: .fullMoon, forward: true, mean: false).date.month, 3)
-            XCTAssertEqual(moon.time(of: .fullMoon, forward: true, mean: false).date.day, 21)
+            #expect(moon.time(of: .fullMoon, forward: true, mean: false).date.month == 3)
+            #expect(moon.time(of: .fullMoon, forward: true, mean: false).date.day == 21)
         }
     }
 }

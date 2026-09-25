@@ -1719,4 +1719,49 @@ public enum CAAPlanetPerihelionAphelion: Sendable {
     @inlinable public static func Neptune(_ k: Double) -> Double {
         2468895.1 + (60190.33 * k) + (0.03429 * k * k)
     }
+
+    @inlinable
+    public static func k(for planet: KPCAAPlanetStrict, year: Double) -> Double {
+        switch planet {
+        case .KPCAAPlanetStrictMercury: return MercuryK(year)
+        case .KPCAAPlanetStrictVenus: return VenusK(year)
+        case .KPCAAPlanetStrictEarth: return EarthK(year)
+        case .KPCAAPlanetStrictMars: return MarsK(year)
+        case .KPCAAPlanetStrictJupiter: return JupiterK(year)
+        case .KPCAAPlanetStrictSaturn: return SaturnK(year)
+        case .KPCAAPlanetStrictUranus: return UranusK(year)
+        case .KPCAAPlanetStrictNeptune: return NeptuneK(year)
+        case .KPCAAPlanetStrictUndefined: return 0.0
+        }
+    }
+
+    @inlinable
+    public static func perihelion(for planet: KPCAAPlanetStrict, k: Double, barycentric: Bool = false) -> Double {
+        switch planet {
+        case .KPCAAPlanetStrictMercury: return Mercury(k)
+        case .KPCAAPlanetStrictVenus: return Venus(k)
+        case .KPCAAPlanetStrictEarth: return EarthPerihelion(k, barycentric)
+        case .KPCAAPlanetStrictMars: return Mars(k)
+        case .KPCAAPlanetStrictJupiter: return Jupiter(k)
+        case .KPCAAPlanetStrictSaturn: return Saturn(k)
+        case .KPCAAPlanetStrictUranus: return Uranus(k)
+        case .KPCAAPlanetStrictNeptune: return Neptune(k)
+        case .KPCAAPlanetStrictUndefined: return 0.0
+        }
+    }
+
+    @inlinable
+    public static func aphelion(for planet: KPCAAPlanetStrict, k: Double, barycentric: Bool = false) -> Double {
+        switch planet {
+        case .KPCAAPlanetStrictMercury: return Mercury(k)
+        case .KPCAAPlanetStrictVenus: return Venus(k)
+        case .KPCAAPlanetStrictEarth: return EarthAphelion(k, barycentric)
+        case .KPCAAPlanetStrictMars: return Mars(k)
+        case .KPCAAPlanetStrictJupiter: return Jupiter(k)
+        case .KPCAAPlanetStrictSaturn: return Saturn(k)
+        case .KPCAAPlanetStrictUranus: return Uranus(k)
+        case .KPCAAPlanetStrictNeptune: return Neptune(k)
+        case .KPCAAPlanetStrictUndefined: return 0.0
+        }
+    }
 }
