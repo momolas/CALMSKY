@@ -155,7 +155,7 @@ public extension Moon {
     ///   - highPrecision: If `true`, applies Newton-Raphson root finding on the true apparent elongation (< 0.05s error).
     ///                    If `false`, uses the classical Meeus Ch. 49 analytical series (backward-compatible).
     /// - Returns: The Julian Day of the event.
-    static func nextPhase(_ phase: MoonPhase, after jd: JulianDay, highPrecision: Bool = false) -> JulianDay {
+    static func nextPhase(_ phase: MoonPhase, after jd: JulianDay, highPrecision: Bool = true) -> JulianDay {
         if highPrecision {
             return exactNextPhase(phase, after: jd)
         }
@@ -177,9 +177,9 @@ public extension Moon {
     /// - Parameters:
     ///   - startJD: The start of the time interval.
     ///   - endJD: The end of the time interval.
-    ///   - highPrecision: If `true`, solves numerically for the exact phase instant (< 0.05s error).
+    ///   - highPrecision: If `true` (default), solves numerically for the exact phase instant (< 0.05s error).
     /// - Returns: An array of `MoonPhaseEvent` ordered chronologically.
-    static func phases(from startJD: JulianDay, to endJD: JulianDay, highPrecision: Bool = false) -> [MoonPhaseEvent] {
+    static func phases(from startJD: JulianDay, to endJD: JulianDay, highPrecision: Bool = true) -> [MoonPhaseEvent] {
         if highPrecision {
             return exactPhases(from: startJD, to: endJD)
         }

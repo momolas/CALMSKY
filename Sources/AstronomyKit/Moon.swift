@@ -68,7 +68,7 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     /// - Parameters:
     ///   - julianDay: The Julian Day for calculation.
     ///   - highPrecision: Flag for precision mode (analytical/numerical).
-    public required init(julianDay: JulianDay, highPrecision: Bool = false) {
+    public required init(julianDay: JulianDay, highPrecision: Bool = true) {
         super.init(julianDay: julianDay, highPrecision: highPrecision)
     }
     

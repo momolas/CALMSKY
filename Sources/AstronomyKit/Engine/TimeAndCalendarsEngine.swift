@@ -335,72 +335,7 @@ private let gLeapSeconds: [LeapSecondRecord] = [
 
 public enum CAADynamicalTime: Sendable {
     public static func DeltaT(_ JD: Double) -> Double {
-        if let lookupDelta = DeltaTLookupTable.lookup(jd: JD) {
-            return lookupDelta
-        }
-
-        let date = CAADate(JD, CAADate.AfterPapalReform(JD))
-        let y = date.FractionalYear()
-
-        if y < -500 {
-            let u = (y - 1820.0) / 100.0
-            return -20.0 + (32.0 * u * u)
-        } else if y < 500 {
-            let u = y / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u; let u5 = u4 * u; let u6 = u5 * u
-            return 10583.6 + (-1014.41 * u) + (33.78311 * u2) + (-5.952053 * u3) + (-0.1798452 * u4) + (0.022174192 * u5) + (0.0090316521 * u6)
-        } else if y < 1600 {
-            let u = (y - 1000.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u; let u5 = u4 * u; let u6 = u5 * u
-            return 1574.2 + (-556.01 * u) + (71.23472 * u2) + (0.319781 * u3) + (-0.8503463 * u4) + (-0.005050998 * u5) + (0.0083572073 * u6)
-        } else if y < 1700 {
-            let u = (y - 1600.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u
-            return 120.0 + (-98.08 * u) + (-153.2 * u2) + (u3 / 0.007129)
-        } else if y < 1800 {
-            let u = (y - 1700.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u
-            return 8.83 + (16.03 * u) + (-59.285 * u2) + (133.36 * u3) + (-u4 / 0.01174)
-        } else if y < 1860 {
-            let u = (y - 1800.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u; let u5 = u4 * u; let u6 = u5 * u; let u7 = u6 * u
-            return 13.72 + (-33.2447 * u) + (68.612 * u2) + (4111.6 * u3) + (-37436.0 * u4) + (121272.0 * u5) + (-169900.0 * u6) + (87500.0 * u7)
-        } else if y < 1900 {
-            let u = (y - 1860.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u; let u5 = u4 * u
-            return 7.62 + (57.37 * u) + (-2517.54 * u2) + (16806.68 * u3) + (-44736.24 * u4) + (u5 / 0.0000233174)
-        } else if y < 1920 {
-            let u = (y - 1900.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u
-            return -2.79 + (149.4119 * u) + (-598.939 * u2) + (6196.6 * u3) + (-19700.0 * u4)
-        } else if y < 1941 {
-            let u = (y - 1920.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u
-            return 21.20 + (84.493 * u) + (-761.00 * u2) + (2093.6 * u3)
-        } else if y < 1961 {
-            let u = (y - 1950.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u
-            return 29.07 + (40.7 * u) + (-u2 / 0.0233) + (u3 / 0.002547)
-        } else if y < 1986 {
-            let u = (y - 1975.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u
-            return 45.45 + 106.7 * u - u2 / 0.026 - u3 / 0.000718
-        } else if y < 2005 {
-            let u = (y - 2000.0) / 100.0
-            let u2 = u * u; let u3 = u2 * u; let u4 = u3 * u; let u5 = u4 * u
-            return 63.86 + (33.45 * u) + (-603.74 * u2) + (1727.5 * u3) + (65181.4 * u4) + (237359.9 * u5)
-        } else if y < 2050 {
-            let u = (y - 2000.0) / 100.0
-            let u2 = u * u
-            return 62.92 + (32.217 * u) + (55.89 * u2)
-        } else if y < 2150 {
-            let u = (y - 1820.0) / 100.0
-            let u2 = u * u
-            return -205.72 + (56.28 * u) + (32.0 * u2)
-        } else {
-            let u = (y - 1820.0) / 100.0
-            return -20.0 + (32.0 * u * u)
-        }
+        AstronomicalTimeScale.deltaTStephenson2016(for: JD)
     }
 
     public static func CumulativeLeapSeconds(_ JD: Double) -> Double {
