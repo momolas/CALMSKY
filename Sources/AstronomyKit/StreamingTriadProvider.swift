@@ -57,13 +57,13 @@ public final class StreamingTriadProvider: Sendable {
     /// Convenience initializer from cache directory.
     public init(
         cacheDirectory: URL,
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021]
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021]
     ) throws {
         var map: [TriadAgency: StreamingSPKEphemerisProvider] = [:]
         for ds in datasets {
             let sp = StreamingSPKEphemerisProvider(dataset: ds, cacheDirectory: cacheDirectory)
             switch ds {
-            case .de442s: map[.us] = sp
+            case .de442s, .de442: map[.us] = sp
             case .inpop21a: map[.fr] = sp
             case .epm2021: map[.ru] = sp
             case .pmoe: map[.cn] = sp

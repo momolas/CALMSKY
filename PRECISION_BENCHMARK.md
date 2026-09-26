@@ -1,12 +1,12 @@
 # Registre Permanent de Précision Astrométrique (Precision Benchmark Ledger)
 
-> **Statut actuel** : ✅ **Exclusivité Numérique Pure — Baseline NASA JPL DE442s (Hors-Ligne) & Tétrade/Triade (En Ligne Streaming) (v2.2 Validé)**  
-> **Baseline Numérique Officielle (Hors-Ligne)** : **NASA JPL DE442s (`de442s.bsp`)** — Précision métrologique **`< 0.0001"` (Sub-milliarcseconde) et `< 1 m` (Sub-mètre)** validée contre NASA JPL Horizons DE441  
-> **Modèle Haute Précision (En Ligne Streaming)** : **Tétrade Numérique Internationale (DE442s US + INPOP21a FR + EPM2021 RU + PMOE CN)** via requêtes HTTP Byte-Range partielles (`StreamingTetradProvider` / `StreamingTriadProvider`)  
-> **Exclusivité Numérique Stricte** : **Zéro théorie analytique, zéro repli dégradé**. Retrait définitif de Standish (1992), de Jean Meeus, de VSOP87D et d'ELP2000-82B  
+> **Statut actuel** : ✅ **Exclusivité Numérique Pure — Baseline NASA JPL DE442s/DE442 (Hors-Ligne) & Tétrade/Triade avec DE442 Complet (En Ligne Streaming) (v2.3 Validé)**  
+> **Baseline Numérique Officielle (Hors-Ligne)** : **NASA JPL DE442s (`de442s.bsp`, ~31 Mo)** ou **DE442 (`de442.bsp`, ~119.8 Mo)** — Précision métrologique **`< 0.0001"` (Sub-milliarcseconde) et `< 1 m` (Sub-mètre)** validée contre NASA JPL Horizons DE441  
+> **Modèle Haute Précision (En Ligne Streaming)** : **Tétrade / Triade Numérique avec DE442 Complet (1549–2650 CE, 1 100 ans)** via requêtes HTTP Byte-Range partielles (`StreamingTetradProvider` / `StreamingTriadProvider` / `StreamingSPKEphemerisProvider`)  
+> **Exclusivité Numérique Stricte** : **Zéro théorie analytique, zéro repli dégradé**. Retrait définitif de Standish (1992), de Jean Meeus, de VSOP87D, d'ELP2000-82B et de la théorie analytique VSOP2013  
 > **Vérité Terrain de Référence** : **NASA JPL Horizons DE441 / DE440** (Intégration Numérique Relativiste Barycentrique)  
-> **Dernière évaluation** : 2026-09-25 (Époque de test : `2026-Sep-20 00:00:00 UTC` / `JD 2461303.5`)  
-> **Temps d'exécution de la suite** : **Sub-seconde (~0.03 s pour le benchmark, ~0.80 s suite complète)** (321 tests, 57 suites, 100% de succès)
+> **Dernière évaluation** : 2026-09-26 (Époque de test : `2026-Sep-20 00:00:00 UTC` / `JD 2461303.5`)  
+> **Temps d'exécution de la suite** : **Sub-seconde (~0.03 s pour le benchmark, ~0.85 s suite complète)** (341 tests, 58 suites, 100% de succès)
 
 Ce document constitue le **registre officiel et vivant** consignant l'évolution métrologique du moteur de calcul d'AstronomyKit face aux éphémérides fondamentales de référence de la NASA (JPL Horizons). **Il doit être mis à jour à chaque optimisation, recalibrage ou enrichissement de modèle.**
 
@@ -95,6 +95,22 @@ AstronomyKit applique une politique métrologique stricte et adaptative (`Adapti
 ---
 
 ## 3. Historique des Évolutions du Modèle (Precision Changelog)
+
+### [v2.5] - 2026-09-26 : Intégration du Kernel Complet NASA JPL DE442 (1100 ans) pour le Streaming Dynamique HTTP Range
+- **Directives Utilisateur Appliquées** :
+  1. *« puisque nous streamons http, on peut utiliser les ephemerides complets et garder un ephemeride compact en local si offline »*
+  2. *« peut aussi utiliser DE442 complet »*
+- **Changements majeurs** :
+  1. **Dualité Asymétrique Validée** :
+     - **Hors-Ligne (Local)** : Conservation du kernel compact `DE442s` (`de442s.bsp`, ~31.1 Mo, 1849–2150 CE) pour minimiser l'empreinte disque sur les appareils (iOS/watchOS/macOS).
+     - **En Ligne (HTTP Range Streaming)** : Adoption du kernel complet officiel **NASA JPL DE442** (`de442.bsp`, ~119.8 Mo, 1549–2650 CE, **1 100 ans**) comme kernel de référence par défaut.
+  2. **Transparence Réseau O(1)** : En mode streaming HTTP Range (`Accept-Ranges: bytes`), la taille du fichier sur les serveurs NAIF de la NASA n'a aucun impact sur la bande passante : seules les tranches de 240 à 480 octets par date et par corps sont transférées.
+  3. **Mise à Jour des Fabriques & Providers** :
+     - Ajout de `EphemerisDataset.de442` pointant directement vers les serveurs officiels NASA NAIF/JPL.
+     - `makeStreamingBaselineProvider(complete: true)` streame `de442` par défaut (avec repli paramétrable `complete: false` vers `de442s`).
+     - `makeStreamingTriadProvider()` et `makeStreamingTetradProvider()` intègrent `de442` pour l'agence américaine (`.us`).
+     - `makeBaselineProviderFromCache()` et `makeAdaptiveProvider()` résolvent dynamiquement `de442.bsp` ou `de442s.bsp` selon la présence en cache local.
+  4. **Validation Métrologique** : 341 tests automatisés dans 58 suites, 100% de succès en ~0.85 s.
 
 ### [v2.4] - 2026-09-26 : Exclusion Stricte des Séries Analytiques VSOP2013 au Profit d'INPOP21a SPK & Clôture Phase 10
 - **Directive Utilisateur Appliquée** :

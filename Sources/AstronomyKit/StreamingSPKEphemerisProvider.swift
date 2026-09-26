@@ -22,13 +22,17 @@ public final class StreamingSPKEphemerisProvider: Sendable {
 
     // MARK: - Properties
 
+    /// The ephemeris dataset being streamed, if initialized with one.
+    public let dataset: EphemerisDataset?
+
     /// The underlying streaming reader.
     public let reader: StreamingSPKReader
 
     // MARK: - Initialization
 
-    /// Initializes a streaming provider with a `StreamingSPKReader`.
-    public init(reader: StreamingSPKReader) {
+    /// Initializes a streaming provider with a `StreamingSPKReader` and optional dataset metadata.
+    public init(dataset: EphemerisDataset? = nil, reader: StreamingSPKReader) {
+        self.dataset = dataset
         self.reader = reader
     }
 
@@ -37,6 +41,7 @@ public final class StreamingSPKEphemerisProvider: Sendable {
         dataset: EphemerisDataset,
         cacheDirectory: URL
     ) {
+        self.dataset = dataset
         let datasetCacheDir = cacheDirectory.appendingPathComponent("streaming_\(dataset.rawValue)")
         let client = SPKRangeClient(
             primaryURL: dataset.remoteURL,

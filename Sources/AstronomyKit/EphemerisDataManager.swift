@@ -30,6 +30,11 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
     /// Source: NASA NAIF/JPL. Recommended for most applications.
     case lunarDE440s
 
+    /// JPL DE442 complete planetary and lunar ephemerides covering 1549–2650 CE (≈119.8 MB).
+    /// Updated May 2024 by NASA JPL (Park et al.) with extended Juno and Uranus occultation data.
+    /// Source: NASA NAIF/JPL. Optimal for complete historical & secular HTTP Range streaming.
+    case de442
+
     /// JPL DE442s compact modern planetary ephemerides covering 1849–2150 CE (≈31.1 MB).
     /// Primary source: Canonical GitHub Releases Assets (fallback to NASA NAIF).
     case de442s
@@ -50,7 +55,7 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
 
     /// All active supported numerical ephemeris datasets.
     public static var allCases: [EphemerisDataset] {
-        [.de442s, .inpop21a, .epm2021, .pmoe, .lunarDE440, .lunarDE440s]
+        [.de442s, .de442, .inpop21a, .epm2021, .pmoe, .lunarDE440, .lunarDE440s]
     }
 
     /// Official baseline ephemeris dataset (NASA JPL DE442s).
@@ -63,7 +68,8 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         case .vsop2013Full: return "VSOP2013 Full (−4000 to +8000 CE)"
         case .lunarDE440: return "DE440 Lunar (1550–2650 CE)"
         case .lunarDE440s: return "DE440s Lunar (1900–2050 CE)"
-        case .de442s: return "DE442s Planetary (1849–2150 CE) [US - NASA JPL]"
+        case .de442: return "DE442 Complete Planetary & Lunar (1549–2650 CE) [US - NASA JPL]"
+        case .de442s: return "DE442s Compact Planetary (1849–2150 CE) [US - NASA JPL]"
         case .inpop21a: return "INPOP21a Planetary (1900–2100 CE) [FR - IMCCE]"
         case .epm2021: return "EPM2021 Planetary (1787–2214 CE) [RU - IAA RAS]"
         case .pmoe: return "PMOE Planetary (1900–2100 CE) [CN - PMO / CAS]"
@@ -82,6 +88,8 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
             urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp"
         case .lunarDE440s:
             urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp"
+        case .de442:
+            urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp"
         case .de442s:
             urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp"
         case .inpop21a:
@@ -100,6 +108,8 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
     /// Upstream official repository URL (fallback if GitHub Releases is unreachable).
     public var fallbackRemoteURL: URL? {
         switch self {
+        case .de442:
+            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")
         case .de442s:
             return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp")
         case .inpop21a:
@@ -125,7 +135,7 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
             return "IMCCE – Observatoire de Paris"
         case .lunarDE440, .lunarDE440s:
             return "NASA NAIF / Jet Propulsion Laboratory"
-        case .de442s:
+        case .de442, .de442s:
             return "NASA NAIF / Jet Propulsion Laboratory (US)"
         case .inpop21a:
             return "IMCCE – Observatoire de Paris (FR)"
@@ -358,7 +368,7 @@ public actor EphemerisDataManager {
             }
             let spkProvider = try SPKEphemerisProvider(spkFileURL: fileURL)
             switch ds {
-            case .de442s:
+            case .de442s, .de442:
                 providers[.us] = spkProvider
             case .inpop21a:
                 providers[.fr] = spkProvider
@@ -392,7 +402,7 @@ public actor EphemerisDataManager {
             if FileManager.default.fileExists(atPath: fileURL.path) {
                 let spk = try SPKEphemerisProvider(spkFileURL: fileURL)
                 switch ds {
-                case .de442s: providers[.us] = spk
+                case .de442s, .de442: providers[.us] = spk
                 case .inpop21a: providers[.fr] = spk
                 case .epm2021: providers[.ru] = spk
                 case .pmoe: providers[.cn] = spk
@@ -440,13 +450,9 @@ public actor EphemerisDataManager {
             !dataset.rawValue.hasPrefix("vsop2013"),
             "HTTP Range streaming requires numerical SPK/DAF ephemerides. Analytical VSOP2013 Poisson series cannot be streamed; use .inpop21a for IMCCE or .de442s for NASA JPL."
         )
-        let datasetCacheDir = cacheDirectory.appendingPathComponent("streaming_\(dataset.rawValue)")
         return StreamingSPKEphemerisProvider(
-            reader: StreamingSPKReader(
-                primaryURL: dataset.remoteURL,
-                fallbackURL: dataset.fallbackRemoteURL,
-                cacheDirectory: datasetCacheDir
-            )
+            dataset: dataset,
+            cacheDirectory: cacheDirectory
         )
     }
 
@@ -455,13 +461,13 @@ public actor EphemerisDataManager {
     /// Fetches and evaluates Chebyshev polynomial slices across all three models in parallel,
     /// transferring less than 10 KB per requested date while providing full consensus and 1-sigma physical uncertainty.
     public func makeStreamingTriadProvider(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021]
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021]
     ) throws -> StreamingTriadProvider {
         var providers: [TriadAgency: StreamingSPKEphemerisProvider] = [:]
         for ds in datasets {
             let sp = makeStreamingProvider(for: ds)
             switch ds {
-            case .de442s: providers[.us] = sp
+            case .de442s, .de442: providers[.us] = sp
             case .inpop21a: providers[.fr] = sp
             case .epm2021: providers[.ru] = sp
             case .pmoe: providers[.cn] = sp
@@ -473,7 +479,7 @@ public actor EphemerisDataManager {
 
     /// Creates a ``StreamingTetradProvider`` combining US, FR, RU, and CN ephemerides in parallel HTTP streaming mode.
     public func makeStreamingTetradProvider(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe]
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021, .pmoe]
     ) throws -> StreamingTetradProvider {
         try makeStreamingTriadProvider(datasets: datasets)
     }
@@ -499,14 +505,16 @@ public actor EphemerisDataManager {
     /// - Returns: An ``SPKEphemerisProvider`` initialized with cached NASA JPL DE442s.
     /// - Throws: ``EphemerisError/dataFileNotFound(_:)`` if the DE442s kernel is not in local cache.
     public nonisolated func makeBaselineProviderFromCache() throws -> SPKEphemerisProvider {
-        let fileURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+        let completeURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442.filename)
+        let compactURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
+        let targetURL = FileManager.default.fileExists(atPath: completeURL.path) ? completeURL : compactURL
+        guard FileManager.default.fileExists(atPath: targetURL.path) else {
             throw EphemerisError.dataFileNotFound(
-                "Offline baseline numerical kernel (DE442s) not found in cache at: \(fileURL.path). " +
+                "Offline baseline numerical kernel (DE442s or DE442) not found in cache at: \(targetURL.path). " +
                 "Call makeBaselineProvider() to download it from the canonical repository."
             )
         }
-        return try SPKEphemerisProvider(spkFileURL: fileURL)
+        return try SPKEphemerisProvider(spkFileURL: targetURL)
     }
 
     /// Instantiates a dedicated high-precision lunar provider using the official NASA JPL DE442s baseline.
@@ -536,17 +544,22 @@ public actor EphemerisDataManager {
         return try LunarDE442sProvider(spkFileURL: fileURL)
     }
 
-    /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of the NASA JPL DE442s baseline.
-    public func makeStreamingBaselineProvider() -> StreamingSPKEphemerisProvider {
-        makeStreamingProvider(for: .de442s)
+    /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of the NASA JPL DE442 baseline.
+    ///
+    /// - Parameter complete: When `true` (default), streams the complete 1100-year kernel (`de442.bsp`, 1549–2650 CE).
+    ///   When `false`, streams the compact 300-year kernel (`de442s.bsp`, 1849–2150 CE).
+    ///   In both modes, network transfer is restricted to ~240–480 bytes per requested date.
+    public func makeStreamingBaselineProvider(complete: Bool = true) -> StreamingSPKEphemerisProvider {
+        makeStreamingProvider(for: complete ? .de442 : .de442s)
     }
 
     /// Creates an optimal adaptive numerical provider adhering to the policy:
-    /// - **Hors-ligne (Offline)** : Utilise la Baseline numérique NASA JPL DE442s si disponible en cache local (`.offlineBaseline`).
-    /// - **Sinon (En ligne / Streaming)** : Utilise la Triade numérique (DE442s US + INPOP21a FR + EPM2021 RU) via streaming dynamique HTTP Range (`.onlineTriad`).
+    /// - **Hors-ligne (Offline)** : Utilise la Baseline numérique NASA JPL (DE442s compact ou DE442 complet) si disponible en cache local (`.offlineBaseline`).
+    /// - **Sinon (En ligne / Streaming)** : Utilise la Triade numérique (DE442 US + INPOP21a FR + EPM2021 RU) via streaming dynamique HTTP Range (`.onlineTriad`).
     public func makeAdaptiveProvider() throws -> AdaptiveEphemerisProvider {
-        let baselineURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
-        if FileManager.default.fileExists(atPath: baselineURL.path) {
+        let compactURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
+        let completeURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442.filename)
+        if FileManager.default.fileExists(atPath: compactURL.path) || FileManager.default.fileExists(atPath: completeURL.path) {
             let baseline = try makeBaselineProviderFromCache()
             return AdaptiveEphemerisProvider(engine: .offlineBaseline(baseline))
         } else {

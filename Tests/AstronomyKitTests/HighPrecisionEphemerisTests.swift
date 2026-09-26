@@ -150,10 +150,23 @@ struct EphemerisDatasetTests {
         #expect(EphemerisDataset.baseline == .de442s)
     }
 
+    @Test("DE442 datasets come from NASA JPL with expected URLs and filenames")
+    func de442DatasetProperties() {
+        #expect(EphemerisDataset.de442.source.contains("NASA"))
+        #expect(EphemerisDataset.de442s.source.contains("NASA"))
+        #expect(EphemerisDataset.de442.filename == "de442.bsp")
+        #expect(EphemerisDataset.de442s.filename == "de442s.bsp")
+        #expect(EphemerisDataset.de442.remoteURL.absoluteString == "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")
+        #expect(EphemerisDataset.de442.fallbackRemoteURL?.absoluteString == "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")
+        #expect(EphemerisDataset.allCases.contains(.de442))
+        #expect(EphemerisDataset.allCases.contains(.de442s))
+    }
+
     @Test("Filenames match expected patterns")
     func filenames() {
         #expect(EphemerisDataset.inpop21a.filename == "inpop21a.bsp")
         #expect(EphemerisDataset.de442s.filename == "de442s.bsp")
+        #expect(EphemerisDataset.de442.filename == "de442.bsp")
         #expect(EphemerisDataset.lunarDE440s.filename == "de440s.bsp")
     }
 }
@@ -201,6 +214,23 @@ struct EphemerisDataManagerTests {
         #expect(throws: EphemerisError.self) {
             _ = try manager.makeTriadProviderFromCache()
         }
+    }
+
+    @Test("makeStreamingBaselineProvider defaults to DE442 complete streaming")
+    func makeStreamingBaselineProviderModes() async {
+        let manager = EphemerisDataManager()
+        let providerComplete = await manager.makeStreamingBaselineProvider(complete: true)
+        let providerCompact = await manager.makeStreamingBaselineProvider(complete: false)
+        #expect(providerComplete.dataset == .de442)
+        #expect(providerCompact.dataset == .de442s)
+    }
+
+    @Test("makeStreamingTriadProvider defaults to DE442 complete kernel for US agency")
+    func makeStreamingTriadProviderDefaults() async throws {
+        let manager = EphemerisDataManager()
+        let triad = try await manager.makeStreamingTriadProvider()
+        let usProvider = try #require(triad.providers[.us])
+        #expect(usProvider.dataset == .de442)
     }
 }
 
