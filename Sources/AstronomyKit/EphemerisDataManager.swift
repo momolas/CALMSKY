@@ -448,7 +448,7 @@ public actor EphemerisDataManager {
     public func makeStreamingProvider(for dataset: EphemerisDataset) -> StreamingSPKEphemerisProvider {
         precondition(
             !dataset.rawValue.hasPrefix("vsop2013"),
-            "HTTP Range streaming requires numerical SPK/DAF ephemerides. Analytical VSOP2013 Poisson series cannot be streamed; use .inpop21a for IMCCE or .de442s for NASA JPL."
+            "HTTP Range streaming requires numerical SPK/DAF ephemerides. Analytical VSOP2013 Poisson series cannot be streamed; use .inpop21a for IMCCE or .de442 for NASA JPL."
         )
         return StreamingSPKEphemerisProvider(
             dataset: dataset,
@@ -467,7 +467,7 @@ public actor EphemerisDataManager {
         for ds in datasets {
             let sp = makeStreamingProvider(for: ds)
             switch ds {
-            case .de442s, .de442: providers[.us] = sp
+            case .de442: providers[.us] = sp
             case .inpop21a: providers[.fr] = sp
             case .epm2021: providers[.ru] = sp
             case .pmoe: providers[.cn] = sp
@@ -544,13 +544,11 @@ public actor EphemerisDataManager {
         return try LunarDE442sProvider(spkFileURL: fileURL)
     }
 
-    /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of the NASA JPL DE442 baseline.
+    /// Creates a ``StreamingSPKEphemerisProvider`` for on-demand HTTP range streaming of the NASA JPL DE442 complete baseline (1549–2650 CE).
     ///
-    /// - Parameter complete: When `true` (default), streams the complete 1100-year kernel (`de442.bsp`, 1549–2650 CE).
-    ///   When `false`, streams the compact 300-year kernel (`de442s.bsp`, 1849–2150 CE).
-    ///   In both modes, network transfer is restricted to ~240–480 bytes per requested date.
-    public func makeStreamingBaselineProvider(complete: Bool = true) -> StreamingSPKEphemerisProvider {
-        makeStreamingProvider(for: complete ? .de442 : .de442s)
+    /// Network transfer is restricted to ~240–480 bytes per requested date directly from NASA NAIF servers.
+    public func makeStreamingBaselineProvider() -> StreamingSPKEphemerisProvider {
+        makeStreamingProvider(for: .de442)
     }
 
     /// Creates an optimal adaptive numerical provider adhering to the policy:

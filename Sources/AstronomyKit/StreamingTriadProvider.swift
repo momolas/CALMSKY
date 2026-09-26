@@ -63,7 +63,7 @@ public final class StreamingTriadProvider: Sendable {
         for ds in datasets {
             let sp = StreamingSPKEphemerisProvider(dataset: ds, cacheDirectory: cacheDirectory)
             switch ds {
-            case .de442s, .de442: map[.us] = sp
+            case .de442: map[.us] = sp
             case .inpop21a: map[.fr] = sp
             case .epm2021: map[.ru] = sp
             case .pmoe: map[.cn] = sp

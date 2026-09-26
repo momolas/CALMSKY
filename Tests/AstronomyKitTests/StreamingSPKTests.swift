@@ -128,7 +128,7 @@ struct StreamingSPKTests {
 
         let triad = try StreamingTriadProvider(
             cacheDirectory: tempDir,
-            datasets: [.de442s, .inpop21a, .epm2021]
+            datasets: [.de442, .inpop21a, .epm2021]
         )
 
         #expect(triad.providers.count == 3)
@@ -149,7 +149,7 @@ struct StreamingSPKTests {
 
     @Test("Live HTTP partial Range request retrieves exactly 1024-byte DAF File Record")
     func liveNAIFByteRangeHeader() async throws {
-        let naifURL = URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp")!
+        let naifURL = URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")!
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("live_range_\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
@@ -186,7 +186,7 @@ struct StreamingSPKTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let manager = EphemerisDataManager(cacheDirectory: tempDir)
-        let streamingProvider = await manager.makeStreamingBaselineProvider(complete: true)
+        let streamingProvider = await manager.makeStreamingBaselineProvider()
 
         let jd = JulianDay(2451545.0) // J2000.0 epoch
 

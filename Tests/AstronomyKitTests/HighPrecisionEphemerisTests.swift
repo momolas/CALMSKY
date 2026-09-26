@@ -216,13 +216,11 @@ struct EphemerisDataManagerTests {
         }
     }
 
-    @Test("makeStreamingBaselineProvider defaults to DE442 complete streaming")
+    @Test("makeStreamingBaselineProvider streams DE442 complete kernel from NASA JPL")
     func makeStreamingBaselineProviderModes() async {
         let manager = EphemerisDataManager()
-        let providerComplete = await manager.makeStreamingBaselineProvider(complete: true)
-        let providerCompact = await manager.makeStreamingBaselineProvider(complete: false)
-        #expect(providerComplete.dataset == .de442)
-        #expect(providerCompact.dataset == .de442s)
+        let provider = await manager.makeStreamingBaselineProvider()
+        #expect(provider.dataset == .de442)
     }
 
     @Test("makeStreamingTriadProvider defaults to DE442 complete kernel and 4-agency Tetrad")
