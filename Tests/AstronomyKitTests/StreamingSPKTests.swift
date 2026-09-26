@@ -164,6 +164,22 @@ struct StreamingSPKTests {
         #expect(locidff.hasPrefix("DAF") || locidff.hasPrefix("NAIF"))
     }
 
+    @Test("Live GitHub Releases CDN partial Range request streams INPOP21a and DE442s DAF records")
+    func liveGitHubReleasesByteRange() async throws {
+        let datasets: [EphemerisDataset] = [.inpop21a, .de442s]
+        for dataset in datasets {
+            let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("live_gh_\(dataset.rawValue)_\(UUID().uuidString)")
+            defer { try? FileManager.default.removeItem(at: tempDir) }
+
+            let client = SPKRangeClient(primaryURL: dataset.remoteURL, cacheDirectory: tempDir)
+            let headerData = try await client.fetchRange(startOffset: 0, length: 1024)
+            #expect(headerData.count == 1024, "\(dataset.rawValue) should stream 1024-byte header from GitHub Releases")
+
+            let locidff = String(data: headerData[0..<8], encoding: .ascii) ?? ""
+            #expect(locidff.hasPrefix("DAF") || locidff.hasPrefix("NAIF"), "\(dataset.rawValue) valid DAF prefix")
+        }
+    }
+
     @Test("Live HTTP Dynamic Temporal Streaming evaluates planetary and lunar state vectors from NASA JPL DE442")
     func liveHTTPStreamingEvaluation() async throws {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("live_streaming_\(UUID().uuidString)")
