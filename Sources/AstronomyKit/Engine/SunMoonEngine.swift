@@ -1670,6 +1670,7 @@ public enum CAADiameters: Sendable {
 
 public enum CAAEclipses: Sendable {
 
+    @inlinable
     public static func calculate(_ k: Double, _ mdash: inout Double) -> CAASolarEclipseDetails {
         var intPart = 0.0
         let bSolarEclipse = modf(k, &intPart) == 0.0
@@ -1682,65 +1683,98 @@ public enum CAAEclipses: Sendable {
         let t4 = t3 * t
         let e = 1.0 - 0.002516 * t - 0.0000074 * t2
 
-        let m = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(2.5534 + 29.10535670 * k - 0.0000014 * t2 - 0.00000011 * t3))
-        mdash = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(201.5643 + 385.81693528 * k + 0.0107582 * t2 + 0.00001238 * t3 - 0.000000058 * t4))
-        let omega = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(124.7746 - 1.56375588 * k + 0.0020672 * t2 + 0.00000215 * t3))
+        let mRad = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(2.5534 + 29.10535670 * k - 0.0000014 * t2 - 0.00000011 * t3))
+        let mdashRad = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(201.5643 + 385.81693528 * k + 0.0107582 * t2 + 0.00001238 * t3 - 0.000000058 * t4))
+        mdash = mdashRad
+        let omegaRad = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(124.7746 - 1.56375588 * k + 0.0020672 * t2 + 0.00000215 * t3))
 
-        let fVal = CAACoordinateTransformation.mapTo0To360Range(160.7108 + 390.67050284 * k - 0.0016118 * t2 - 0.00000227 * t3 + 0.00000001 * t4)
+        let fVal = SphericalTrigonometry.mapTo0To360Range(160.7108 + 390.67050284 * k - 0.0016118 * t2 - 0.00000227 * t3 + 0.00000001 * t4)
         details.F = fVal
-        let fdashVal = fVal - 0.02665 * sin(omega)
+        let sinOmega = sin(omegaRad)
+        let fdashVal = fVal - 0.02665 * sinOmega
 
-        let f = CAACoordinateTransformation.degreesToRadians(fVal)
-        let fdash = CAACoordinateTransformation.degreesToRadians(fdashVal)
+        let f = SphericalTrigonometry.degreesToRadians(fVal)
+        let fdash = SphericalTrigonometry.degreesToRadians(fdashVal)
 
         if abs(sin(f)) > 0.36 {
             return details
         }
 
-        let a1 = CAACoordinateTransformation.degreesToRadians(CAACoordinateTransformation.mapTo0To360Range(299.77 + 0.107408 * k - 0.009173 * t2))
+        let a1 = SphericalTrigonometry.degreesToRadians(SphericalTrigonometry.mapTo0To360Range(299.77 + 0.107408 * k - 0.009173 * t2))
         details.TimeOfMaximumEclipse = CAAMoonPhases.meanPhase(k)
+
+        let sinM = sin(mRad)
+        let cosM = cos(mRad)
+        let sinMdash = sin(mdashRad)
+        let cosMdash = cos(mdashRad)
+        let sinFdash = sin(fdash)
+        let cosFdash = cos(fdash)
+
+        let sin2M = 2.0 * sinM * cosM
+        let cos2M = cosM * cosM - sinM * sinM
+
+        let sin2Mdash = 2.0 * sinMdash * cosMdash
+        let cos2Mdash = cosMdash * cosMdash - sinMdash * sinMdash
+        let sin3Mdash = sinMdash * (3.0 - 4.0 * sinMdash * sinMdash)
+
+        let sin2Fdash = 2.0 * sinFdash * cosFdash
+        let cos2Fdash = cosFdash * cosFdash - sinFdash * sinFdash
+
+        let sinMdashMinusM = sinMdash * cosM - cosMdash * sinM
+        let sinMdashPlusM = sinMdash * cosM + cosMdash * sinM
+        let cosMdashMinusM = cosMdash * cosM + sinMdash * sinM
+        let cosMdashPlusM = cosMdash * cosM - sinMdash * sinM
+
+        let sinMdashMinus2Fdash = sinMdash * cos2Fdash - cosMdash * sin2Fdash
+        let sinMdashPlus2Fdash = sinMdash * cos2Fdash + cosMdash * sin2Fdash
+
+        let sin2MdashPlusM = sin2Mdash * cosM + cos2Mdash * sinM
+        let sin2MdashMinusM = sin2Mdash * cosM - cos2Mdash * sinM
+
+        let sinMPlus2Fdash = sinM * cos2Fdash + cosM * sin2Fdash
+        let sinMMinus2Fdash = sinM * cos2Fdash - cosM * sin2Fdash
 
         var deltaJD = 0.0
         if bSolarEclipse {
-            deltaJD += -0.4075 * sin(mdash) + 0.1721 * e * sin(m)
+            deltaJD += -0.4075 * sinMdash + 0.1721 * e * sinM
         } else {
-            deltaJD += -0.4065 * sin(mdash) + 0.1727 * e * sin(m)
+            deltaJD += -0.4065 * sinMdash + 0.1727 * e * sinM
         }
-        deltaJD += 0.0161 * sin(2.0 * mdash) -
-            0.0097 * sin(2.0 * fdash) +
-            0.0073 * e * sin(mdash - m) -
-            0.0050 * e * sin(mdash + m) -
-            0.0023 * sin(mdash - 2.0 * fdash) +
-            0.0021 * e * sin(2.0 * m) +
-            0.0012 * sin(mdash + 2.0 * fdash) +
-            0.0006 * e * sin(2.0 * mdash + m) -
-            0.0004 * sin(3.0 * mdash) -
-            0.0003 * e * sin(m + 2.0 * fdash) +
+        deltaJD += 0.0161 * sin2Mdash -
+            0.0097 * sin2Fdash +
+            0.0073 * e * sinMdashMinusM -
+            0.0050 * e * sinMdashPlusM -
+            0.0023 * sinMdashMinus2Fdash +
+            0.0021 * e * sin2M +
+            0.0012 * sinMdashPlus2Fdash +
+            0.0006 * e * sin2MdashPlusM -
+            0.0004 * sin3Mdash -
+            0.0003 * e * sinMPlus2Fdash +
             0.0003 * sin(a1) -
-            0.0002 * e * sin(m - 2.0 * fdash) -
-            0.0002 * e * sin(2.0 * mdash - m) -
-            0.0002 * sin(omega)
+            0.0002 * e * sinMMinus2Fdash -
+            0.0002 * e * sin2MdashMinusM -
+            0.0002 * sinOmega
 
         details.TimeOfMaximumEclipse += deltaJD
 
-        let p = 0.2070 * e * sin(m) +
-            0.0024 * e * sin(2.0 * m) -
-            0.0392 * sin(mdash) +
-            0.0116 * sin(2.0 * mdash) -
-            0.0073 * e * sin(mdash + m) +
-            0.0067 * e * sin(mdash - m) +
-            0.0118 * sin(2.0 * fdash)
+        let p = 0.2070 * e * sinM +
+            0.0024 * e * sin2M -
+            0.0392 * sinMdash +
+            0.0116 * sin2Mdash -
+            0.0073 * e * sinMdashPlusM +
+            0.0067 * e * sinMdashMinusM +
+            0.0118 * sin2Fdash
 
         let q = 5.2207 -
-            0.0048 * e * cos(m) +
-            0.0020 * e * cos(2.0 * m) -
-            0.3299 * cos(mdash) -
-            0.0060 * e * cos(mdash + m) +
-            0.0041 * e * cos(mdash - m)
+            0.0048 * e * cosM +
+            0.0020 * e * cos2M -
+            0.3299 * cosMdash -
+            0.0060 * e * cosMdashPlusM +
+            0.0041 * e * cosMdashMinusM
 
-        let w = abs(cos(fdash))
-        details.gamma = (p * cos(fdash) + q * sin(fdash)) * (1.0 - 0.0048 * w)
-        details.u = 0.0059 + 0.0046 * e * cos(m) - 0.0182 * cos(mdash) + 0.0004 * cos(2.0 * mdash) - 0.0005 * cos(m + mdash)
+        let w = abs(cosFdash)
+        details.gamma = (p * cosFdash + q * sinFdash) * (1.0 - 0.0048 * w)
+        details.u = 0.0059 + 0.0046 * e * cosM - 0.0182 * cosMdash + 0.0004 * cos2Mdash - 0.0005 * cosMdashPlusM
 
         let fgamma = abs(details.gamma)
         if fgamma > (1.5433 + details.u) {
@@ -1785,6 +1819,7 @@ public enum CAAEclipses: Sendable {
         return details
     }
 
+    @inlinable
     public static func calculateSolar(_ k: Double) -> CAASolarEclipseDetails {
         var mdash = 0.0
         return calculate(k, &mdash)
@@ -1795,6 +1830,7 @@ public enum CAAEclipses: Sendable {
         calculateSolar(k)
     }
 
+    @inlinable
     public static func calculateLunar(_ k: Double) -> CAALunarEclipseDetails {
         var mdash = 0.0
         let solarDetails = calculate(k, &mdash)

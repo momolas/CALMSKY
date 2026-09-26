@@ -21,7 +21,7 @@ public final class Sun: Object, CelestialBody, @unchecked Sendable {
     /// Accessor to all values of the underlying eclipse details. Will probably become private
     /// once all relevant accessors are implemented and covered.
     public var eclipseDetails: CAASolarEclipseDetails {
-        return CAAEclipses.CalculateSolar(CAAMoonPhases.K(self.julianDay.date.fractionalYear))
+        return CAAEclipses.CalculateSolar(round(CAAMoonPhases.K(self.julianDay.date.fractionalYear)))
     }
     
     /// The (constant) diameter of the Sun.

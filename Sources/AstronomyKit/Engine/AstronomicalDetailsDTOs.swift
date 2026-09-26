@@ -208,6 +208,7 @@ public struct CAASolarEclipseDetails: Sendable, Codable, Hashable {
     public var gamma: Double
     public var GreatestMagnitude: Double
 
+    @inlinable
     public init(Flags: UInt32 = 0, TimeOfMaximumEclipse: Double = 0, F: Double = 0, u: Double = 0, gamma: Double = 0, GreatestMagnitude: Double = 0) {
         self.Flags = Flags
         self.TimeOfMaximumEclipse = TimeOfMaximumEclipse
@@ -232,6 +233,7 @@ public struct CAALunarEclipseDetails: Sendable, Codable, Hashable {
     public var TotalPhaseSemiDuration: Double
     public var PartialPhasePenumbraSemiDuration: Double
 
+    @inlinable
     public init(bEclipse: Bool = false, TimeOfMaximumEclipse: Double = 0, F: Double = 0, u: Double = 0, gamma: Double = 0, PenumbralRadii: Double = 0, UmbralRadii: Double = 0, PenumbralMagnitude: Double = 0, UmbralMagnitude: Double = 0, PartialPhaseSemiDuration: Double = 0, TotalPhaseSemiDuration: Double = 0, PartialPhasePenumbraSemiDuration: Double = 0) {
         self.bEclipse = bEclipse
         self.TimeOfMaximumEclipse = TimeOfMaximumEclipse

@@ -16,9 +16,10 @@ import Foundation
 /// - parameter temperature: The air temperature at Earth's surface
 ///
 /// - returns: The refraction amplitude, in arcminutes.
+@inlinable
 public func refraction(fromApparentAltitude h0: Degree, pressure: Millibar = 1010, temperature: Celsius = 10) -> ArcMinute {
     // AA returns a value in Degrees
-    return Degree(CAARefraction.RefractionFromApparent(h0.value, pressure, temperature)).inArcMinutes
+    Degree(CAARefraction.RefractionFromApparent(h0.value, pressure, temperature)).inArcMinutes
 }
 
 /// Compute the atmospheric refraction from the true "airless" altitude of a celestial body h that has been already
@@ -29,9 +30,10 @@ public func refraction(fromApparentAltitude h0: Degree, pressure: Millibar = 101
 /// - parameter temperature: The air temperature at Earth's surface
 ///
 /// - returns: The refraction amplitude, in arcminutes.
+@inlinable
 public func refraction(fromTrueAltitude h: Degree, pressure: Millibar = 1010, temperature: Celsius = 10) -> ArcMinute {
     // AA returns a value in Degrees
-    return Degree(CAARefraction.RefractionFromTrue(h.value, pressure, temperature)).inArcMinutes
+    Degree(CAARefraction.RefractionFromTrue(h.value, pressure, temperature)).inArcMinutes
 }
 
 /// Compute modern atmospheric refraction from apparent altitude using the BIPM Ciddor (1996/2002) model.
@@ -42,6 +44,7 @@ public func refraction(fromTrueAltitude h: Degree, pressure: Millibar = 1010, te
 ///   - temperature: The air temperature at Earth's surface in Celsius (default: 10).
 ///   - parameters: Environmental and spectral parameters (wavelength, CO2, humidity).
 /// - Returns: The refraction amplitude, in arcminutes.
+@inlinable
 public func refractionCiddor(
     fromApparentAltitude h0: Degree,
     pressure: Millibar = 1010,
@@ -65,6 +68,7 @@ public func refractionCiddor(
 ///   - temperature: The air temperature at Earth's surface in Celsius (default: 10).
 ///   - parameters: Environmental and spectral parameters (wavelength, CO2, humidity).
 /// - Returns: The refraction amplitude, in arcminutes.
+@inlinable
 public func refractionCiddor(
     fromTrueAltitude h: Degree,
     pressure: Millibar = 1010,

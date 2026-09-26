@@ -10,6 +10,7 @@ import Foundation
 
 public enum AtmosphericRefractionEngine: Sendable {
 
+    @inlinable
     public static func refractionFromTrue(altitude: Double, pressure: Double, temperature: Double) -> Double {
         if altitude > 85.0 {
             return 0.0
@@ -34,6 +35,7 @@ public enum AtmosphericRefractionEngine: Sendable {
         }
     }
 
+    @inlinable
     public static func refractionFromApparent(altitude: Double, pressure: Double, temperature: Double) -> Double {
         var trueAltitude = altitude
         var bContinue = true
@@ -58,6 +60,7 @@ public enum AtmosphericRefractionEngine: Sendable {
     ///   - pressure: Atmospheric pressure in millibars (default: 1010.0).
     ///   - temperature: Air temperature in Celsius (default: 10.0).
     /// - Returns: Refraction in degrees to subtract from apparent altitude to obtain airless true altitude.
+    @inlinable
     public static func saemundssonRefraction(apparentAltitude: Double, pressure: Double = 1010.0, temperature: Double = 10.0) -> Double {
         guard apparentAltitude >= -5.0, apparentAltitude.isFinite else { return 0.0 }
         let h = apparentAltitude
@@ -75,6 +78,7 @@ public enum AtmosphericRefractionEngine: Sendable {
     ///   - temperatureC: Air temperature in Celsius (default: 15.0).
     ///   - params: Ciddor atmospheric and spectral parameters.
     /// - Returns: Phase refractive index excess (n - 1).
+    @inlinable
     public static func ciddorRefractivity(
         pressureHPa: Double = 1013.25,
         temperatureC: Double = 15.0,
@@ -158,6 +162,7 @@ public enum AtmosphericRefractionEngine: Sendable {
     ///   - temperatureC: Air temperature in Celsius (default: 10.0).
     ///   - params: Ciddor atmospheric and spectral parameters.
     /// - Returns: Atmospheric refraction in degrees.
+    @inlinable
     public static func ciddorRefraction(
         apparentAltitude: Double,
         pressureHPa: Double = 1010.0,
@@ -176,7 +181,7 @@ public enum AtmosphericRefractionEngine: Sendable {
 
         let h = apparentAltitude
         let hRad = SphericalTrigonometry.degreesToRadians(h)
-        let zRad = (.pi / 2.0) - hRad // Zenith angle
+        let zRad = (Double.pi / 2.0) - hRad // Zenith angle
 
         // Reference standard refractivity at 1010 hPa, 10°C, 550nm
         let refNMinus1 = 0.00028279
@@ -206,7 +211,7 @@ public enum AtmosphericRefractionEngine: Sendable {
             let rLowDeg = ((1.02 / denom) * (nMinus1 / refNMinus1)) / 60.0
 
             let weight = (h - 10.0) / 5.0 // [0, 1]
-            let smoothWeight = 0.5 - 0.5 * cos(weight * .pi)
+            let smoothWeight = 0.5 - 0.5 * cos(weight * Double.pi)
             return (1.0 - smoothWeight) * rLowDeg + smoothWeight * rHighDeg
         }
     }
@@ -218,6 +223,7 @@ public enum AtmosphericRefractionEngine: Sendable {
     ///   - temperatureC: Air temperature in Celsius (default: 10.0).
     ///   - params: Ciddor atmospheric and spectral parameters.
     /// - Returns: Apparent altitude in degrees.
+    @inlinable
     public static func apparentAltitudeFromTrue(
         trueAltitude: Double,
         pressureHPa: Double = 1010.0,
@@ -252,6 +258,7 @@ public struct CiddorParameters: Sendable, Hashable {
     /// Relative humidity in percentage [0, 100] (default 50%)
     public var relativeHumidity: Double
 
+    @inlinable
     public init(
         wavelengthMicrometers: Double = 0.55,
         co2Ppm: Double = 450.0,

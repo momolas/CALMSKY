@@ -99,7 +99,7 @@ public final class Moon : Object, CelestialBody, @unchecked Sendable {
     /// Accessor to all values underlying the eclipse details. Will probably become private
     /// once all relevant accessors are implemented and covered.
     public var eclipseDetails: CAALunarEclipseDetails {
-        return CAAEclipses.CalculateLunar(CAAMoonPhases.K(self.julianDay.date.fractionalYear))
+        return CAAEclipses.CalculateLunar(round(CAAMoonPhases.K(self.julianDay.date.fractionalYear) - 0.5) + 0.5)
     }
 
     /// The diameter of the Moon.
