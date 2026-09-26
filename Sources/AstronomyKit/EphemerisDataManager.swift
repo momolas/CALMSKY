@@ -76,7 +76,10 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         }
     }
 
-    /// The remote URL of the official source (canonical GitHub Releases Assets for Triad models).
+    /// The remote URL of the official source (canonical GitHub Releases CDN for all kernels including DE442s).
+    ///
+    /// All kernels are distributed from the canonical GitHub Releases Assets for fast, reliable CDN delivery.
+    /// NAIF / IMCCE / IAA RAS upstream servers are used only as fallback.
     public var remoteURL: URL {
         let urlString: String
         switch self {
@@ -91,7 +94,8 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         case .de442:
             urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp"
         case .de442s:
-            urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp"
+            // Primary: canonical GitHub Releases CDN (fast, no institutional firewall issues)
+            urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp"
         case .inpop21a:
             urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/inpop21a.bsp"
         case .epm2021:
@@ -105,13 +109,14 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         return url
     }
 
-    /// Upstream official repository URL (fallback if primary source is unreachable).
+    /// Upstream official institutional URL (fallback if GitHub CDN is unreachable).
     public var fallbackRemoteURL: URL? {
         switch self {
         case .de442:
             return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442.bsp")
         case .de442s:
-            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp")
+            // Fallback: NASA NAIF official server
+            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp")
         case .inpop21a:
             return URL(string: "https://ftp.imcce.fr/pub/ephem/planets/inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz")
         case .epm2021:
@@ -484,21 +489,56 @@ public actor EphemerisDataManager {
         try makeStreamingTriadProvider(datasets: datasets)
     }
 
-    // MARK: - Baseline Numerical Ephemeris (NASA JPL DE442s)
+    // MARK: - Baseline Numerical Ephemeris (NASA JPL DE442s – On Demand)
+
+    /// Ensures the compact NASA JPL DE442s offline baseline kernel is available in the local cache.
+    ///
+    /// This is the primary on-demand download entry point for the DE442s kernel.
+    /// If the kernel is already cached, this method returns immediately (idempotent, zero network call).
+    /// If absent, it downloads from the canonical GitHub Releases CDN (~31 MB), falling back to NASA NAIF.
+    ///
+    /// Typical usage at first launch (e.g. `onAppear` or a background task):
+    ///
+    /// ```swift
+    /// let manager = EphemerisDataManager()
+    ///
+    /// // Downloads once on first call, no-op on subsequent calls
+    /// try await manager.ensureBaselineKernel { received, total in
+    ///     print("DE442s: \(received)/\(total)")
+    /// }
+    ///
+    /// // Use offline at any time without network
+    /// let provider = try manager.makeBaselineProviderFromCache()
+    /// ```
+    ///
+    /// - Parameter progress: Optional closure called with `(bytesReceived, totalBytes)`.
+    ///   Never invoked if the kernel is already cached.
+    /// - Returns: The local cache URL of the DE442s kernel.
+    /// - Throws: An error if download fails from both GitHub CDN and NASA NAIF.
+    @discardableResult
+    public func ensureBaselineKernel(
+        progress: (@Sendable (Int64, Int64) -> Void)? = nil
+    ) async throws -> URL {
+        try await download(.de442s, progress: progress)
+    }
 
     /// Instantiates the official baseline numerical ephemeris provider (NASA JPL DE442s).
     ///
     /// Downloads the kernel from the canonical GitHub Releases CDN (or NASA NAIF fallback) if not present.
+    /// Prefer calling ``ensureBaselineKernel(progress:)`` separately at app startup so the download
+    /// happens with explicit progress feedback before the provider is needed.
+    ///
     /// - Parameter progress: Optional closure called with `(bytesReceived, totalBytes)`.
     /// - Returns: An ``SPKEphemerisProvider`` initialized with NASA JPL DE442s.
     public func makeBaselineProvider(
         progress: (@Sendable (Int64, Int64) -> Void)? = nil
     ) async throws -> SPKEphemerisProvider {
-        let fileURL = try await download(.de442s) { received, total in
+        let fileURL = try await ensureBaselineKernel { received, total in
             progress?(received, total)
         }
         return try SPKEphemerisProvider(spkFileURL: fileURL)
     }
+
 
     /// Instantiates the official baseline numerical ephemeris provider (NASA JPL DE442s) from local cache for offline use.
     ///

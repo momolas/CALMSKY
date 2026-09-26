@@ -82,8 +82,11 @@ struct TriadEnsembleTests {
 
         let de442s = EphemerisDataset.de442s
         #expect(de442s.filename == "de442s.bsp")
-        #expect(de442s.remoteURL.absoluteString.contains("naif.jpl.nasa.gov") == true)
-        #expect(de442s.fallbackRemoteURL?.absoluteString.contains("github.com/momolas/CALMSKY") == true)
+        // de442s primary source is the canonical GitHub Releases CDN (same policy as inpop21a, epm2021, pmoe)
+        #expect(de442s.remoteURL.absoluteString.hasPrefix("https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/"))
+        // Fallback is NASA NAIF official server
+        #expect(de442s.fallbackRemoteURL?.absoluteString.contains("naif.jpl.nasa.gov") == true)
+
 
         let inpop21a = EphemerisDataset.inpop21a
         #expect(inpop21a.filename == "inpop21a.bsp")
