@@ -210,4 +210,35 @@ public final class StreamingTriadProvider: Sendable {
         }
         throw EphemerisError.calculationFailed("Could not resolve Earth position for angular projection")
     }
+
+    // MARK: - Convenience Evaluation APIs
+
+    /// Heliocentric position of a Solar System body in AU (ICRS/J2000) computed via streaming consensus.
+    public func position(for body: SolarSystemBody, at jd: JulianDay) async throws -> Vector3D {
+        let details = try await consensusDetails(for: body, at: jd)
+        return details.consensusPosition
+    }
+
+    /// Full 6D state vector of a Solar System body (position in AU, velocity in AU/day) computed via streaming consensus.
+    public func stateVector(for body: SolarSystemBody, at jd: JulianDay) async throws -> StateVector {
+        let details = try await consensusDetails(for: body, at: jd)
+        return StateVector(position: details.consensusPosition, velocity: details.consensusVelocity)
+    }
+
+    /// Geocentric position of the Moon in AU (ICRS/J2000, TDB) computed via streaming consensus.
+    public func lunarGeocentricPosition(at jd: JulianDay) async throws -> Vector3D {
+        let moonPos = try await position(for: .moon, at: jd)
+        let earthPos = try await position(for: .earth, at: jd)
+        return moonPos - earthPos
+    }
+
+    /// Geocentric 6D state vector of the Moon (position in AU, velocity in AU/day) computed via streaming consensus.
+    public func lunarGeocentricStateVector(at jd: JulianDay) async throws -> StateVector {
+        let moonState = try await stateVector(for: .moon, at: jd)
+        let earthState = try await stateVector(for: .earth, at: jd)
+        return StateVector(
+            position: moonState.position - earthState.position,
+            velocity: moonState.velocity - earthState.velocity
+        )
+    }
 }

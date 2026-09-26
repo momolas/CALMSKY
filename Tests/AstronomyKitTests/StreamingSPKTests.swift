@@ -206,4 +206,80 @@ struct StreamingSPKTests {
         #expect(cachedEarth == earthState.position)
         #expect(elapsed < .milliseconds(20), "Cached streaming evaluation should complete rapidly from local chunk cache (took \(elapsed))")
     }
+
+    // MARK: - Live Network Tetrad Range & Consensus Test
+
+    @Test("Live HTTP Dynamic Streaming Tetrad evaluates multi-agency consensus, lunar state vectors, and adaptive integration")
+    func liveHTTPStreamingTetradEvaluation() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("live_tetrad_\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let manager = EphemerisDataManager(cacheDirectory: tempDir)
+        let tetrad: StreamingTetradProvider = try await manager.makeStreamingTetradProvider()
+
+        // 1. Verify 4-agency architecture (US + FR + RU + CN)
+        #expect(tetrad.providers.count == 4)
+        #expect(tetrad.providers[.us]?.dataset == .de442)
+        #expect(tetrad.providers[.fr]?.dataset == .inpop21a)
+        #expect(tetrad.providers[.ru]?.dataset == .epm2021)
+        #expect(tetrad.providers[.cn]?.dataset == .pmoe)
+
+        let jd = JulianDay(2451545.0) // J2000.0 epoch
+
+        // 2. Sun consensus evaluation: immediate exact zero without network requests
+        let sunDetails = try await tetrad.consensusDetails(for: .sun, at: jd)
+        #expect(sunDetails.consensusPosition == .zero)
+        #expect(sunDetails.consensusVelocity == .zero)
+        #expect(sunDetails.physicalUncertaintyKm == 0.0)
+        #expect(sunDetails.contributingAgencies.count == 4)
+
+        // 3. Live streaming consensus for Earth (evaluates agencies in parallel via withTaskGroup)
+        let earthDetails = try await tetrad.consensusDetails(for: .earth, at: jd)
+        let earthDistAU = earthDetails.consensusPosition.length
+        #expect(earthDistAU > 0.98 && earthDistAU < 1.02, "Earth consensus distance at J2000 should be ≈ 1.0 AU (got \(earthDistAU))")
+        #expect(earthDetails.contributingAgencies.contains(.us))
+
+        // 4. Convenience evaluation methods on StreamingTetradProvider
+        let earthPos = try await tetrad.position(for: .earth, at: jd)
+        let earthState = try await tetrad.stateVector(for: .earth, at: jd)
+        #expect(earthPos == earthDetails.consensusPosition)
+        #expect(earthState.position == earthDetails.consensusPosition)
+        #expect(earthState.velocity == earthDetails.consensusVelocity)
+
+        // 5. Geocentric Lunar state vector via streaming consensus
+        let moonGeocentricPos = try await tetrad.lunarGeocentricPosition(at: jd)
+        let moonGeocentricState = try await tetrad.lunarGeocentricStateVector(at: jd)
+        let moonDistKm = moonGeocentricPos.length * StreamingTetradProvider.kmPerAU
+        #expect(moonDistKm > 360_000 && moonDistKm < 406_000, "Moon geocentric distance should be between 360,000 and 406,000 km (got \(moonDistKm))")
+        #expect(moonGeocentricState.position == moonGeocentricPos)
+
+        // 6. Live streaming consensus for Mars
+        let marsDetails = try await tetrad.consensusDetails(for: .mars, at: jd)
+        let marsDistAU = marsDetails.consensusPosition.length
+        #expect(marsDistAU > 1.38 && marsDistAU < 1.67, "Mars consensus distance should be between 1.38 and 1.67 AU (got \(marsDistAU))")
+
+        // 7. Integration with AdaptiveEphemerisProvider in onlineTetrad mode
+        let adaptive = AdaptiveEphemerisProvider(tetrad: tetrad)
+        #expect(adaptive.isStreamingTetrad == true)
+        #expect(adaptive.isStreamingTriad == true)
+        #expect(adaptive.isOfflineBaseline == false)
+
+        let adaptiveEarthPos = try await adaptive.position(for: .earth, at: jd)
+        #expect(adaptiveEarthPos == earthPos)
+
+        let adaptiveEarthState = try await adaptive.stateVector(for: .earth, at: jd)
+        #expect(adaptiveEarthState.position == earthState.position)
+        #expect(adaptiveEarthState.velocity == earthState.velocity)
+
+        // 8. Verify total network data transferred for the entire Tetrad is < 120 KB
+        let subpaths = (try? FileManager.default.subpathsOfDirectory(atPath: tempDir.path)) ?? []
+        var totalBytesCached: Int64 = 0
+        for subpath in subpaths {
+            let fileURL = tempDir.appendingPathComponent(subpath)
+            if let res = try? fileURL.resourceValues(forKeys: [.fileSizeKey]), let size = res.fileSize {
+                totalBytesCached += Int64(size)
+            }
+        }
+        #expect(totalBytesCached > 0 && totalBytesCached < 120_000, "Streaming Tetrad transferred \(totalBytesCached) bytes (expected < 120 KB)")
+    }
 }

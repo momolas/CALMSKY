@@ -40,6 +40,9 @@ public actor StreamingSPKReader {
     /// Cached segment descriptors.
     private var cachedSegments: [SPKReader.SegmentDescriptor]?
 
+    /// Failure record if segments could not be fetched from remote server.
+    private var segmentsError: Error?
+
     /// Endianness of the remote SPK file (most SPK files are Little Endian).
     private var isLittleEndian: Bool = true
 
@@ -73,6 +76,9 @@ public actor StreamingSPKReader {
 
     /// Retrieves all segment descriptors from the remote SPK file via streaming.
     public func getSegments() async throws -> [SPKReader.SegmentDescriptor] {
+        if let error = segmentsError {
+            throw error
+        }
         if let cached = cachedSegments {
             return cached
         }
@@ -157,6 +163,7 @@ public actor StreamingSPKReader {
             self.segmentsTask = nil
             return segments
         } catch {
+            self.segmentsError = error
             self.segmentsTask = nil
             throw error
         }

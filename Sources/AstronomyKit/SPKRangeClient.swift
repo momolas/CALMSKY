@@ -147,9 +147,15 @@ public actor SPKRangeClient {
     // MARK: - Private Network Implementation
 
     private func performRangeRequest(url: URL, start: Int, end: Int) async throws -> Data {
+        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" || scheme == "mock" else {
+            throw EphemerisError.calculationFailed(
+                "Dynamic byte-range streaming requires HTTP or HTTPS protocol (received \(url.scheme ?? "unknown"))"
+            )
+        }
+
         var request = URLRequest(url: url)
         request.setValue("bytes=\(start)-\(end)", forHTTPHeaderField: "Range")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 8
 
         let (data, response) = try await session.data(for: request)
 
