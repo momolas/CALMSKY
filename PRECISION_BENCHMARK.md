@@ -1,12 +1,12 @@
 # Registre Permanent de Précision Astrométrique (Precision Benchmark Ledger)
 
-> **Statut actuel** : ✅ **Exclusivité Numérique Pure — Baseline NASA JPL DE442s/DE442 (Hors-Ligne) & Tétrade/Triade avec DE442 Complet (En Ligne Streaming) (v2.3 Validé)**  
+> **Statut actuel** : ✅ **Exclusivité Numérique Pure — Baseline NASA JPL DE442s/DE442 (Hors-Ligne) & Tétrade Mondiale par Défaut (En Ligne Streaming) (v2.6 Validé)**  
 > **Baseline Numérique Officielle (Hors-Ligne)** : **NASA JPL DE442s (`de442s.bsp`, ~31 Mo)** ou **DE442 (`de442.bsp`, ~119.8 Mo)** — Précision métrologique **`< 0.0001"` (Sub-milliarcseconde) et `< 1 m` (Sub-mètre)** validée contre NASA JPL Horizons DE441  
-> **Modèle Haute Précision (En Ligne Streaming)** : **Tétrade / Triade Numérique avec DE442 Complet (1549–2650 CE, 1 100 ans)** via requêtes HTTP Byte-Range partielles (`StreamingTetradProvider` / `StreamingTriadProvider` / `StreamingSPKEphemerisProvider`)  
+> **Modèle Haute Précision par Défaut (En Ligne Streaming)** : **Tétrade Numérique Internationale (DE442 US + INPOP21a FR + EPM2021 RU + PMOE CN)** via requêtes HTTP Byte-Range partielles (`StreamingTetradProvider` / `AdaptiveEphemerisProvider`)  
 > **Exclusivité Numérique Stricte** : **Zéro théorie analytique, zéro repli dégradé**. Retrait définitif de Standish (1992), de Jean Meeus, de VSOP87D, d'ELP2000-82B et de la théorie analytique VSOP2013  
 > **Vérité Terrain de Référence** : **NASA JPL Horizons DE441 / DE440** (Intégration Numérique Relativiste Barycentrique)  
 > **Dernière évaluation** : 2026-09-26 (Époque de test : `2026-Sep-20 00:00:00 UTC` / `JD 2461303.5`)  
-> **Temps d'exécution de la suite** : **Sub-seconde (~0.03 s pour le benchmark, ~0.85 s suite complète)** (341 tests, 58 suites, 100% de succès)
+> **Temps d'exécution de la suite** : **Sub-seconde (~0.03 s pour le benchmark, ~0.84 s suite complète)** (342 tests, 58 suites, 100% de succès)
 
 Ce document constitue le **registre officiel et vivant** consignant l'évolution métrologique du moteur de calcul d'AstronomyKit face aux éphémérides fondamentales de référence de la NASA (JPL Horizons). **Il doit être mis à jour à chaque optimisation, recalibrage ou enrichissement de modèle.**
 
@@ -25,7 +25,7 @@ AstronomyKit applique une politique métrologique stricte et adaptative (`Adapti
                                           /         \
                       ┌──────────────────┐           ┌────────────────────────────┐
                       │  HORS-LIGNE      │           │  EN LIGNE (STREAMING)      │
-                      │  Baseline DE442s │           │  Tétrade / Triade Mondiale │
+                      │  Baseline DE442s │           │  Tétrade Mondiale DÉFAUT   │
                       │  NASA JPL        │           │  US + FR + RU + CN         │
                       │  < 0.0001" (< 1m)│           │  1σ < 0.05 km (< 0.001")   │
                       └──────────────────┘           └────────────────────────────┘
@@ -40,15 +40,15 @@ AstronomyKit applique une politique métrologique stricte et adaptative (`Adapti
                                              └────────────────────────────┘
 ```
 
-1. **En Hors-Ligne (Baseline Numérique DE442s)** :
-   - Lorsque le fichier `de442s.bsp` (~31.1 Mo) est présent dans le cache local (`Caches/AstronomyKit/`), le moteur instancie directement `SPKEphemerisProvider(filePath:)`.
+1. **En Hors-Ligne (Baseline Numérique DE442s / DE442)** :
+   - Lorsque le fichier `de442s.bsp` (~31.1 Mo) ou `de442.bsp` (~119.8 Mo) est présent dans le cache local (`Caches/AstronomyKit/`), le moteur instancie directement `SPKEphemerisProvider(filePath:)`.
    - Évaluation vectorisée Apple Accelerate des polynômes de Tchebychev de Type 2.
    - **Précision absolue** : concordance exacte avec NASA JPL Horizons DE441 (erreur angulaire `< 0.0001"` et distance `< 1 m`).
 
-2. **En Ligne (Tétrade / Triade Numérique en Streaming Temporel)** :
-   - Par défaut en ligne, le moteur instancie `StreamingTriadProvider` (ou `StreamingTetradProvider`) via `makeStreamingTriadProvider()` ou `makeStreamingTetradProvider()`.
-   - Les 4 kernels mondiaux majeurs sont interrogés dynamiquement par tranches de 1024 à 4096 octets via des requêtes HTTP partielles (`Accept-Ranges: bytes`) hébergées sur GitHub Releases :
-     - **US** : NASA JPL `DE442s` (1849–2150 CE)
+2. **En Ligne (Tétrade Numérique en Streaming Temporel - PAR DÉFAUT)** :
+   - Par défaut en ligne, le moteur instancie `StreamingTetradProvider` via `makeStreamingTetradProvider()` (ou `makeAdaptiveProvider()`).
+   - Les 4 kernels mondiaux majeurs sont interrogés dynamiquement par tranches de 1024 à 4096 octets via des requêtes HTTP partielles (`Accept-Ranges: bytes`) hébergées sur NASA NAIF & GitHub Releases :
+     - **US** : NASA JPL `DE442` (1549–2650 CE, 1 100 ans) ou `DE442s` (1849–2150 CE)
      - **FR** : Observatoire de Paris / IMCCE `INPOP21a` (1900–2100 CE)
      - **RU** : Académie des Sciences de Russie / IAA RAS `EPM2021` (1787–2214 CE)
      - **CN** : Observatoire de la Montagne Pourpre / CAS `PMOE` (1900–2100 CE)
@@ -95,6 +95,19 @@ AstronomyKit applique une politique métrologique stricte et adaptative (`Adapti
 ---
 
 ## 3. Historique des Évolutions du Modèle (Precision Changelog)
+
+### [v2.6] - 2026-09-26 : Adoption de la Tétrade par Défaut (US + FR + RU + CN)
+- **Directive Utilisateur Appliquée** :
+  - *« utiliser la tetrade par defaut »*
+- **Changements majeurs** :
+  1. **Généralisation de la Tétrade comme Ensemble par Défaut** :
+     - `makeAdaptiveProvider()` résout désormais par défaut vers la Tétrade numérique en streaming (`StreamingTetradProvider`, `.onlineTetrad`), combinant les 4 modèles mondiaux (NASA JPL DE442, IMCCE INPOP21a, IAA RAS EPM2021, PMO/CAS PMOE) avec un quorum de 4 agences et $\binom{4}{2} = 6$ paires d'inter-comparaison.
+     - `StreamingTriadProvider.init(cacheDirectory:)` et `makeStreamingTriadProvider()` incluent désormais `.pmoe` par défaut, assurant que tout appel de commodité bénéficie du consensus complet à 4 agences.
+     - `makeTriadProvider()` et `makeTriadProviderFromCache()` incluent également `.pmoe` par défaut dans la liste des datasets candidats.
+  2. **Extension d'AdaptiveEphemerisProvider** :
+     - Ajout de `case onlineTetrad(StreamingTetradProvider)` dans `AdaptiveEphemerisProvider.Engine`.
+     - Ajout de la propriété `isStreamingTetrad: Bool` et maintien transparent de `isStreamingTriad: Bool` (retournant `true` pour la Triade et la Tétrade).
+  3. **Validation Métrologique** : 342 tests automatisés dans 58 suites, 100% de succès en ~0.84 s.
 
 ### [v2.5] - 2026-09-26 : Intégration du Kernel Complet NASA JPL DE442 (1100 ans) pour le Streaming Dynamique HTTP Range
 - **Directives Utilisateur Appliquées** :

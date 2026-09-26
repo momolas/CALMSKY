@@ -225,12 +225,25 @@ struct EphemerisDataManagerTests {
         #expect(providerCompact.dataset == .de442s)
     }
 
-    @Test("makeStreamingTriadProvider defaults to DE442 complete kernel for US agency")
+    @Test("makeStreamingTriadProvider defaults to DE442 complete kernel and 4-agency Tetrad")
     func makeStreamingTriadProviderDefaults() async throws {
         let manager = EphemerisDataManager()
         let triad = try await manager.makeStreamingTriadProvider()
         let usProvider = try #require(triad.providers[.us])
         #expect(usProvider.dataset == .de442)
+        #expect(triad.providers.count == 4)
+        #expect(triad.providers[.cn] != nil)
+    }
+
+    @Test("makeStreamingTetradProvider defaults to DE442 complete kernel and 4-agency Tetrad")
+    func makeStreamingTetradProviderDefaults() async throws {
+        let manager = EphemerisDataManager()
+        let tetrad = try await manager.makeStreamingTetradProvider()
+        #expect(tetrad.providers.count == 4)
+        #expect(tetrad.providers[.us]?.dataset == .de442)
+        #expect(tetrad.providers[.fr]?.dataset == .inpop21a)
+        #expect(tetrad.providers[.ru]?.dataset == .epm2021)
+        #expect(tetrad.providers[.cn]?.dataset == .pmoe)
     }
 }
 

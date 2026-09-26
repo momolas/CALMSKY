@@ -352,12 +352,12 @@ public actor EphemerisDataManager {
     /// Strictly enforces numerical exclusivity: no silent fallback to analytical models.
     ///
     /// - Parameters:
-    ///   - datasets: Datasets to include (defaults to all three: `.de442s`, `.inpop21a`, `.epm2021`).
+    ///   - datasets: Datasets to include (defaults to all four Tetrad models: `.de442s`, `.inpop21a`, `.epm2021`, `.pmoe`).
     ///   - progress: Optional closure called with `(dataset, bytesReceived, totalBytes)`.
     /// - Returns: A configured ``TriadEphemerisProvider``.
     /// - Throws: An error if download fails or kernels cannot be parsed.
     public func makeTriadProvider(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021],
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe],
         progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
     ) async throws -> TriadEphemerisProvider {
         var providers: [TriadAgency: any EphemerisProvider] = [:]
@@ -389,11 +389,11 @@ public actor EphemerisDataManager {
     /// Strictly enforces numerical exclusivity: if none of the requested kernels are present in cache,
     /// throws ``EphemerisError/dataFileNotFound(_:)``. Never falls back to analytical models.
     ///
-    /// - Parameter datasets: Candidate datasets to look for in local cache (defaults to `.de442s`, `.inpop21a`, `.epm2021`).
+    /// - Parameter datasets: Candidate datasets to look for in local cache (defaults to all four Tetrad models: `.de442s`, `.inpop21a`, `.epm2021`, `.pmoe`).
     /// - Returns: A configured ``TriadEphemerisProvider``.
     /// - Throws: ``EphemerisError`` if no cached kernel is available or if data is corrupted.
     public nonisolated func makeTriadProviderFromCache(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021]
+        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe]
     ) throws -> TriadEphemerisProvider {
         var providers: [TriadAgency: any EphemerisProvider] = [:]
 
@@ -461,7 +461,7 @@ public actor EphemerisDataManager {
     /// Fetches and evaluates Chebyshev polynomial slices across all three models in parallel,
     /// transferring less than 10 KB per requested date while providing full consensus and 1-sigma physical uncertainty.
     public func makeStreamingTriadProvider(
-        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021]
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021, .pmoe]
     ) throws -> StreamingTriadProvider {
         var providers: [TriadAgency: StreamingSPKEphemerisProvider] = [:]
         for ds in datasets {
@@ -555,7 +555,7 @@ public actor EphemerisDataManager {
 
     /// Creates an optimal adaptive numerical provider adhering to the policy:
     /// - **Hors-ligne (Offline)** : Utilise la Baseline numérique NASA JPL (DE442s compact ou DE442 complet) si disponible en cache local (`.offlineBaseline`).
-    /// - **Sinon (En ligne / Streaming)** : Utilise la Triade numérique (DE442 US + INPOP21a FR + EPM2021 RU) via streaming dynamique HTTP Range (`.onlineTriad`).
+    /// - **Sinon (En ligne / Streaming)** : Utilise la Tétrade numérique (DE442 US + INPOP21a FR + EPM2021 RU + PMOE CN) via streaming dynamique HTTP Range (`.onlineTetrad`).
     public func makeAdaptiveProvider() throws -> AdaptiveEphemerisProvider {
         let compactURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
         let completeURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442.filename)
@@ -563,8 +563,8 @@ public actor EphemerisDataManager {
             let baseline = try makeBaselineProviderFromCache()
             return AdaptiveEphemerisProvider(engine: .offlineBaseline(baseline))
         } else {
-            let triad = try makeStreamingTriadProvider()
-            return AdaptiveEphemerisProvider(engine: .onlineTriad(triad))
+            let tetrad = try makeStreamingTetradProvider()
+            return AdaptiveEphemerisProvider(engine: .onlineTetrad(tetrad))
         }
     }
 }
@@ -572,12 +572,13 @@ public actor EphemerisDataManager {
 // MARK: - Adaptive Ephemeris Provider
 
 /// Adaptive ephemeris orchestrator dynamically selecting between:
-/// - Offline Baseline: NASA JPL DE442s local numerical SPK kernel.
-/// - Online Consensus: Streaming Triad (NASA JPL DE442s + IMCCE INPOP21a + IAA RAS EPM2021) via parallel HTTP Range requests.
+/// - Offline Baseline: NASA JPL DE442s / DE442 local numerical SPK kernel.
+/// - Online Consensus: Streaming Tetrad (NASA JPL DE442 + IMCCE INPOP21a + IAA RAS EPM2021 + PMO/CAS PMOE) via parallel HTTP Range requests.
 public final class AdaptiveEphemerisProvider: Sendable {
     public enum Engine: Sendable {
         case offlineBaseline(SPKEphemerisProvider)
         case onlineTriad(StreamingTriadProvider)
+        case onlineTetrad(StreamingTetradProvider)
     }
 
     public let engine: Engine
@@ -586,21 +587,48 @@ public final class AdaptiveEphemerisProvider: Sendable {
         self.engine = engine
     }
 
+    public convenience init(tetrad: StreamingTetradProvider) {
+        self.init(engine: .onlineTetrad(tetrad))
+    }
+
+    public convenience init(triad: StreamingTriadProvider) {
+        self.init(engine: triad.providers.count >= 4 ? .onlineTetrad(triad) : .onlineTriad(triad))
+    }
+
+    public convenience init(baseline: SPKEphemerisProvider) {
+        self.init(engine: .offlineBaseline(baseline))
+    }
+
     public var isOfflineBaseline: Bool {
         if case .offlineBaseline = engine { return true }
         return false
     }
 
+    public var isStreamingTetrad: Bool {
+        switch engine {
+        case .onlineTetrad:
+            return true
+        case .onlineTriad(let triad):
+            return triad.providers.count >= 4
+        case .offlineBaseline:
+            return false
+        }
+    }
+
     public var isStreamingTriad: Bool {
-        if case .onlineTriad = engine { return true }
-        return false
+        switch engine {
+        case .onlineTriad, .onlineTetrad:
+            return true
+        case .offlineBaseline:
+            return false
+        }
     }
 
     public func position(for body: SolarSystemBody, at jd: JulianDay) async throws -> Vector3D {
         switch engine {
         case .offlineBaseline(let baseline):
             return try baseline.position(for: body, at: jd)
-        case .onlineTriad(let triad):
+        case .onlineTriad(let triad), .onlineTetrad(let triad):
             let details = try await triad.consensusDetails(for: body, at: jd)
             return details.consensusPosition
         }
@@ -610,7 +638,7 @@ public final class AdaptiveEphemerisProvider: Sendable {
         switch engine {
         case .offlineBaseline(let baseline):
             return try baseline.stateVector(for: body, at: jd)
-        case .onlineTriad(let triad):
+        case .onlineTriad(let triad), .onlineTetrad(let triad):
             let details = try await triad.consensusDetails(for: body, at: jd)
             return StateVector(position: details.consensusPosition, velocity: details.consensusVelocity)
         }

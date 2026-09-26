@@ -288,9 +288,10 @@ struct PrecisionBenchmarkTests {
 
         let manager = EphemerisDataManager(cacheDirectory: tempDir)
 
-        // 1. When DE442s is NOT in local cache -> Adaptive provider selects Online Streaming Triad
+        // 1. When DE442s is NOT in local cache -> Adaptive provider selects Online Streaming Tetrad
         let onlineProvider = try await manager.makeAdaptiveProvider()
-        #expect(onlineProvider.isStreamingTriad, "When offline cache is empty, adaptive provider must select Streaming Triad")
+        #expect(onlineProvider.isStreamingTetrad, "When offline cache is empty, adaptive provider must select Streaming Tetrad")
+        #expect(onlineProvider.isStreamingTriad)
         #expect(!onlineProvider.isOfflineBaseline)
 
         // 2. When DE442s IS in local cache -> Adaptive provider selects Offline DE442s Baseline
@@ -329,6 +330,7 @@ struct PrecisionBenchmarkTests {
         let offlineProvider = try await manager.makeAdaptiveProvider()
         #expect(offlineProvider.isOfflineBaseline, "When DE442s is in cache, adaptive provider must select Offline Baseline")
         #expect(!offlineProvider.isStreamingTriad)
+        #expect(!offlineProvider.isStreamingTetrad)
     }
 
     @Test("LunarDE442sProvider typealias and SPK Moon target integration")
