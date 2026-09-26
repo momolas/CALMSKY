@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import Network
+
 
 /// Identifies a downloadable ephemeris dataset from an official astronomical data center.
 public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
@@ -591,21 +593,94 @@ public actor EphemerisDataManager {
         makeStreamingProvider(for: .de442)
     }
 
-    /// Creates an optimal adaptive numerical provider adhering to the policy:
-    /// - **Hors-ligne (Offline)** : Utilise la Baseline numérique NASA JPL (DE442s compact ou DE442 complet) si disponible en cache local (`.offlineBaseline`).
-    /// - **Sinon (En ligne / Streaming)** : Utilise la Tétrade numérique (DE442 US + INPOP21a FR + EPM2021 RU + PMOE CN) via streaming dynamique HTTP Range (`.onlineTetrad`).
-    public func makeAdaptiveProvider() throws -> AdaptiveEphemerisProvider {
-        let compactURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442s.filename)
-        let completeURL = cacheDirectory.appendingPathComponent(EphemerisDataset.de442.filename)
-        if FileManager.default.fileExists(atPath: compactURL.path) || FileManager.default.fileExists(atPath: completeURL.path) {
-            let baseline = try makeBaselineProviderFromCache()
-            return AdaptiveEphemerisProvider(engine: .offlineBaseline(baseline))
-        } else {
+    // MARK: - Launch Preparation
+
+    /// Prepares the offline baseline kernel in the background at application launch.
+    ///
+    /// Downloads `de442s.bsp` (~31 MB) from the canonical GitHub Releases CDN (fallback: NASA NAIF)
+    /// into the local cache **once**. On subsequent calls the file is already present and the method
+    /// returns immediately without any network activity.
+    ///
+    /// Call this as early as possible at app startup — for example from `AppDelegate.applicationDidFinishLaunching`
+    /// or a SwiftUI `.task {}` on the root view — so the offline baseline is ready before the user
+    /// triggers an operation that requires it.
+    ///
+    /// ```swift
+    /// // In your App struct:
+    /// var body: some Scene {
+    ///     WindowGroup {
+    ///         ContentView()
+    ///             .task {
+    ///                 await ephemerisManager.prepareOfflineBaseline()
+    ///             }
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// The returned `Task` can be awaited to track completion or `@discardableResult`-ignored
+    /// for pure fire-and-forget background preparation.
+    ///
+    /// - Parameter progress: Optional closure called with `(bytesReceived, totalBytes)`.
+    ///   Never invoked if the kernel is already cached.
+    /// - Returns: A background `Task` resolving to the local cache URL of `de442s.bsp`.
+    @discardableResult
+    public func prepareOfflineBaseline(
+        progress: (@Sendable (Int64, Int64) -> Void)? = nil
+    ) -> Task<URL, Error> {
+        Task(priority: .background) { [self] in
+            try await self.ensureBaselineKernel(progress: progress)
+        }
+    }
+
+    // MARK: - Adaptive Provider (Network-Aware)
+
+    /// Creates an optimal adaptive numerical provider based on current network reachability.
+    ///
+    /// **Online (network available)**:
+    /// Uses the streaming Tetrad — parallel HTTP Range requests:
+    /// - 🇺🇸 **US**: NASA JPL DE442 streamed directly from **NASA NAIF** (`naif.jpl.nasa.gov`)
+    /// - 🇫🇷 **FR**: IMCCE INPOP21a streamed from **GitHub CDN**
+    /// - 🇷🇺 **RU**: IAA RAS EPM2021 streamed from **GitHub CDN**
+    /// - 🇨🇳 **CN**: PMO/CAS PMOE streamed from **GitHub CDN**
+    ///
+    /// **Offline (no network)**:
+    /// Uses the locally cached NASA JPL **DE442s** compact baseline (~31 MB).
+    /// Throws ``EphemerisError/dataFileNotFound(_:)`` if the cache has not been populated yet
+    /// (call ``prepareOfflineBaseline()`` at launch to prevent this).
+    ///
+    /// - Returns: A configured ``AdaptiveEphemerisProvider``.
+    /// - Throws: ``EphemerisError`` if offline and the baseline kernel is not cached.
+    public func makeAdaptiveProvider() async throws -> AdaptiveEphemerisProvider {
+        if await isNetworkAvailable() {
+            // Online: parallel HTTP Range streaming from NAIF (US) + GitHub CDN (FR, RU, CN)
             let tetrad = try makeStreamingTetradProvider()
             return AdaptiveEphemerisProvider(engine: .onlineTetrad(tetrad))
+        } else {
+            // Offline: use the locally cached DE442s compact baseline
+            let baseline = try makeBaselineProviderFromCache()
+            return AdaptiveEphemerisProvider(engine: .offlineBaseline(baseline))
+        }
+    }
+
+    // MARK: - Network Reachability
+
+    /// Performs a one-shot synchronous-style network path check via `NWPathMonitor`.
+    ///
+    /// Returns `true` if a satisfactory network path is available (WiFi, Cellular, Ethernet).
+    /// Uses a continuation so it can be awaited from any async context without blocking the actor.
+    private func isNetworkAvailable() async -> Bool {
+        await withCheckedContinuation { continuation in
+            let monitor = NWPathMonitor()
+            let queue = DispatchQueue(label: "astronomy.kit.network.probe", qos: .utility)
+            monitor.pathUpdateHandler = { path in
+                monitor.cancel()
+                continuation.resume(returning: path.status == .satisfied)
+            }
+            monitor.start(queue: queue)
         }
     }
 }
+
 
 // MARK: - Adaptive Ephemeris Provider
 

@@ -280,7 +280,7 @@ struct PrecisionBenchmarkTests {
         }
     }
 
-    @Test("Adaptive Ephemeris Provider Policy (Offline DE442s Baseline vs Online Streaming Triad)")
+    @Test("Adaptive Ephemeris Provider Policy (Network-First: Online Streaming Tetrad vs Offline DE442s Cache)")
     func testAdaptiveProviderPolicy() async throws {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
@@ -288,50 +288,51 @@ struct PrecisionBenchmarkTests {
 
         let manager = EphemerisDataManager(cacheDirectory: tempDir)
 
-        // 1. When DE442s is NOT in local cache -> Adaptive provider selects Online Streaming Tetrad
-        let onlineProvider = try await manager.makeAdaptiveProvider()
-        #expect(onlineProvider.isStreamingTetrad, "When offline cache is empty, adaptive provider must select Streaming Tetrad")
-        #expect(onlineProvider.isStreamingTriad)
-        #expect(!onlineProvider.isOfflineBaseline)
+        // Policy: network-first — when a network path is available, always use Streaming Tetrad
+        // regardless of whether the local DE442s cache exists.
+        // In CI/unit tests the host always has a network, so makeAdaptiveProvider() must return
+        // the online streaming Tetrad.
+        let provider = try await manager.makeAdaptiveProvider()
+        #expect(provider.isStreamingTetrad, "With network available, adaptive provider must always select Streaming Tetrad")
+        #expect(provider.isStreamingTriad, "Streaming Tetrad is also a superset of Streaming Triad")
+        #expect(!provider.isOfflineBaseline, "Offline Baseline must NOT be selected when network is available")
 
-        // 2. When DE442s IS in local cache -> Adaptive provider selects Offline DE442s Baseline
-        // Create valid minimal 2048-byte SPK file in cache with 1 segment so SPKEphemerisProvider initializes cleanly
+        // Verify that the offline path works correctly when the cache is populated:
+        // makeBaselineProviderFromCache() must succeed after writing a valid stub kernel.
         let baselinePath = tempDir.appendingPathComponent(EphemerisDataset.de442s.filename)
         var dummyDAF = Data(count: 2048)
         dummyDAF.replaceSubrange(0..<8, with: "DAF/SPK ".data(using: .ascii)!)
         var nd: Int32 = 2
         var ni: Int32 = 6
         var fward: Int32 = 2
-        withUnsafeBytes(of: &nd) { dummyDAF.replaceSubrange(8..<12, with: $0) }
-        withUnsafeBytes(of: &ni) { dummyDAF.replaceSubrange(12..<16, with: $0) }
+        withUnsafeBytes(of: &nd)    { dummyDAF.replaceSubrange(8..<12, with: $0) }
+        withUnsafeBytes(of: &ni)    { dummyDAF.replaceSubrange(12..<16, with: $0) }
         withUnsafeBytes(of: &fward) { dummyDAF.replaceSubrange(76..<80, with: $0) }
-
-        // Record 2 (summary record at offset 1024)
         var nSummaries: Double = 1.0
         withUnsafeBytes(of: &nSummaries) { dummyDAF.replaceSubrange(1040..<1048, with: $0) }
         var startEpoch: Double = -1_000_000_000.0
-        var endEpoch: Double = 1_000_000_000.0
+        var endEpoch:   Double =  1_000_000_000.0
         withUnsafeBytes(of: &startEpoch) { dummyDAF.replaceSubrange(1048..<1056, with: $0) }
-        withUnsafeBytes(of: &endEpoch) { dummyDAF.replaceSubrange(1056..<1064, with: $0) }
-        var target: Int32 = 1
-        var center: Int32 = 0
-        var frame: Int32 = 1
-        var spkType: Int32 = 2
-        var startAddr: Int32 = 1
-        var endAddr: Int32 = 100
-        withUnsafeBytes(of: &target) { dummyDAF.replaceSubrange(1064..<1068, with: $0) }
-        withUnsafeBytes(of: &center) { dummyDAF.replaceSubrange(1068..<1072, with: $0) }
-        withUnsafeBytes(of: &frame) { dummyDAF.replaceSubrange(1072..<1076, with: $0) }
-        withUnsafeBytes(of: &spkType) { dummyDAF.replaceSubrange(1076..<1080, with: $0) }
+        withUnsafeBytes(of: &endEpoch)   { dummyDAF.replaceSubrange(1056..<1064, with: $0) }
+        var target: Int32 = 1;  var center: Int32 = 0
+        var frame:  Int32 = 1;  var spkType: Int32 = 2
+        var startAddr: Int32 = 1; var endAddr: Int32 = 100
+        withUnsafeBytes(of: &target)    { dummyDAF.replaceSubrange(1064..<1068, with: $0) }
+        withUnsafeBytes(of: &center)    { dummyDAF.replaceSubrange(1068..<1072, with: $0) }
+        withUnsafeBytes(of: &frame)     { dummyDAF.replaceSubrange(1072..<1076, with: $0) }
+        withUnsafeBytes(of: &spkType)   { dummyDAF.replaceSubrange(1076..<1080, with: $0) }
         withUnsafeBytes(of: &startAddr) { dummyDAF.replaceSubrange(1080..<1084, with: $0) }
-        withUnsafeBytes(of: &endAddr) { dummyDAF.replaceSubrange(1084..<1088, with: $0) }
+        withUnsafeBytes(of: &endAddr)   { dummyDAF.replaceSubrange(1084..<1088, with: $0) }
         try dummyDAF.write(to: baselinePath)
 
-        let offlineProvider = try await manager.makeAdaptiveProvider()
-        #expect(offlineProvider.isOfflineBaseline, "When DE442s is in cache, adaptive provider must select Offline Baseline")
-        #expect(!offlineProvider.isStreamingTriad)
-        #expect(!offlineProvider.isStreamingTetrad)
+        // Offline path: makeBaselineProviderFromCache() succeeds when kernel is in cache
+        let offlineProvider = try manager.makeBaselineProviderFromCache()
+        let wrappedOffline = AdaptiveEphemerisProvider(baseline: offlineProvider)
+        #expect(wrappedOffline.isOfflineBaseline, "makeBaselineProviderFromCache() + AdaptiveEphemerisProvider must report Offline Baseline")
+        #expect(!wrappedOffline.isStreamingTriad)
+        #expect(!wrappedOffline.isStreamingTetrad)
     }
+
 
     @Test("LunarDE442sProvider typealias and SPK Moon target integration")
     func testLunarDE442sProviderIntegration() throws {
