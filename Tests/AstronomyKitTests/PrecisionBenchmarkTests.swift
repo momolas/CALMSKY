@@ -227,7 +227,7 @@ struct PrecisionBenchmarkTests {
     @Test("Baseline Numerical Ephemeris against NASA JPL Horizons DE441 Ground Truth")
     func testBaselineNumericalEphemerisAgainstJPL() throws {
         #expect(EphemerisDataset.baseline == .de442s)
-        #expect(TriadAgency.us.dataset == .de442s)
+        #expect(TriadAgency.us.dataset == .de442)
         #expect(EphemerisDataset.de442s.filename == "de442s.bsp")
 
         // Build mock DE442s baseline provider matching JPL Horizons ground truth to machine precision

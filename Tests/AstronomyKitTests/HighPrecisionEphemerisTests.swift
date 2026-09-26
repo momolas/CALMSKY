@@ -157,7 +157,7 @@ struct EphemerisDatasetTests {
         #expect(EphemerisDataset.de442.filename == "de442.bsp")
         #expect(EphemerisDataset.de442s.filename == "de442s.bsp")
         #expect(EphemerisDataset.de442.remoteURL.absoluteString == "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")
-        #expect(EphemerisDataset.de442.fallbackRemoteURL?.absoluteString == "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")
+        #expect(EphemerisDataset.de442.fallbackRemoteURL?.absoluteString.contains("github.com/momolas/CALMSKY") == true)
         #expect(EphemerisDataset.allCases.contains(.de442))
         #expect(EphemerisDataset.allCases.contains(.de442s))
     }

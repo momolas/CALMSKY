@@ -91,7 +91,7 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         case .de442:
             urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp"
         case .de442s:
-            urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp"
+            urlString = "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp"
         case .inpop21a:
             urlString = "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/inpop21a.bsp"
         case .epm2021:
@@ -105,13 +105,13 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         return url
     }
 
-    /// Upstream official repository URL (fallback if GitHub Releases is unreachable).
+    /// Upstream official repository URL (fallback if primary source is unreachable).
     public var fallbackRemoteURL: URL? {
         switch self {
         case .de442:
-            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442.bsp")
+            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442.bsp")
         case .de442s:
-            return URL(string: "https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de442s.bsp")
+            return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp")
         case .inpop21a:
             return URL(string: "ftp://ftp.imcce.fr/pub/ephem/planets/inpop21a/inpop21a_TDB_m100_p100_spice.tar.gz")
         case .epm2021:
@@ -352,12 +352,12 @@ public actor EphemerisDataManager {
     /// Strictly enforces numerical exclusivity: no silent fallback to analytical models.
     ///
     /// - Parameters:
-    ///   - datasets: Datasets to include (defaults to all four Tetrad models: `.de442s`, `.inpop21a`, `.epm2021`, `.pmoe`).
+    ///   - datasets: Datasets to include (defaults to all four Tetrad models: `.de442`, `.inpop21a`, `.epm2021`, `.pmoe`).
     ///   - progress: Optional closure called with `(dataset, bytesReceived, totalBytes)`.
     /// - Returns: A configured ``TriadEphemerisProvider``.
     /// - Throws: An error if download fails or kernels cannot be parsed.
     public func makeTriadProvider(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe],
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021, .pmoe],
         progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
     ) async throws -> TriadEphemerisProvider {
         var providers: [TriadAgency: any EphemerisProvider] = [:]
@@ -389,11 +389,11 @@ public actor EphemerisDataManager {
     /// Strictly enforces numerical exclusivity: if none of the requested kernels are present in cache,
     /// throws ``EphemerisError/dataFileNotFound(_:)``. Never falls back to analytical models.
     ///
-    /// - Parameter datasets: Candidate datasets to look for in local cache (defaults to all four Tetrad models: `.de442s`, `.inpop21a`, `.epm2021`, `.pmoe`).
+    /// - Parameter datasets: Candidate datasets to look for in local cache (defaults to all four Tetrad models: `.de442`, `.inpop21a`, `.epm2021`, `.pmoe`).
     /// - Returns: A configured ``TriadEphemerisProvider``.
     /// - Throws: ``EphemerisError`` if no cached kernel is available or if data is corrupted.
     public nonisolated func makeTriadProviderFromCache(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe]
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021, .pmoe]
     ) throws -> TriadEphemerisProvider {
         var providers: [TriadAgency: any EphemerisProvider] = [:]
 
@@ -413,7 +413,7 @@ public actor EphemerisDataManager {
 
         guard !providers.isEmpty else {
             throw EphemerisError.dataFileNotFound(
-                "No Triad/Tetrad numerical kernels (.de442s, .inpop21a, .epm2021, .pmoe) found in cache directory \(cacheDirectory.path). " +
+                "No Triad/Tetrad numerical kernels (.de442, .de442s, .inpop21a, .epm2021, .pmoe) found in cache directory \(cacheDirectory.path). " +
                 "Numerical exclusivity strictly enforced (analytical fallback disabled)."
             )
         }
@@ -423,11 +423,11 @@ public actor EphemerisDataManager {
 
     // MARK: - Tetrad Ensemble Factories (US + FR + RU + CN)
 
-    /// Instantiates a 4-agency ``TetradEphemerisProvider`` (NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, PMO/CAS PMOE).
+    /// Instantiates a 4-agency ``TetradEphemerisProvider`` (NASA JPL DE442, IMCCE INPOP21a, IAA RAS EPM2021, PMO/CAS PMOE).
     ///
     /// Downloads missing numerical kernels in parallel with progress reporting.
     public func makeTetradProvider(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe],
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021, .pmoe],
         progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
     ) async throws -> TetradEphemerisProvider {
         try await makeTriadProvider(datasets: datasets, progress: progress)
@@ -435,7 +435,7 @@ public actor EphemerisDataManager {
 
     /// Instantiates a 4-agency ``TetradEphemerisProvider`` from locally cached numerical kernels without network access.
     public nonisolated func makeTetradProviderFromCache(
-        datasets: [EphemerisDataset] = [.de442s, .inpop21a, .epm2021, .pmoe]
+        datasets: [EphemerisDataset] = [.de442, .inpop21a, .epm2021, .pmoe]
     ) throws -> TetradEphemerisProvider {
         try makeTriadProviderFromCache(datasets: datasets)
     }

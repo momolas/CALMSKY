@@ -41,7 +41,7 @@ public enum TriadAgency: String, CaseIterable, Sendable, Identifiable {
     /// Corresponding primary dataset.
     public var dataset: EphemerisDataset {
         switch self {
-        case .us: return .de442s
+        case .us: return .de442
         case .fr: return .inpop21a
         case .ru: return .epm2021
         case .cn: return .pmoe

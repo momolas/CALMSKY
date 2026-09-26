@@ -51,7 +51,7 @@ struct TriadEnsembleTests {
 
         let us = TriadAgency.us
         #expect(us.rawValue == "US")
-        #expect(us.dataset == .de442s)
+        #expect(us.dataset == .de442)
         #expect(us.institutionName.contains("NASA"))
 
         let fr = TriadAgency.fr
@@ -75,10 +75,15 @@ struct TriadEnsembleTests {
 
     @Test("Triad and Tetrad datasets have canonical GitHub Releases URLs and upstream fallback")
     func triadDatasetURLs() {
+        let de442 = EphemerisDataset.de442
+        #expect(de442.filename == "de442.bsp")
+        #expect(de442.remoteURL.absoluteString.contains("naif.jpl.nasa.gov") == true)
+        #expect(de442.fallbackRemoteURL?.absoluteString.contains("github.com/momolas/CALMSKY") == true)
+
         let de442s = EphemerisDataset.de442s
         #expect(de442s.filename == "de442s.bsp")
-        #expect(de442s.remoteURL.absoluteString.hasPrefix("https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/"))
-        #expect(de442s.fallbackRemoteURL?.absoluteString.contains("naif.jpl.nasa.gov") == true)
+        #expect(de442s.remoteURL.absoluteString.contains("naif.jpl.nasa.gov") == true)
+        #expect(de442s.fallbackRemoteURL?.absoluteString.contains("github.com/momolas/CALMSKY") == true)
 
         let inpop21a = EphemerisDataset.inpop21a
         #expect(inpop21a.filename == "inpop21a.bsp")

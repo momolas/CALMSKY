@@ -164,9 +164,9 @@ struct StreamingSPKTests {
         #expect(locidff.hasPrefix("DAF") || locidff.hasPrefix("NAIF"))
     }
 
-    @Test("Live GitHub Releases CDN partial Range request streams INPOP21a and DE442s DAF records")
+    @Test("Live GitHub Releases CDN partial Range request streams INPOP21a and EPM2021 DAF records")
     func liveGitHubReleasesByteRange() async throws {
-        let datasets: [EphemerisDataset] = [.inpop21a, .de442s]
+        let datasets: [EphemerisDataset] = [.inpop21a, .epm2021]
         for dataset in datasets {
             let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("live_gh_\(dataset.rawValue)_\(UUID().uuidString)")
             defer { try? FileManager.default.removeItem(at: tempDir) }
