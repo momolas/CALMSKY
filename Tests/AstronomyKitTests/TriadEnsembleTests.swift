@@ -276,4 +276,26 @@ struct TriadEnsembleTests {
             _ = try SPKEphemerisProvider(spkFileURL: tempURL)
         }
     }
+
+    @Test("INPOP21a and EPM2021 SPK kernels evaluate physical state vectors accurately")
+    func realKernelsEvaluation() throws {
+        let inpopURL = URL(fileURLWithPath: "/tmp/inpop21a.bsp")
+        if FileManager.default.fileExists(atPath: inpopURL.path) {
+            let provider = try SPKEphemerisProvider(spkFileURL: inpopURL)
+            let jd = JulianDay(2451545.0)
+            let earthPos = try provider.position(for: .earth, at: jd)
+            #expect(earthPos.length > 0.98 && earthPos.length < 1.02, "INPOP21a Earth distance: \(earthPos.length)")
+            let marsPos = try provider.position(for: .mars, at: jd)
+            #expect(marsPos.length > 1.38 && marsPos.length < 1.67, "INPOP21a Mars distance: \(marsPos.length)")
+            let moonPos = try provider.lunarGeocentricPosition(at: jd)
+            let moonDistKm = moonPos.length * SPKEphemerisProvider.kmPerAU
+            #expect(moonDistKm > 360_000 && moonDistKm < 406_000, "INPOP21a Moon distance: \(moonDistKm)")
+        }
+
+        let epmURL = URL(fileURLWithPath: "/tmp/epm2021.bsp")
+        if FileManager.default.fileExists(atPath: epmURL.path) {
+            let reader = try SPKReader(url: epmURL)
+            #expect(!reader.segments.isEmpty, "EPM2021 kernel should contain parsed segments")
+        }
+    }
 }

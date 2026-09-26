@@ -135,7 +135,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
         // Special Moon case: evaluate relative to EMB (3) or Earth (399)
         if body == .moon {
             if let moonSeg = spkReader.segments.last(where: {
-                $0.targetID == 301 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+                $0.targetID == 301 && $0.dataType == 2 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
             }) {
                 let moonResult = try spkReader.evaluate(segment: moonSeg, epochTDB: epochTDB)
                 let centerSSB = try resolveTargetRelSSB(targetID: moonSeg.centerID, epochTDB: epochTDB, depth: 0)
@@ -150,7 +150,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
         // Special Earth case: if 399 segment doesn't exist, derive from EMB (3) and Moon (301)
         if body == .earth {
             if let earthSeg = spkReader.segments.last(where: {
-                $0.targetID == 399 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+                $0.targetID == 399 && $0.dataType == 2 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
             }) {
                 let earthResult = try spkReader.evaluate(segment: earthSeg, epochTDB: epochTDB)
                 let centerSSB = try resolveTargetRelSSB(targetID: earthSeg.centerID, epochTDB: epochTDB, depth: 0)
@@ -159,7 +159,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
                     velocity: centerSSB.velocity + earthResult.velocity
                 )
             } else if let embSeg = spkReader.segments.last(where: {
-                $0.targetID == 3 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+                $0.targetID == 3 && $0.dataType == 2 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
             }) {
                 let embResult = try spkReader.evaluate(segment: embSeg, epochTDB: epochTDB)
                 let embSSB = embSeg.centerID == 0 ? embResult : try {
@@ -171,7 +171,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
                 // If segment center is EMB (3): r_Earth/EMB = - (M_Moon / M_Earth) * r_Moon/EMB = - (1 / 81.30056907) * r_Moon/EMB
                 // If segment center is Earth (399): r_Earth/EMB = - μ * r_Moon/Earth
                 if let moonSeg = spkReader.segments.last(where: {
-                    $0.targetID == 301 && ($0.centerID == 3 || $0.centerID == 399) && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+                    $0.targetID == 301 && $0.dataType == 2 && ($0.centerID == 3 || $0.centerID == 399) && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
                 }) {
                     let moonResult = try spkReader.evaluate(segment: moonSeg, epochTDB: epochTDB)
                     let ratio = (moonSeg.centerID == 3) ? (1.0 / 81.30056907) : Self.moonMassRatio
@@ -191,7 +191,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
         let candidates = candidateNAIFTargetIDs(for: body)
         for candID in candidates {
             if let seg = spkReader.segments.last(where: {
-                $0.targetID == candID && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+                $0.targetID == candID && $0.dataType == 2 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
             }) {
                 let segResult = try spkReader.evaluate(segment: seg, epochTDB: epochTDB)
                 if seg.centerID == 0 {
@@ -211,7 +211,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
     /// Evaluates the state vector of the Sun relative to SSB (0) in km and km/s.
     private func evaluateSunRelSSB(epochTDB: Double) throws -> SPKReader.EvaluationResult {
         if let sunSeg = spkReader.segments.last(where: {
-            $0.targetID == 10 && $0.centerID == 0 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+            $0.targetID == 10 && $0.centerID == 0 && $0.dataType == 2 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
         }) {
             return try spkReader.evaluate(segment: sunSeg, epochTDB: epochTDB)
         }
@@ -229,7 +229,7 @@ public final class SPKEphemerisProvider: EphemerisProvider, Sendable {
         }
 
         if let seg = spkReader.segments.last(where: {
-            $0.targetID == targetID && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
+            $0.targetID == targetID && $0.dataType == 2 && epochTDB >= $0.startEpoch && epochTDB <= $0.endEpoch
         }) {
             let segRes = try spkReader.evaluate(segment: seg, epochTDB: epochTDB)
             if seg.centerID == 0 {
