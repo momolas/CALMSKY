@@ -44,6 +44,8 @@ import Foundation
 /// ```
 ///
 /// Use ``EphemerisDataManager/makeHybridProvider(progress:)`` or ``EphemerisDataManager/makeHybridDE442sProvider(progress:)`` for automatic download and setup.
+/// - Warning: Deprecated. Use unified numerical SPK ephemerides (``SPKEphemerisProvider`` or ``StreamingTriadProvider``).
+@available(*, deprecated, message: "HybridEphemerisProvider is deprecated in CALMSKY. Use SPKEphemerisProvider with DE442s (covering planets and Moon in unified numerical integration) or StreamingTriadProvider.")
 public final class HybridEphemerisProvider: Sendable {
 
     // MARK: - Constants
@@ -87,6 +89,7 @@ public final class HybridEphemerisProvider: Sendable {
 
 // MARK: - EphemerisProvider Conformance
 
+@available(*, deprecated)
 extension HybridEphemerisProvider: EphemerisProvider {
 
     /// Heliocentric position of a Solar System body in AU (ICRS/J2000).

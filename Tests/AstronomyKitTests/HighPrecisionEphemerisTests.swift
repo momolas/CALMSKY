@@ -143,9 +143,17 @@ struct EphemerisDatasetTests {
         #expect(EphemerisDataset.lunarDE440s.source.contains("NASA"))
     }
 
+    @Test("INPOP21a numerical SPK is the official IMCCE dataset (replaces analytical VSOP2013)")
+    func inpop21aOfficialIMCCE() {
+        #expect(EphemerisDataset.inpop21a.source.contains("IMCCE"))
+        #expect(EphemerisDataset.inpop21a.filename == "inpop21a.bsp")
+        #expect(EphemerisDataset.baseline == .de442s)
+    }
+
     @Test("Filenames match expected patterns")
     func filenames() {
-        #expect(EphemerisDataset.vsop2013Modern.filename == "VSOP2013.P2000.bin")
+        #expect(EphemerisDataset.inpop21a.filename == "inpop21a.bsp")
+        #expect(EphemerisDataset.de442s.filename == "de442s.bsp")
         #expect(EphemerisDataset.lunarDE440s.filename == "de440s.bsp")
     }
 }

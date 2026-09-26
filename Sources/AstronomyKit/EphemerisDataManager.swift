@@ -12,10 +12,14 @@ import Foundation
 public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
     /// VSOP2013 planetary ephemerides covering the modern era (0–2000 CE).
     /// Source: IMCCE, Observatoire de Paris.
+    /// - Warning: Deprecated. Use ``inpop21a`` for IMCCE numerical SPK integration, or ``de442s`` for NASA JPL baseline.
+    @available(*, deprecated, message: "Analytical VSOP2013 Poisson series is deprecated. Use .inpop21a (IMCCE numerical SPK) or .de442s (NASA JPL baseline).")
     case vsop2013Modern
 
     /// VSOP2013 planetary ephemerides with full coverage (−4000 to +8000 CE).
     /// Source: IMCCE, Observatoire de Paris.
+    /// - Warning: Deprecated. Use ``inpop21a`` for IMCCE numerical SPK integration, or ``de442s`` for NASA JPL baseline.
+    @available(*, deprecated, message: "Analytical VSOP2013 Poisson series is deprecated. Use .inpop21a (IMCCE numerical SPK) or .de442s (NASA JPL baseline).")
     case vsop2013Full
 
     /// JPL DE440 lunar segments covering 1550–2650 CE (≈115 MB).
@@ -43,6 +47,11 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
     case pmoe
 
     public var id: String { rawValue }
+
+    /// All active supported numerical ephemeris datasets.
+    public static var allCases: [EphemerisDataset] {
+        [.de442s, .inpop21a, .epm2021, .pmoe, .lunarDE440, .lunarDE440s]
+    }
 
     /// Official baseline ephemeris dataset (NASA JPL DE442s).
     public static var baseline: EphemerisDataset { .de442s }
@@ -131,23 +140,22 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
 /// Manages downloading, caching, and verification of ephemeris data files from official sources.
 ///
 /// `EphemerisDataManager` is an `actor` providing thread-safe asynchronous access to
-/// large binary data files required by ``VSOP2013Provider`` and ``LunarDE440Provider``.
+/// official numerical SPK ephemerides (NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, PMO PMOE).
 ///
 /// ## Usage
 ///
 /// ```swift
 /// let manager = EphemerisDataManager()
 ///
-/// // Download specific datasets
-/// let vsopURL = try await manager.download(.vsop2013Modern)
-/// let lunarURL = try await manager.download(.lunarDE440s)
-///
-/// // Or create a ready-to-use hybrid provider in one call
-/// let provider = try await manager.makeHybridProvider { dataset, received, total in
-///     print("[\(dataset.name)] \(received)/\(total) bytes")
+/// // Create the official NASA JPL DE442s baseline provider
+/// let baseline = try await manager.makeBaselineProvider { received, total in
+///     print("[DE442s] \(received)/\(total) bytes")
 /// }
 ///
-/// let moonPos = try provider.position(for: .moon, at: jd) // Centimeter precision!
+/// // Or create an on-demand dynamic streaming Triad provider (US + FR + RU)
+/// let triad = try manager.makeStreamingTriadProvider()
+///
+/// let moonPos = try await triad.position(for: .moon, at: jd) // Centimeter precision!
 /// ```
 public actor EphemerisDataManager {
 
@@ -285,6 +293,7 @@ public actor EphemerisDataManager {
     /// - Parameter progress: Optional closure called with `(dataset, bytesReceived, totalBytes)`.
     /// - Returns: A configured ``HybridEphemerisProvider``.
     /// - Throws: An error if downloads fail or data files are invalid.
+    @available(*, deprecated, message: "Analytical VSOP2013 hybrid provider is deprecated. Use makeBaselineProvider() (NASA JPL DE442s) or makeStreamingTriadProvider() (DE442s + INPOP21a + EPM2021) for 100% numerical integration.")
     public func makeHybridProvider(
         progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
     ) async throws -> HybridEphemerisProvider {
@@ -307,6 +316,7 @@ public actor EphemerisDataManager {
     ///
     /// - Parameter progress: Optional closure called with `(dataset, bytesReceived, totalBytes)`.
     /// - Returns: A configured ``HybridEphemerisProvider`` combining VSOP2013 with DE442s.
+    @available(*, deprecated, message: "Analytical VSOP2013 hybrid provider is deprecated. Use makeBaselineProvider() (NASA JPL DE442s) or makeStreamingTriadProvider() (DE442s + INPOP21a + EPM2021) for 100% numerical integration.")
     public func makeHybridDE442sProvider(
         progress: (@Sendable (EphemerisDataset, Int64, Int64) -> Void)? = nil
     ) async throws -> HybridEphemerisProvider {
@@ -426,6 +436,10 @@ public actor EphemerisDataManager {
     ///
     /// Fetches only the required byte chunks for requested dates without downloading the full kernel.
     public func makeStreamingProvider(for dataset: EphemerisDataset) -> StreamingSPKEphemerisProvider {
+        precondition(
+            !dataset.rawValue.hasPrefix("vsop2013"),
+            "HTTP Range streaming requires numerical SPK/DAF ephemerides. Analytical VSOP2013 Poisson series cannot be streamed; use .inpop21a for IMCCE or .de442s for NASA JPL."
+        )
         let datasetCacheDir = cacheDirectory.appendingPathComponent("streaming_\(dataset.rawValue)")
         return StreamingSPKEphemerisProvider(
             reader: StreamingSPKReader(

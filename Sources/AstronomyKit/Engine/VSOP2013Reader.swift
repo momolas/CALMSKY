@@ -133,6 +133,7 @@ private struct VSOP2013InternalState: Sendable {
     var ephemerideFiles: [VSOP2013EphemeridesFile] = (0..<6).map { _ in VSOP2013EphemeridesFile() }
 }
 
+@available(*, deprecated, message: "CAAVSOP2013 analytical reader is deprecated. Use SPKReader with numerical SPK kernels (DE442s, INPOP21a, etc.).")
 public final class CAAVSOP2013: Sendable {
     public enum Planet: Int, Sendable, CaseIterable {
         case MERCURY = 0

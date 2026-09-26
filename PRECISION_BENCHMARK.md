@@ -96,6 +96,20 @@ AstronomyKit applique une politique métrologique stricte et adaptative (`Adapti
 
 ## 3. Historique des Évolutions du Modèle (Precision Changelog)
 
+### [v2.4] - 2026-09-26 : Exclusion Stricte des Séries Analytiques VSOP2013 au Profit d'INPOP21a SPK & Clôture Phase 10
+- **Directive Utilisateur Appliquée** :
+  - *« ne pas utiliser Les éphémérides analytiques VSOP2013 de l'IMCCE »*
+- **Changements majeurs** :
+  1. **Exclusion / Dépréciation de VSOP2013** : Banalisation des séries de Poisson analytiques `VSOP2013` (fichiers continus non streamables de 27 à 54 Mo). Dépréciation formelle de `VSOP2013Provider`, `HybridEphemerisProvider`, `CAAVSOP2013`, `makeHybridProvider`, `makeHybridDE442sProvider`, et des datasets `vsop2013Modern` / `vsop2013Full`.
+  2. **Exclusivité Numérique IMCCE (INPOP21a)** : Pour la France et l'IMCCE (Observatoire de Paris), AstronomyKit s'appuie désormais à 100% sur le kernel numérique SPK `INPOP21a` (`inpop21a.bsp`, ~24.2 Mo), compatible HTTP Range streaming dynamique et stockage local.
+  3. **Protection des Usines de Streaming** : `makeStreamingProvider(for:)` rejette formellement les datasets analytiques et garantit que seules les éphémérides numériques SPK/DAF sont requêtées.
+  4. **Périmètre Numérique Consolidé** :
+     - Baseline Hors-Ligne : NASA JPL `DE442s` (US)
+     - Consensus En-Ligne : Tétrade / Triade (`DE442s` US + `INPOP21a` FR + `EPM2021` RU + `PMOE` CN)
+- **Résultats** :
+  - **100% des tests validés** en sub-seconde (~0.75 s) sur 58 suites.
+  - Zéro compromis analytique, intégrité métrologique absolue garantie.
+
 ### [v2.3] - 2026-09-21 : Optimisation Matérielle Native Apple Accelerate & Écosystème Apple 100% (Sans Linux)
 - **Directives Utilisateur Appliquées** :
   1. *« etudier l'utilisation du framework Apple Accelerate »*

@@ -21,7 +21,9 @@ import Foundation
 ///   ``LunarDE440Provider`` or ``HybridEphemerisProvider``. The Sun position is derived
 ///   by negating the Earth-Moon Barycenter position.
 /// - Thread Safety: Conforms to `Sendable`. Access to the underlying
-///   `CAAVSOP2013` instance is protected by an internal `NSLock`.
+/// - Warning: Deprecated. Analytical VSOP2013 Poisson series is deprecated in favor of
+///   numerical SPK ephemerides (``SPKEphemerisProvider`` with INPOP21a for IMCCE or DE442s for NASA JPL).
+@available(*, deprecated, message: "VSOP2013 analytical ephemerides are deprecated in CALMSKY. Use SPKEphemerisProvider with INPOP21a (IMCCE numerical SPK) or DE442s (NASA JPL baseline).")
 public final class VSOP2013Provider: Sendable {
 
     // MARK: - Properties
@@ -89,6 +91,7 @@ public final class VSOP2013Provider: Sendable {
 
 // MARK: - EphemerisProvider Conformance
 
+@available(*, deprecated)
 extension VSOP2013Provider: EphemerisProvider {
 
     /// Heliocentric position of a Solar System body in AU (ICRS/J2000).

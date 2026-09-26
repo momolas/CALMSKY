@@ -47,11 +47,11 @@ extension EphemerisError: LocalizedError {
 ///
 /// Conforming types provide heliocentric positions and state vectors for Solar System bodies.
 /// Canonical numerical providers include:
-/// - ``StreamingTriadProvider``: Parallel HTTP Range streaming combining NASA JPL, IMCCE, and IAA RAS models.
-/// - ``TriadEphemerisProvider``: Multi-agency consensus ensemble (US DE442s, FR INPOP21a, RU EPM2021).
-/// - ``SPKEphemerisProvider``: Hardware-vectorized DAF/SPK Type 2 numerical kernel reader.
-/// - ``VSOP2013Provider``: High-precision planetary positions from IMCCE VSOP2013 (≈1–10 m accuracy).
-/// - ``HybridEphemerisProvider``: Combines VSOP2013 (planets) with JPL DE440 (Moon, ≈1–3 cm accuracy).
+/// - ``StreamingTetradProvider`` / ``StreamingTriadProvider``: Parallel HTTP Range streaming combining NASA JPL, IMCCE, IAA RAS, and PMO models.
+/// - ``TriadEphemerisProvider`` / ``TetradEphemerisProvider``: Multi-agency consensus ensemble (US DE442s, FR INPOP21a, RU EPM2021, CN PMOE).
+/// - ``SPKEphemerisProvider``: Hardware-vectorized DAF/SPK Type 2 numerical kernel reader (NASA JPL DE442s baseline).
+/// - (Deprecated) ``VSOP2013Provider``: Legacy analytical Poisson series, deprecated in favor of INPOP21a numerical SPK ephemerides.
+/// - (Deprecated) ``HybridEphemerisProvider``: Deprecated in favor of unified numerical SPK ephemerides.
 ///
 /// All positions are returned in the **ICRS/J2000** reference frame with units of **AU** for position
 /// and **AU/day** for velocity.
