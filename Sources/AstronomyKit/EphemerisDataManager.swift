@@ -39,7 +39,7 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
     /// Primary source: Canonical GitHub Releases Assets (fallback to NASA NAIF).
     case de442s
 
-    /// IMCCE INPOP21a modern planetary ephemerides covering 1900–2100 CE (≈24.2 MB).
+    /// IMCCE INPOP21a complete millennial planetary ephemerides covering 1000–3000 CE (≈213.1 MB, inpop21a_TDB_m1000_p1000_spice).
     /// Primary source: Canonical GitHub Releases Assets (fallback to IMCCE).
     case inpop21a
 
@@ -70,7 +70,7 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         case .lunarDE440s: return "DE440s Lunar (1900–2050 CE)"
         case .de442: return "DE442 Complete Planetary & Lunar (1549–2650 CE) [US - NASA JPL]"
         case .de442s: return "DE442s Compact Planetary (1849–2150 CE) [US - NASA JPL]"
-        case .inpop21a: return "INPOP21a Planetary (1900–2100 CE) [FR - IMCCE]"
+        case .inpop21a: return "INPOP21a Complete Millennial Planetary (1000–3000 CE) [FR - IMCCE]"
         case .epm2021: return "EPM2021 Planetary (1787–2214 CE) [RU - IAA RAS]"
         case .pmoe: return "PMOE Planetary (1900–2100 CE) [CN - PMO / CAS]"
         }
@@ -113,7 +113,7 @@ public enum EphemerisDataset: String, Sendable, CaseIterable, Identifiable {
         case .de442s:
             return URL(string: "https://github.com/momolas/CALMSKY/releases/download/ephemerides-v1.0/de442s.bsp")
         case .inpop21a:
-            return URL(string: "ftp://ftp.imcce.fr/pub/ephem/planets/inpop21a/inpop21a_TDB_m100_p100_spice.tar.gz")
+            return URL(string: "https://ftp.imcce.fr/pub/ephem/planets/inpop21a/inpop21a_TDB_m1000_p1000_spice.tar.gz")
         case .epm2021:
             return URL(string: "ftp://ftp.iaaras.ru/pub/epm/EPM2021/SPICE/epm2021.bsp")
         case .pmoe:

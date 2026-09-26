@@ -295,6 +295,15 @@ struct TriadEnsembleTests {
             let moonPos = try provider.lunarGeocentricPosition(at: jd)
             let moonDistKm = moonPos.length * SPKEphemerisProvider.kmPerAU
             #expect(moonDistKm > 360_000 && moonDistKm < 406_000, "INPOP21a Moon distance: \(moonDistKm)")
+
+            // Verify secular millennial coverage (1500 CE & 2500 CE)
+            let jd1500 = JulianDay(2268923.75) // ~1500 CE
+            let earth1500 = try provider.position(for: .earth, at: jd1500)
+            #expect(earth1500.length > 0.98 && earth1500.length < 1.02, "INPOP21a Earth distance at 1500 CE: \(earth1500.length)")
+
+            let jd2500 = JulianDay(2634166.25) // ~2500 CE
+            let earth2500 = try provider.position(for: .earth, at: jd2500)
+            #expect(earth2500.length > 0.98 && earth2500.length < 1.02, "INPOP21a Earth distance at 2500 CE: \(earth2500.length)")
         }
 
         let epmURL = URL(fileURLWithPath: "/tmp/epm2021.bsp")
