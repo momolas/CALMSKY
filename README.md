@@ -4,7 +4,7 @@
 ![](https://img.shields.io/badge/accelerate-Apple%20SIMD%20%7C%20vDSP%20%7C%20BLAS-orange.svg)
 ![](https://img.shields.io/badge/licence-MIT-blue.svg)
 
-*The most comprehensive collection of accurate astronomical algorithms in modern Swift.* 
+*The most comprehensive collection of accurate astronomical algorithms in modern Swift.*
 
 Description
 ===========
@@ -12,25 +12,65 @@ Description
 **AstronomyKit** provides everything you need to compute planetary orbits, solar & lunar eclipses, length of seasons, moon phases, rise/transit/set times, Galilean moons of Jupiter, Saturn's rings, coordinate transformations, religious & lunisolar calendars (Hijri, Jewish, Easter), crescent visibility (*Hilal*), atmospheric air mass, and observation windows with professional-grade accuracy.
 
 AstronomyKit incorporates the core algorithms of **international reference standards**:
-- **NASA JPL DE442s Baseline (Offline)**: High-precision numerical ephemeris engine for offline operation (`EphemerisDataset.baseline = .de442s`) providing sub-meter and sub-milliarcsecond planetary positioning without network connectivity.
-- **Numerical Ensemble (Online Dynamic Streaming - Triad & Tetrad)**: Real-time dynamic HTTP byte-range streaming (`StreamingTetradProvider` / `StreamingTriadProvider`) orchestrating the world's 4 premier space agency models: NASA JPL `DE442s` (US), IMCCE `INPOP21a` (FR), IAA RAS `EPM2021` (RU), and Purple Mountain Observatory / CAS `PMOE` (CN) with multi-agency consensus and physical $1\sigma$ uncertainty.
-- **Adaptive Ephemeris Engine**: Automatic intelligent dispatch (`AdaptiveEphemerisProvider`) resolving to the offline NASA JPL DE442s baseline when cached, or to the dynamic online streaming ensemble.
-- **Strict Numerical Exclusivity**: Pure numerical integration via offline NASA JPL DE442s baseline or online dynamic streaming Tetrad (US, FR, RU, CN). Zero degraded analytical fallbacks (no Jean Meeus, no VSOP87D, no ELP2000-82B, no Standish 1992 fallback, no analytical VSOP2013 Poisson series). French planetary ephemerides (IMCCE) are served exclusively via the modern INPOP21a numerical SPK integration.
+
+- **NASA JPL DE442 + Numerical Tetrad (Online)**: Real-time dynamic HTTP byte-range streaming (`StreamingTetradProvider` / `StreamingTriadProvider`) orchestrating the world's 4 premier space agency models in parallel, providing multi-agency consensus and physical $1\sigma$ uncertainty when network is available.
+- **NASA JPL DE442s Baseline (Offline)**: Compact high-precision numerical ephemeris (~31 MB, 1849–2150 CE) cached locally at launch for fully offline operation without any network connectivity.
+- **Adaptive Ephemeris Engine (Network-First)**: Automatic intelligent dispatch (`AdaptiveEphemerisProvider`) selecting **Online Streaming Tetrad** when network is available, or **Offline DE442s Baseline** from local cache when offline.
+- **Strict Numerical Exclusivity**: Pure numerical integration via the offline NASA JPL DE442s compact baseline or the online dynamic streaming Tetrad (US, FR, RU, CN). Zero degraded analytical fallbacks (no Jean Meeus, no VSOP87D, no ELP2000-82B, no analytical VSOP2013 Poisson series). French planetary ephemerides (IMCCE) are served exclusively via the modern INPOP21a numerical SPK integration.
 - **USNO NOVAS**: 3D Cartesian vector astrometry (`Vector3D`, `StateVector`), Einstein gravitational light deflection, and relativistic stellar aberration.
-- **IAU SOFA**: Modern time scales (`UT1`, `UTC`, `TAI`, `TT`, `TDB`), $\Delta T$ (NASA Espenak 2006), Earth Rotation Angle (ERA IAU 2000), and CIRS $\leftrightarrow$ TIRS coordinate rotations.
+- **IAU SOFA**: Modern time scales (`UT1`, `UTC`, `TAI`, `TT`, `TDB`), $\Delta T$ (Stephenson, Morrison & Hohenkerk 2016), Earth Rotation Angle (ERA IAU 2000), and CIRS $\leftrightarrow$ TIRS coordinate rotations.
 - **NORAD SGP4**: Artificial satellite orbit propagation from standard Two-Line Element (TLE) sets, with topocentric observer look angles (altitude, azimuth, distance).
 
-### Architecture & Numerical Precision
+---
 
-AstronomyKit is built on a **100% Pure Swift 6** architecture, offering professional-grade astrometric precision validated against **NASA JPL Horizons (DE441)**:
+Ephemeris Engine Architecture
+==============================
 
-- **Offline NASA JPL DE442s Baseline**: Direct local DAF/SPK Type 2 Chebyshev evaluation delivering exact sub-milliarcsecond (< 0.001") and sub-meter precision offline.
-- **Online Numerical Tetrad (US + FR + RU + CN)**: Dynamic streaming over HTTP byte-ranges combines NASA JPL (`DE442s`), IMCCE (`INPOP21a`), IAA RAS (`EPM2021`), and PMO/CAS (`PMOE`) with multi-agency consensus and physical $1\sigma$ uncertainty (< 0.05 km).
-- **Pure Swift 6 & Lightning-Fast Build**: 100% pure native Swift with zero C/C++ dependencies and zero Poisson trigonometric lookup tables. Clean build compiles in **sub-second time**.
-- **Strict Concurrency**: 100% data-race safe, pure `Sendable` value types across astronomical objects, coordinates, and providers.
-- **Physical Uncertainty Analysis**: Multi-model consensus with empirical $1\sigma$ physical dispersion in km and geocentric arcseconds.
-- **Strong Unit Safety**: Type-safe dimensional structures for `Degree`, `ArcSecond`, `Hour`, `JulianDay`, `AstronomicalUnit`, `Kilometer`, etc.
-- **High Test Coverage**: 321 unit tests in 57 suites executing in **sub-second time** (~0.8 s) via modern `Swift-Testing` (`@Test`, `@Suite`).
+### Source Policy per Agency
+
+| Mode | Agency | Dataset | Source | Size | Coverage |
+|---|---|---|---|---|---|
+| 🌐 **Online streaming** | 🇺🇸 NASA JPL | DE442 | **NAIF direct** (`naif.jpl.nasa.gov`) | 120 MB | 1549–2650 CE |
+| 🌐 **Online streaming** | 🇫🇷 IMCCE | INPOP21a (millennial) | **GitHub CDN** | 213 MB | 973–3026 CE |
+| 🌐 **Online streaming** | 🇷🇺 IAA RAS | EPM2021 | **GitHub CDN** | 40 MB | 1787–2214 CE |
+| 🌐 **Online streaming** | 🇨🇳 PMO/CAS | PMOE | **GitHub CDN** | 25 MB | 1900–2100 CE |
+| 📵 **Offline baseline** | 🇺🇸 NASA JPL | DE442s (compact) | **GitHub CDN** → cached locally | 31 MB | 1849–2150 CE |
+
+> **Network bandwidth**: HTTP Range streaming fetches only ~328 bytes per requested date regardless of kernel size. Full kernel files are never downloaded during live evaluation.
+
+### Adaptive Provider — Network-First Policy
+
+```
+🚀 App Launch
+   └── ephemerisManager.prepareOfflineBaseline()    ← fire-and-forget background Task
+       Downloads de442s.bsp (~31 MB) once from GitHub CDN → local cache
+       No-op on subsequent calls (idempotent)
+
+📡 Network available  →  makeAdaptiveProvider()  →  Streaming Tetrad
+   ├── 🇺🇸 DE442    HTTP Range  ← NAIF (naif.jpl.nasa.gov)         ~120 bytes/query
+   ├── 🇫🇷 INPOP21a HTTP Range  ← GitHub CDN                        ~328 bytes/query
+   ├── 🇷🇺 EPM2021  HTTP Range  ← GitHub CDN                        ~328 bytes/query
+   └── 🇨🇳 PMOE     HTTP Range  ← GitHub CDN                        ~328 bytes/query
+       → 4-agency consensus position + 1σ physical uncertainty (< 0.05 km)
+
+📵 No network         →  makeAdaptiveProvider()  →  Offline DE442s Cache
+   └── de442s.bsp from local cache directory
+       → SPKEphemerisProvider (1849–2150 CE, sub-meter precision)
+```
+
+### Integration
+
+```swift
+// App.swift — trigger once at startup
+.task {
+    // Downloads de442s.bsp in background on first run; no-op thereafter
+    await ephemerisManager.prepareOfflineBaseline()
+}
+
+// At use time — automatic network detection
+let provider = try await ephemerisManager.makeAdaptiveProvider()
+// → Streaming Tetrad (online) or DE442s cache (offline), transparently
+```
 
 ---
 
@@ -288,21 +328,37 @@ let look = SatellitePropagator.lookAngles(
 print("Altitude: \(look.altitude)°, Azimuth: \(look.azimuth)°, Range: \(look.distanceKm) km")
 ```
 
-### 16. Stack Complet Tétrade / Triade (US + FR + RU + CN) & Consensus Métrologique
+### 16. Adaptive Provider — Network-First Ephemeris
 
 ```swift
 let manager = EphemerisDataManager()
 
-// Download numerical kernels (DE442s, INPOP21a, EPM2021, PMOE) via GitHub Releases CDN
-let tetrad = try await manager.makeTetradProvider { dataset, received, total in
-    print("[\(dataset.name)] \(received)/\(total) bytes")
-}
+// At app launch: cache de442s.bsp locally once (fire-and-forget)
+manager.prepareOfflineBaseline()
 
-// Or load exclusively from local cache without network
-// let tetrad = try manager.makeTetradProviderFromCache()
+// Later — transparently picks Streaming Tetrad online or DE442s offline
+let provider = try await manager.makeAdaptiveProvider()
 
-// Metrological 4-agency consensus & 1-sigma physical uncertainty
-let consensus = try tetrad.consensusDetails(for: .mars, at: jd)
+// Evaluate any body — same API regardless of online/offline mode
+let mars = try await provider.position(for: .mars, at: jd)
+let moonState = try await provider.stateVector(for: .moon, at: jd)
+```
+
+### 17. Metrological Tetrad — 4-Agency Consensus
+
+```swift
+let manager = EphemerisDataManager()
+
+// Streaming (no download required — ~328 bytes per query)
+let tetrad = try manager.makeStreamingTetradProvider()
+
+// Or download kernels for full local access
+// let tetrad = try await manager.makeTetradProvider { dataset, received, total in
+//     print("[\(dataset.name)] \(received)/\(total) bytes")
+// }
+
+// 4-agency consensus & 1-sigma physical uncertainty
+let consensus = try await tetrad.consensusDetails(for: .mars, at: jd)
 print("Consensus Position (AU):", consensus.consensusPosition)
 print("1-σ Physical Uncertainty:", consensus.physicalUncertaintyKm, "km")
 print("1-σ Geocentric Angular Uncertainty:", consensus.physicalUncertaintyArcsec, "arcsec")
@@ -311,10 +367,25 @@ print("Max Agency Discrepancy:", consensus.maxDiscrepancyKm, "km")
 
 ---
 
+Architecture & Numerical Precision
+====================================
+
+AstronomyKit is built on a **100% Pure Swift 6** architecture with professional-grade astrometric precision validated against **NASA JPL Horizons (DE441)**:
+
+- **Offline NASA JPL DE442s Baseline**: Direct local DAF/SPK Type 2 Chebyshev evaluation delivering sub-milliarcsecond (< 0.001") and sub-meter precision offline.
+- **Online Numerical Tetrad (US + FR + RU + CN)**: Dynamic HTTP Range streaming of NASA JPL DE442 (NAIF), IMCCE INPOP21a (GitHub CDN, millennial 973–3026 CE), IAA RAS EPM2021 (GitHub CDN), and PMO/CAS PMOE (GitHub CDN) with 4-agency consensus and physical $1\sigma$ uncertainty (< 0.05 km).
+- **Pure Swift 6 & Apple Accelerate**: Native SIMD (`simd_double3x3`), vDSP (dot products, polynomial evaluation), and `vvsincos` vectorization. Zero C/C++ dependencies. Clean build in sub-second time.
+- **Strict Concurrency**: 100% data-race safe, pure `Sendable` value types.
+- **Physical Uncertainty Analysis**: Multi-model consensus with empirical $1\sigma$ physical dispersion in km and geocentric arcseconds.
+- **Strong Unit Safety**: Type-safe dimensional structures for `Degree`, `ArcSecond`, `Hour`, `JulianDay`, `AstronomicalUnit`, `Kilometer`, etc.
+- **High Test Coverage**: **346 unit tests** in 58 suites executing in **~3 s** via modern `Swift-Testing` (`@Test`, `@Suite`).
+
+---
+
 Documentation
 =============
 
-AstronomyKit includes full **Apple DocC** documentation. You can preview it in your browser with:
+AstronomyKit includes full **Apple DocC** documentation. Preview it in your browser with:
 
 ```bash
 swift package --disable-sandbox preview-documentation --target AstronomyKit
@@ -339,11 +410,10 @@ Or add it directly in Xcode via **File > Add Package Dependencies...** with `htt
 
 ---
 
-
 Caution on Coordinates
 ======================
 
-Coordinate computations are key for modern astronomy. High-precision positions in AstronomyKit are referenced to the Barycentric Dynamical Time (TDB) frame and International Celestial Reference Frame (ICRF / J2000) using NASA JPL numerical integration (DE442s), IMCCE INPOP21a, and IAA RAS EPM2021. For conversions requiring high-order relativistic stellar motions, vector astrometry tools based on USNO NOVAS are natively provided.
+Coordinate computations are key for modern astronomy. High-precision positions in AstronomyKit are referenced to the Barycentric Dynamical Time (TDB) frame and International Celestial Reference Frame (ICRF / J2000) using NASA JPL numerical integration (DE442 / DE442s), IMCCE INPOP21a, and IAA RAS EPM2021. For conversions requiring high-order relativistic stellar motions, vector astrometry tools based on USNO NOVAS are natively provided.
 
 ---
 
@@ -351,7 +421,8 @@ Author
 ======
 
 Cédric Foellmi, a.k.a. **[@onekiloparsec](https://twitter.com/onekiloparsec)** ([website](https://onekiloparsec.dev)). <br/>
-(Ph.D. in astrophysics, and former *support astronomer* at the [European Southern Observatory](http://www.eso.org) in Chile). <br/> Author of the app iObserve for macOS and [arcsecond.io](https://www.arcsecond.io).
+(Ph.D. in astrophysics, and former *support astronomer* at the [European Southern Observatory](http://www.eso.org) in Chile). <br/>
+Author of the app iObserve for macOS and [arcsecond.io](https://www.arcsecond.io).
 
 ---
 

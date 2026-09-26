@@ -6,7 +6,12 @@ The most comprehensive collection of accurate astronomical algorithms in Swift.
 
 **AstronomyKit** provides modern, expressive, and type-safe Swift APIs for astronomical calculations, ephemerides, celestial mechanics, and observational astronomy.
 
-Built upon pure Swift 6 ephemeris engines featuring the **NASA JPL DE442s** offline baseline and state-of-the-art **Numerical Ensemble** dynamic streaming (NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, and PMO/CAS PMOE), AstronomyKit provides sub-milliarcsecond professional-grade accuracy with the safety and elegance of modern Swift.
+Built on pure Swift 6 with native Apple Accelerate (SIMD, vDSP), AstronomyKit powers a **network-first ephemeris engine** combining:
+
+- **Online**: Parallel HTTP byte-range streaming of 4 premier space agency numerical kernels (US, FR, RU, CN) — no full download required, only ~328 bytes per query.
+- **Offline**: NASA JPL DE442s compact baseline (~31 MB) downloaded once at launch and cached locally for fully air-gapped operation.
+
+Sub-milliarcsecond professional-grade accuracy, validated against NASA JPL Horizons (DE441).
 
 ### Key Features
 
@@ -23,11 +28,24 @@ Built upon pure Swift 6 ephemeris engines featuring the **NASA JPL DE442s** offl
 
 ### Getting Started & Guides
 
+- <doc:EphemerisEngine>
 - <doc:HilalVisibility>
 - <doc:CoordinatesAndTransformations>
 - <doc:StandardsAndReductions>
 - <doc:RiseTransitSetTimes>
 - <doc:PlanetsAndMoons>
+
+### Ephemeris Engine
+
+- ``EphemerisDataManager``
+- ``EphemerisDataset``
+- ``AdaptiveEphemerisProvider``
+- ``StreamingTetradProvider``
+- ``StreamingTriadProvider``
+- ``StreamingSPKEphemerisProvider``
+- ``TriadEphemerisProvider``
+- ``SPKEphemerisProvider``
+- ``LunarDE440Provider``
 
 ### Global Standards & Vector Astrometry
 

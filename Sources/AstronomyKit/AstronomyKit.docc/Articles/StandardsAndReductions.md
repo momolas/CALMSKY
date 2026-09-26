@@ -4,7 +4,7 @@ Learn how AstronomyKit implements global reference standards: USNO NOVAS, IAU SO
 
 ## Overview
 
-In addition to pure high-precision numerical ephemerides (offline NASA JPL DE442s baseline, online dynamic streaming Tetrad: NASA JPL DE442s, IMCCE INPOP21a, IAA RAS EPM2021, PMO/CAS PMOE), **AstronomyKit** incorporates core algorithms from global standards:
+In addition to pure high-precision numerical ephemerides — **online**: parallel HTTP Range streaming of NASA JPL DE442 (NAIF), IMCCE INPOP21a (GitHub CDN), IAA RAS EPM2021 (GitHub CDN), and PMO/CAS PMOE (GitHub CDN); **offline**: NASA JPL DE442s compact baseline cached locally at launch — **AstronomyKit** incorporates core algorithms from global standards:
 
 1. **USNO NOVAS** (*Naval Observatory Vector Astrometry Software*): 3D spatial vectors, relativistic gravitational light deflection, and stellar aberration.
 2. **IAU SOFA** (*Standards of Fundamental Astronomy*): Modern time scales ($\Delta T$, TT, TDB, TAI) and intermediate reference systems (CIRS, TIRS, Earth Rotation Angle).
