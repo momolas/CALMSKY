@@ -163,4 +163,47 @@ struct StreamingSPKTests {
         let locidff = String(data: headerData[0..<8], encoding: .ascii) ?? ""
         #expect(locidff.hasPrefix("DAF") || locidff.hasPrefix("NAIF"))
     }
+
+    @Test("Live HTTP Dynamic Temporal Streaming evaluates planetary and lunar state vectors from NASA JPL DE442")
+    func liveHTTPStreamingEvaluation() async throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("live_streaming_\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let manager = EphemerisDataManager(cacheDirectory: tempDir)
+        let streamingProvider = await manager.makeStreamingBaselineProvider(complete: true)
+
+        let jd = JulianDay(2451545.0) // J2000.0 epoch
+
+        // 1. Evaluate Earth heliocentric state vector via live HTTP byte streaming
+        let earthState = try await streamingProvider.stateVector(for: .earth, at: jd)
+        let earthDistAU = earthState.position.length
+        #expect(earthDistAU > 0.98 && earthDistAU < 1.02, "Earth heliocentric distance at J2000 should be ≈ 1.0 AU (got \(earthDistAU))")
+
+        // 2. Evaluate Moon geocentric state vector via live HTTP byte streaming
+        let moonState = try await streamingProvider.lunarGeocentricStateVector(at: jd)
+        let moonDistKm = moonState.position.length * StreamingSPKEphemerisProvider.kmPerAU
+        #expect(moonDistKm > 360_000 && moonDistKm < 406_000, "Moon geocentric distance should be between 360,000 and 406,000 km (got \(moonDistKm))")
+
+        // 3. Evaluate Mars heliocentric position via live HTTP byte streaming
+        let marsPos = try await streamingProvider.position(for: .mars, at: jd)
+        let marsDistAU = marsPos.length
+        #expect(marsDistAU > 1.38 && marsDistAU < 1.67, "Mars heliocentric distance should be between 1.38 and 1.67 AU (got \(marsDistAU))")
+
+        // 4. Verify network data conservation: total cached bytes on disk should be < 60 KB despite 120 MB remote file!
+        let streamCacheDir = tempDir.appendingPathComponent("streaming_de442")
+        let diskFiles = (try? FileManager.default.contentsOfDirectory(at: streamCacheDir, includingPropertiesForKeys: [.fileSizeKey])) ?? []
+        var totalBytesCached: Int64 = 0
+        for file in diskFiles {
+            let res = try file.resourceValues(forKeys: [.fileSizeKey])
+            totalBytesCached += Int64(res.fileSize ?? 0)
+        }
+        #expect(totalBytesCached > 0 && totalBytesCached < 60_000, "Streaming should download only ~2-10 KB, transferred \(totalBytesCached) bytes")
+
+        // 5. Verify local sparse cache hit performance: second query at identical epoch completes sub-millisecond without network access
+        let start = ContinuousClock.now
+        let cachedEarth = try await streamingProvider.position(for: .earth, at: jd)
+        let elapsed = ContinuousClock.now - start
+        #expect(cachedEarth == earthState.position)
+        #expect(elapsed < .milliseconds(20), "Cached streaming evaluation should complete rapidly from local chunk cache (took \(elapsed))")
+    }
 }
