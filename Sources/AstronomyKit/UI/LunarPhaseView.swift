@@ -28,22 +28,14 @@ public struct LunarPhaseView: View {
 
     public var body: some View {
         VStack(spacing: 8) {
-            ZStack {
-                // Dark lunar disk (Earthshine)
-                Circle()
-                    .fill(Color(white: 0.15))
-                    .frame(width: effectiveSize, height: effectiveSize)
-
-                // Illuminated phase representation
-                PhaseGraphicCanvas(phase: phase, illumination: illumination)
-                    .frame(width: effectiveSize, height: effectiveSize)
-                    .clipShape(.circle)
-
-                // Limb highlight
-                Circle()
-                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                    .frame(width: effectiveSize, height: effectiveSize)
-            }
+            PhaseGraphicCanvas(phase: phase, illumination: illumination)
+                .clipShape(.circle)
+                .overlay {
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                }
+                .background(Color(white: 0.15), in: .circle)
+                .frame(width: effectiveSize, height: effectiveSize)
 
             VStack(spacing: 2) {
                 Text(phase.name)

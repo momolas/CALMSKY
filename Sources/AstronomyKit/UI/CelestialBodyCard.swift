@@ -45,7 +45,7 @@ public struct CelestialBodyCard: View {
             .padding(16)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             .overlay(
-                RoundedRectangle.rect(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: 16)
                     .strokeBorder(colorTint.opacity(0.3), lineWidth: 1)
             )
             .contentShape(.rect(cornerRadius: 16))
@@ -56,14 +56,7 @@ public struct CelestialBodyCard: View {
     }
 
     private var colorTint: Color {
-        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
-        return Color(nsColor: snapshot.body.averageColor)
-        #elseif canImport(UIKit)
-        return Color(uiColor: snapshot.body.averageColor)
-        #else
-        let c = snapshot.body.averageColor
-        return Color(red: c.red, green: c.green, blue: c.blue)
-        #endif
+        snapshot.body.displayColor
     }
 
     private var bodyTypeDescription: String {
@@ -98,14 +91,11 @@ private struct CardHeaderSection: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(tint.opacity(0.2))
-                    .frame(width: 44, height: 44)
-                Text(symbol)
-                    .font(.title2)
-                    .foregroundStyle(tint)
-            }
+            Text(symbol)
+                .font(.title2)
+                .foregroundStyle(tint)
+                .frame(width: 44, height: 44)
+                .background(tint.opacity(0.2), in: .circle)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
@@ -130,10 +120,7 @@ private struct CardHeaderSection: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(
-                    Capsule()
-                        .fill(Color.secondary.opacity(0.15))
-                )
+                .background(Color.secondary.opacity(0.12), in: .rect(cornerRadius: 6))
             }
         }
     }

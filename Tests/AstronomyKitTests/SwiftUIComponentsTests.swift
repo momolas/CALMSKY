@@ -49,5 +49,32 @@ struct SwiftUIComponentsTests {
         _ = ObservationPlannerView()
         #expect(ObservationPlannerView.BodyFilter.allCases.count == 3)
     }
+
+    @Test("SolarSystemBody displayColor and CelestialColor interop")
+    func testCelestialColorInterop() {
+        for body in SolarSystemBody.allCases {
+            let color = body.displayColor
+            _ = color
+        }
+        let white = Color(celestialColor: .white)
+        _ = white
+    }
+
+    @Test("Angle and Radian SwiftUI interop")
+    func testAngleInterop() {
+        let deg = Degree(45.0)
+        let swiftUIAngle = deg.asSwiftUIAngle
+        #expect(swiftUIAngle.degrees == 45.0)
+
+        let convertedDeg = Degree(swiftUIAngle)
+        #expect(convertedDeg.value == 45.0)
+
+        let rad = Radian(.pi / 2.0)
+        let radAngle = rad.asSwiftUIAngle
+        #expect(abs(radAngle.radians - .pi / 2.0) < 1e-12)
+
+        let convertedRad = Radian(radAngle)
+        #expect(abs(convertedRad.value - .pi / 2.0) < 1e-12)
+    }
 }
 #endif

@@ -49,4 +49,24 @@ public extension Radian {
         SwiftUI.Angle(radians: self.value)
     }
 }
+
+public extension Color {
+    /// Initializes a SwiftUI Color from a platform-agnostic AstronomyKit `CelestialColor`.
+    init(celestialColor: CelestialColor) {
+        #if canImport(AppKit) && !targetEnvironment(macCatalyst)
+        self.init(nsColor: celestialColor)
+        #elseif canImport(UIKit)
+        self.init(uiColor: celestialColor)
+        #else
+        self.init(red: celestialColor.red, green: celestialColor.green, blue: celestialColor.blue, opacity: celestialColor.alpha)
+        #endif
+    }
+}
+
+public extension SolarSystemBody {
+    /// Semantic SwiftUI Color representation of the body's average color.
+    var displayColor: Color {
+        Color(celestialColor: averageColor)
+    }
+}
 #endif

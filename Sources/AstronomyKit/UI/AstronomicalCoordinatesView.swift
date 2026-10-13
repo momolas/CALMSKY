@@ -67,6 +67,13 @@ public struct AstronomicalCoordinatesView: View {
         .sensoryFeedback(.success, trigger: showingCopiedNotification)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): Right ascension \(coordinates.rightAscension.formatted(.rightAscension)), Declination \(coordinates.declination.formatted(.sexagesimal))")
+        .task(id: showingCopiedNotification) {
+            guard showingCopiedNotification else { return }
+            try? await Task.sleep(for: .seconds(2))
+            withAnimation(.easeOut(duration: 0.2)) {
+                showingCopiedNotification = false
+            }
+        }
     }
 
     private func copyToPasteboard() {
@@ -80,13 +87,6 @@ public struct AstronomicalCoordinatesView: View {
 
         withAnimation(.easeInOut(duration: 0.2)) {
             showingCopiedNotification = true
-        }
-
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            withAnimation(.easeOut(duration: 0.2)) {
-                showingCopiedNotification = false
-            }
         }
     }
 }

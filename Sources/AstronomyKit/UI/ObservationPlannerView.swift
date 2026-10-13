@@ -11,12 +11,7 @@ import SwiftUI
 
 /// An interactive, HIG-compliant SwiftUI view for planning astronomical observations.
 public struct ObservationPlannerView: View {
-    @State private var selectedDate: Date = .now
-    @State private var selectedFilter: BodyFilter = .all
-    @State private var selectedBody: SolarSystemBody?
-    @State private var snapshots: [EphemerisSnapshot] = []
-
-    public enum BodyFilter: String, CaseIterable, Identifiable {
+    public enum BodyFilter: String, CaseIterable, Identifiable, Sendable {
         case all = "All"
         case planets = "Planets"
         case sunAndMoon = "Sun & Moon"
@@ -31,6 +26,16 @@ public struct ObservationPlannerView: View {
             }
         }
     }
+
+    private struct PlannerQuery: Equatable, Sendable {
+        let date: Date
+        let filter: BodyFilter
+    }
+
+    @State private var selectedDate: Date = .now
+    @State private var selectedFilter: BodyFilter = .all
+    @State private var selectedBody: SolarSystemBody?
+    @State private var snapshots: [EphemerisSnapshot] = []
 
     public init() {}
 
@@ -66,11 +71,8 @@ public struct ObservationPlannerView: View {
                 }
             }
         }
-        .task(id: selectedDate) {
+        .task(id: PlannerQuery(date: selectedDate, filter: selectedFilter)) {
             await reloadSnapshots()
-        }
-        .onChange(of: selectedFilter) {
-            Task { await reloadSnapshots() }
         }
     }
 
@@ -105,7 +107,7 @@ private struct HeaderSection: View {
                 .font(.title2)
                 .foregroundStyle(.tint)
                 .frame(width: 44, height: 44)
-                .background(Circle().fill(.tint.opacity(0.15)))
+                .background(.tint.opacity(0.15), in: .circle)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Sky Observation Planner")
